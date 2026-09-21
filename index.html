@@ -745,7 +745,8 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .em-kadd input{width:150px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px}
 .em-strips{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
 .em-strip{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;cursor:text}
-.em-strip .em-lb{margin-bottom:0;line-height:1.3;min-height:2.6em}
+.em-strip .em-lb{margin-bottom:0;line-height:1.3}
+.em-strip .em-unit-l{display:block;font-weight:400;color:var(--ink-mute)}
 .em-strip input{border:0;background:transparent;font-family:'Kanit',sans-serif;font-size:18px;font-weight:600;color:var(--ink);padding:0;width:100%;outline:none;font-variant-numeric:tabular-nums}
 .em-seg{display:inline-flex;background:var(--paper-2);border-radius:10px;padding:3px;flex-wrap:wrap}
 .em-seg button{border:0;background:transparent;border-radius:8px;padding:7px 14px;font:inherit;font-size:14px;color:#4d5a66;cursor:pointer}
@@ -765,6 +766,8 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .c-sub{display:block;font-size:11.5px;color:var(--ink-mute);line-height:1.3;margin-top:1px}
 /* หน้าบันทึกรายการใหม่: ใช้ฟอนต์ Sarabun ทั้งหน้า ยกเว้นหัวเรื่อง 1-4 (.section-title) และแถบปุ่ม ล้างฟอร์ม/บันทึกข้อมูล (.form-savebar) ที่คงเดิม */
 #view-form :not(.section-title):not(.section-title *):not(.form-savebar):not(.form-savebar *){font-family:'Sarabun',sans-serif}
+/* หน้าต่างรายละเอียดเคส: เนื้อหาภายใน (หัวข้อการ์ด ยอดรวมสุทธิ ฯลฯ) ใช้ Sarabun ทั้งหมด — หัวสีกรมท่าและปุ่มด้านล่างคงเดิม */
+.case-modal .modal-body,.case-modal .modal-body *{font-family:'Sarabun',sans-serif}
 .quick-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px}
 .export-group{margin-left:auto;display:flex;gap:8px;position:relative}
 .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(10,37,64,.28);padding:6px;z-index:40;min-width:290px;max-width:360px}
@@ -3986,7 +3989,7 @@ function buildSummarySheet(wb, rows, meta){
   ws.getCell(r, 1).value = 'สำนักงานทางหลวงที่ 14 (ชลบุรี) · แขวงทางหลวงระยอง';
   ws.getCell(r, 1).font = F({ color: { argb: 'FF5C6773' } }); r++;
   ws.mergeCells(r, 1, r, 6);
-  ws.getCell(r, 1).value = 'ส่งออกเมื่อ ' + thaiLongNow() + (recorderName ? ' · โดย ' + recorderName : '');
+  ws.getCell(r, 1).value = 'ส่งออกเมื่อ ' + thaiLongNow();
   ws.getCell(r, 1).font = F({ size: 10, color: { argb: 'FF5C6773' } }); r++;
   ws.mergeCells(r, 1, r, 6);
   ws.getCell(r, 1).value = 'ขอบเขตข้อมูล: ' + (meta.filters.length ? 'ตามตัวกรอง — ' + meta.filters.join(' · ') : 'ทั้งหมด') + ' (' + rows.length + ' เคส)';
@@ -4288,7 +4291,7 @@ tbody tr.tot td{font-weight:700;background:#ecefe9;border-top:2px solid #123a5e}
 </style></head><body>
 <div class="top-gap"></div>
 <h1>รายงานอุบัติเหตุ หมวดทางหลวงเชิงเนิน</h1>
-<div class="sub0">สำนักงานทางหลวงที่ 14 (ชลบุรี) · แขวงทางหลวงระยอง · ส่งออกเมื่อ ${th(thaiLongNow())}${recorderName ? ' · โดย ' + th(recorderName) : ''}</div>
+<div class="sub0">สำนักงานทางหลวงที่ 14 (ชลบุรี) · แขวงทางหลวงระยอง · ส่งออกเมื่อ ${th(thaiLongNow())}</div>
 <div class="scope">ขอบเขตข้อมูล: ${meta.filters.length ? 'ตามตัวกรอง — ' + th(meta.filters.join(' · ')) : 'ทั้งหมด'}</div>
 <div class="tiles">
   <div class="tile"><b>${s.total.toLocaleString('th-TH')}</b><span>เคสทั้งหมด</span></div>
@@ -4420,7 +4423,7 @@ function openRouteEditModal(route, preset){
   const r = route || { highway:'', controlNo:'', section:'', kmRanges:[], distanceActual:null, distance2Lane:null, asphalt:null, concrete:null, workQty:null, status:'active' };
   const initStatus = (preset && preset.status) ? preset.status : (isRouteActive(r) ? 'active' : 'transferred');
   let kmList = (r.kmRanges || []).map(x => [x[0], x[1]]);
-  const numField = (id, label, v) => `<label class="em-strip"><span class="em-lb">${label}</span><input type="text" id="${id}" inputmode="decimal" value="${v ?? ''}" placeholder="0"></label>`;
+  const numField = (id, label, unit, v) => `<label class="em-strip"><span class="em-lb">${label}<span class="em-unit-l">(${unit})</span></span><input type="text" id="${id}" inputmode="decimal" value="${v ?? ''}" placeholder="0"></label>`;
   root.innerHTML = `
     <div class="modal-backdrop"><div class="modal edit-modal em-route">
       <div class="modal-head em-head">
@@ -4446,11 +4449,11 @@ function openRouteEditModal(route, preset){
         </div>
         <div class="em-sec"><span class="em-num">3</span> ระยะและปริมาณงาน</div>
         <div class="em-strips em-field">
-          ${numField('re_distanceActual', 'ระยะทางจริง (กม.)', r.distanceActual)}
-          ${numField('re_distance2Lane', 'ต่อ 2 ช่อง (กม.)', r.distance2Lane)}
-          ${numField('re_asphalt', 'แอสฟัลท์ (กม.)', r.asphalt)}
-          ${numField('re_concrete', 'คอนกรีต (กม.)', r.concrete)}
-          ${numField('re_workQty', 'ปริมาณงาน (หน่วย)', r.workQty)}
+          ${numField('re_distanceActual', 'ระยะทางจริง', 'กม.', r.distanceActual)}
+          ${numField('re_distance2Lane', 'ต่อ 2 ช่อง', 'กม.', r.distance2Lane)}
+          ${numField('re_asphalt', 'แอสฟัลท์', 'กม.', r.asphalt)}
+          ${numField('re_concrete', 'คอนกรีต', 'กม.', r.concrete)}
+          ${numField('re_workQty', 'ปริมาณงาน', 'หน่วย', r.workQty)}
         </div>
         <div class="em-sec"><span class="em-num">4</span> สถานะสายทาง</div>
         <div class="em-field">
