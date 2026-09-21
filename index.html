@@ -710,11 +710,6 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .p-sub{display:block;font-size:12px;color:var(--ink-mute);line-height:1.3}
 .p-sub.on{color:var(--green)}
 .quick-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px}
-.qf-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);display:inline-flex;gap:8px;align-items:center}
-.qf-chip b{font-family:'Kanit',sans-serif;font-weight:600;background:var(--paper-2);border-radius:999px;padding:0 8px;color:var(--ink)}
-.qf-chip:hover{border-color:var(--navy-800)}
-.qf-chip.on{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
-.qf-chip.on b{background:rgba(255,255,255,.2);color:#fff}
 .export-group{margin-left:auto;display:flex;gap:8px;position:relative}
 .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(10,37,64,.28);padding:6px;z-index:40;min-width:290px;max-width:360px}
 .export-menu-h{font-size:12px;color:var(--ink-mute);padding:6px 10px 4px}
@@ -722,8 +717,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .export-menu button:hover{background:var(--amber-glow)}
 .export-menu button span{color:var(--ink-mute);margin-left:6px}
 .export-menu button small{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:2px;white-space:normal}
-.ins-badge{margin-left:5px;font-size:13px;cursor:help}
-.routes-dbl-hint{font-size:12.5px;color:var(--ink-mute);align-self:center;margin-right:auto}
+.ins-sub{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:3px;line-height:1.3;white-space:normal}
 tr.route-editable{cursor:pointer;user-select:none}
 tr.route-editable:hover td{background:var(--amber-glow)}
 .row-edit-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-soft)}
@@ -1084,16 +1078,13 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           <label style="text-align:center">การจัดซ่อม</label>
           <select id="filterRepair">
             <option value="">ทั้งหมด</option>
-            <option value="pending">รอจัดซ่อม (รวมยังไม่ระบุ)</option>
             <option value="done">จัดซ่อมแล้ว</option>
-            <option value="notdone">ยังไม่จัดซ่อม</option>
+            <option value="pending">ยังไม่จัดซ่อม</option>
             <option value="unknown">ยังไม่ระบุ</option>
           </select>
         </div>
       </div>
       <div class="quick-filters">
-        <button type="button" class="qf-chip" id="qfInsRepair">🛡 มีประกัน · รอจัดซ่อม <b id="qfInsRepairCount">0</b></button>
-        <a class="link-btn" id="qfClear" style="display:none">ล้างตัวกรองประกัน/ซ่อม</a>
         <div class="export-group">
           <button type="button" class="btn btn-outline btn-sm" id="btnExportXlsx">⬇ ส่งออก Excel</button>
           <button type="button" class="btn btn-outline btn-sm" id="btnExportPdf">🖨 ส่งออก PDF</button>
@@ -1161,7 +1152,6 @@ tr.route-editable:hover td{background:var(--amber-glow)}
     <div class="card">
       <div class="assets-toolbar" style="justify-content:flex-end">
         <button class="btn btn-outline btn-sm" id="btnAddRoute" type="button">+ เพิ่มสายทาง</button>
-        <span class="routes-dbl-hint" id="routesDblHint" style="display:none">ดับเบิลคลิกที่แถวเพื่อแก้ไข</span>
         <div class="assets-updated-badge" id="routesUpdatedHint"></div>
       </div>
       <div class="table-wrap">
@@ -1189,7 +1179,6 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           <button type="button" class="assets-search-clear" id="assetsSearchClear" title="ล้างคำค้นหา">✕</button>
         </div>
         <button class="btn btn-outline btn-sm" id="btnAddAsset" type="button">+ เพิ่มรายการทรัพย์สิน</button>
-        <span class="routes-dbl-hint" id="assetsDblHint" style="display:none">ดับเบิลคลิกที่แถวเพื่อแก้ไข</span>
         <div class="assets-updated-badge" id="assetsUpdatedHint"></div>
       </div>
       <div class="asset-category-chips" id="assetCategoryChips"></div>
@@ -1438,7 +1427,7 @@ function renderHighwayBarChart(hwRoutesSorted, byHw){
   const gradient = ctx.createLinearGradient(0, 0, canvas.parentElement.clientWidth || 400, 0);
   gradient.addColorStop(0, '#5b93bf');
   gradient.addColorStop(1, '#1c4b73');
-  const labels = hwRoutesSorted.map(r => `ทล.${r.highway} (${r.section})${isRouteActive(r) ? '' : ' · โอนแล้ว'}`);
+  const labels = hwRoutesSorted.map(r => `ทล.${r.highway} (${r.section})`);
   const data = hwRoutesSorted.map(r => byHw[r.highway] || 0);
   barChartInstance = new Chart(ctx, {
     type: 'bar',
@@ -1862,7 +1851,7 @@ async function logoutRecorder(){
   location.reload();
 }
 function updateWhoDisplay(){
-  const ownerTag = isOwner() ? ' (เจ้าของระบบ)' : '';
+  const ownerTag = isOwner() ? ' 👑' : '';
   const el = document.getElementById('whoDisplay');
   const btn = document.getElementById('btnChangeWho');
   if (recorderName) {
@@ -2274,7 +2263,7 @@ function refreshHighwayOptions(){
   ROUTES.forEach(r => {
     const opt = document.createElement('option');
     opt.value = r.highway;
-    opt.textContent = 'ทล.' + r.highway + (isRouteActive(r) ? '' : ' (โอนแล้ว)');
+    opt.textContent = 'ทล.' + r.highway;
     fh.appendChild(opt);
   });
   fh.value = prevFh;
@@ -3215,15 +3204,7 @@ function renderTable(){
   const fYear = document.getElementById('filterYear').value;
   const fHw = document.getElementById('filterHighway').value;
   const fStatus = document.getElementById('filterStatus').value;
-  const fIns = document.getElementById('filterInsurance').value;
-  const fRepair = document.getElementById('filterRepair').value;
   const seqMap = computeSeqMap();
-
-  // จำนวนบนปุ่มลัด = เคสที่มีประกัน + รอจัดซ่อม ภายใต้ตัวกรองปีงบ/ทล. ที่เลือกอยู่
-  const qfCount = records.filter(r => (!fYear || String(r.fiscalYear) === fYear) && (!fHw || String(r.highway) === fHw) && isInsuredUnrepaired(r)).length;
-  document.getElementById('qfInsRepairCount').textContent = qfCount;
-  document.getElementById('qfInsRepair').classList.toggle('on', fIns === 'yes' && fRepair === 'pending');
-  document.getElementById('qfClear').style.display = (fIns || fRepair) ? '' : 'none';
 
   const fState = listFilterState();
   let rows = records.filter(r => recordMatchesList(r, fState, seqMap));
@@ -3241,11 +3222,11 @@ function renderTable(){
       <td class="mono nowrap-cell center-cell">${formatThaiDate(r.dateIncident)}</td>
       <td class="hw-cell">ทล.${escapeHtml(r.highway)}<br><span class="hint">${escapeHtml(r.section)}</span></td>
       <td class="nowrap-cell center-cell"><span class="km-badge">${escapeHtml(formatKm(r.km))}</span></td>
-      <td class="nowrap-cell violator-cell">${escapeHtml(r.driverName || '-')}${r.hasInsurance === 'มี' ? '<span class="ins-badge" title="มีประกันภัย' + (r.insuranceCompany ? ': ' + escapeHtml(r.insuranceCompany) : '') + '">🛡</span>' : ''}</td>
+      <td class="nowrap-cell violator-cell">${escapeHtml(r.driverName || '-')}</td>
       <td class="mono plate-cell">${formatPlateCellHtml(r)}</td>
       <td class="mono nowrap-cell center-cell">${formatMoney(r.totalPrice)}</td>
       <td class="nowrap-cell center-cell">${statusPill(r.compensationStatus,'comp')}</td>
-      <td class="nowrap-cell center-cell">${statusPill(r.repairStatus,'repair')}</td>
+      <td class="center-cell">${statusPill(r.repairStatus,'repair')}${r.hasInsurance === 'มี' ? '<span class="ins-sub">ประกัน: ' + (escapeHtml(r.insuranceCompany) || 'มี') + '</span>' : ''}</td>
       <td class="mono nowrap-cell center-cell">${r.closedDate ? formatThaiDate(r.closedDate) : '-'}</td>
     `;
     tbody.appendChild(tr);
@@ -3794,7 +3775,6 @@ function recordMatchesList(r, f, seqMap){
   if (f.ins === 'unknown' && r.hasInsurance) return false;
   if (f.repair === 'pending' && r.repairStatus === 'จัดซ่อมแล้ว') return false;
   if (f.repair === 'done' && r.repairStatus !== 'จัดซ่อมแล้ว') return false;
-  if (f.repair === 'notdone' && r.repairStatus !== 'ยังไม่จัดซ่อม') return false;
   if (f.repair === 'unknown' && r.repairStatus) return false;
   if (f.q) {
     const otherPlates = (r.otherPartiesList || []).map(p => p.plate).join(' ');
@@ -3822,7 +3802,7 @@ function describeListFilters(){
   if (f.hw) out.push('ทล.' + f.hw);
   if (f.status) out.push(f.status === 'open' ? 'ยังไม่ยุติเรื่อง' : 'ยุติเรื่องแล้ว');
   if (f.ins) out.push('ประกันภัย: ' + ({ yes: 'มี', no: 'ไม่มี', unknown: 'ยังไม่ระบุ' })[f.ins]);
-  if (f.repair) out.push('การจัดซ่อม: ' + ({ pending: 'รอจัดซ่อม (รวมยังไม่ระบุ)', done: 'จัดซ่อมแล้ว', notdone: 'ยังไม่จัดซ่อม', unknown: 'ยังไม่ระบุ' })[f.repair]);
+  if (f.repair) out.push('การจัดซ่อม: ' + ({ pending: 'ยังไม่จัดซ่อม (รวมที่ยังไม่ระบุ)', done: 'จัดซ่อมแล้ว', unknown: 'ยังไม่ระบุ' })[f.repair]);
   if (f.q) out.push('คำค้น "' + document.getElementById('searchBox').value.trim() + '"');
   return out;
 }
@@ -4196,11 +4176,11 @@ function buildReportHtml(rows, meta){
       <td class="c nw">${th(formatThaiDate(r.dateIncident))}</td>
       <td>ทล.${th(r.highway)}<div class="sub">${th(r.section)}</div></td>
       <td class="c nw">${th(formatKm(r.km))}</td>
-      <td>${th(r.driverName || '-')}${r.hasInsurance === 'มี' ? `<div class="sub">🛡 ${th(r.insuranceCompany || 'มีประกัน')}</div>` : ''}</td>
+      <td>${th(r.driverName || '-')}</td>
       <td class="nw">${th(plateText(r) || '-')}</td>
       <td class="r nw">${th(formatMoney(m.total))}</td>
       <td class="c">${pill(r.compensationStatus, 'ชดใช้แล้ว')}</td>
-      <td class="c">${pill(r.repairStatus, 'จัดซ่อมแล้ว')}</td>
+      <td class="c">${pill(r.repairStatus, 'จัดซ่อมแล้ว')}${r.hasInsurance === 'มี' ? `<div class="sub">ประกัน: ${th(r.insuranceCompany || 'มี')}</div>` : ''}</td>
       <td class="c nw">${r.closedDate ? th(formatThaiDate(r.closedDate)) : '-'}</td>
     </tr>`;
   }).join('');
@@ -4329,8 +4309,6 @@ function renderRoutesTable(){
     }
   }
   tbody.innerHTML = html;
-  const dblHint = document.getElementById('routesDblHint');
-  if (dblHint) dblHint.style.display = owner ? '' : 'none';
 
   if (owner) {
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
@@ -4650,8 +4628,6 @@ function renderAssetsPanel(){
 
   const owner = isOwner();
   const colSpan = 3;
-  const assetsHint = document.getElementById('assetsDblHint');
-  if (assetsHint) assetsHint.style.display = owner ? '' : 'none';
   let idx = 0;
   const rowsHtml = [];
   items.forEach(({ group }) => {
@@ -4984,17 +4960,6 @@ async function init(){
   document.getElementById('filterStatus').addEventListener('change', renderTable);
   document.getElementById('filterInsurance').addEventListener('change', renderTable);
   document.getElementById('filterRepair').addEventListener('change', renderTable);
-  document.getElementById('qfInsRepair').addEventListener('click', () => {
-    const on = document.getElementById('filterInsurance').value === 'yes' && document.getElementById('filterRepair').value === 'pending';
-    document.getElementById('filterInsurance').value = on ? '' : 'yes';
-    document.getElementById('filterRepair').value = on ? '' : 'pending';
-    renderTable();
-  });
-  document.getElementById('qfClear').addEventListener('click', () => {
-    document.getElementById('filterInsurance').value = '';
-    document.getElementById('filterRepair').value = '';
-    renderTable();
-  });
   document.getElementById('btnExportXlsx').addEventListener('click', (e) => { e.stopPropagation(); openExportMenu('xlsx'); });
   document.getElementById('btnExportPdf').addEventListener('click', (e) => { e.stopPropagation(); openExportMenu('pdf'); });
   document.getElementById('exportMenu').addEventListener('click', (e) => {
