@@ -785,7 +785,14 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .dsel-item.sel{font-weight:600}
 .dsel-tick{color:var(--amber);font-size:13px;margin-left:12px}
 .dsel.it-preset{width:190px;padding:0;border:0;border-radius:0;background:none}
-.dsel.it-preset .dsel-btn{border-radius:10px;padding:9px 12px;font-size:14px}.combo{position:relative}
+.dsel.it-preset .dsel-btn{border-radius:10px;padding:9px 12px;font-size:14px}.ins-row{grid-template-columns:200px minmax(0,440px)}
+@media(max-width:720px){.ins-row{grid-template-columns:1fr}}
+.ref-field{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden;transition:border-color .15s ease,box-shadow .15s ease}
+.ref-field:focus-within{border-color:var(--amber-500);box-shadow:0 0 0 3px rgba(224,98,15,.14)}
+.ref-prefix{display:flex;align-items:center;padding:0 10px;background:var(--paper-2);color:var(--ink-soft);font-size:14px;white-space:nowrap;border-right:1px solid var(--line);user-select:none}
+.ref-field input{flex:1;min-width:0;border:0 !important;border-radius:0 !important;box-shadow:none !important;background:transparent !important}
+.ref-field.ref-free .ref-prefix{display:none}
+.combo{position:relative}
 .combo .it-dd{top:calc(100% + 4px)}
 .combo input{width:100%;box-sizing:border-box}
 .ic-group{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:#fff}
@@ -923,8 +930,8 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           <input type="date" id="f_dateFound">
         </div>
         <div class="field">
-          <label>เวลา (เช่น 9.30)</label>
-          <input type="text" id="f_time" placeholder="09.30 น">
+          <label>เวลา</label>
+          <input type="text" id="f_time">
         </div>
       </div>
       <div class="grid grid-4" style="margin-top:12px">
@@ -936,7 +943,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
         </div>
         <div class="field">
           <label>กม. ที่เกิดเหตุ <span class="req">*</span></label>
-          <input type="text" id="f_km" placeholder="225&#43;500">
+          <input type="text" id="f_km">
           <span class="hint km-hint" id="kmHint"></span>
         </div>
         <div class="field">
@@ -972,7 +979,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           </div>
           <div class="field">
             <label>อายุ (ปี)</label>
-            <input type="text" id="f_driverAge" inputmode="numeric" maxlength="3" placeholder="เช่น 35">
+            <input type="text" id="f_driverAge" inputmode="numeric" maxlength="3">
           </div>
           <div class="field">
             <label>เบอร์โทร</label>
@@ -997,7 +1004,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           </div>
           <div class="field">
             <label>ยี่ห้อ / สี</label>
-            <input type="text" id="f_vehicleBrand" placeholder="เช่น โตโยต้า สีขาว">
+            <input type="text" id="f_vehicleBrand">
           </div>
           <div class="field">
             <label>ทะเบียนรถ</label>
@@ -1008,7 +1015,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
             <input type="text" id="f_trailerPlate" placeholder="เช่น 71-9716 สมุทรปราการ">
           </div>
         </div>
-        <div class="grid grid-2" style="margin-top:12px">
+        <div class="grid ins-row" style="margin-top:12px">
           <div class="field">
             <label>มีประกันภัยหรือไม่</label>
             <select id="f_hasInsurance">
@@ -1105,7 +1112,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
       <div class="grid grid-3" style="margin-top:12px">
         <div class="field">
           <label>เลขที่หนังสืออ้างอิง</label>
-          <input type="text" id="f_referenceNo" placeholder="ที่ สทล.14ขท.ระยอง.1/xx-xx/ส.3/xxxx">
+          <div class="ref-field" id="refField"><span class="ref-prefix" id="refPrefix">ที่ สทล.14 ขท.ระยอง.1/</span><input type="text" id="f_referenceNo"></div>
         </div>
         <div class="field">
           <label>เลขที่แจ้งความ</label>
@@ -1288,9 +1295,9 @@ tr.route-editable:hover td{background:var(--amber-glow)}
         <button class="btn btn-outline" id="btnOpenTrash">เปิดถังขยะ</button>
       </div>
       <div class="card" id="cardInsurer" style="display:none">
-        <div class="section-title">🏷 ชื่อบริษัทประกัน</div>
-        <p class="hint">รวมชื่อบริษัทประกันที่พิมพ์ไม่เหมือนกันให้เป็นชื่อเดียว (ดูตัวอย่างก่อนปรับ)</p>
-        <button class="btn btn-outline" id="btnInsurerCleanup" type="button">จัดระเบียบชื่อบริษัท</button>
+        <div class="section-title">🏷 จัดระเบียบข้อมูล</div>
+        <p class="hint">รวมชื่อบริษัทประกันที่พิมพ์ไม่เหมือนกัน และแก้รูปแบบเลขที่หนังสืออ้างอิงให้ตรงกัน (ดูตัวอย่างก่อนปรับ)</p>
+        <button class="btn btn-outline" id="btnInsurerCleanup" type="button">ตรวจและจัดระเบียบ</button>
       </div>
       <div class="card" id="cardImport" style="display:none">
         <div class="section-title">⬆ นำเข้าจากระบบเดิม</div>
@@ -1666,8 +1673,9 @@ function formatMoney(n){
 function formatPosition(r){
   const side = r.side || '';
   const loc = r.location || '';
-  if (side && loc) return side + ' ' + loc;
-  return side || loc;
+  const s = (side && loc) ? side + ' ' + loc : (side || loc);
+  // ข้อมูลเก่าบางเคสพิมพ์คำซ้ำ (เช่น "ไหล่ทาง ไหล่ทาง") — ตัดคำที่ซ้ำติดกันให้เหลือคำเดียว
+  return s.split(/\s+/).filter((w, i, a) => i === 0 || w !== a[i - 1]).join(' ');
 }
 const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 function formatThaiDate(dateStr){
@@ -2875,7 +2883,7 @@ function clearForm(){
   document.getElementById('f_compensationStatus').value = '';
   document.getElementById('f_repairStatus').value = '';
   document.getElementById('f_closedDate').value = '';
-  document.getElementById('f_referenceNo').value = '';
+  setReferenceNoField('');
   document.getElementById('f_policeReportNo').value = '';
   document.getElementById('f_note').value = '';
   currentFallbackTotal = null;
@@ -2930,7 +2938,7 @@ function loadRecordIntoForm(rec){
   document.getElementById('f_compensationStatus').value = rec.compensationStatus || '';
   document.getElementById('f_repairStatus').value = rec.repairStatus || '';
   document.getElementById('f_closedDate').value = rec.closedDate && /^\d{4}-\d{2}-\d{2}$/.test(rec.closedDate) ? rec.closedDate : '';
-  document.getElementById('f_referenceNo').value = rec.referenceNo || '';
+  setReferenceNoField(rec.referenceNo);
   document.getElementById('f_policeReportNo').value = rec.policeReportNo || '';
   document.getElementById('f_note').value = rec.note || '';
   currentFallbackTotal = rec.totalPrice || null;
@@ -3041,7 +3049,7 @@ async function saveForm(){
     compensationStatus: document.getElementById('f_compensationStatus').value,
     repairStatus: document.getElementById('f_repairStatus').value,
     closedDate: document.getElementById('f_closedDate').value,
-    referenceNo: document.getElementById('f_referenceNo').value.trim(),
+    referenceNo: getReferenceNoField(),
     policeReportNo: document.getElementById('f_policeReportNo').value.trim(),
     note: document.getElementById('f_note').value.trim(),
     recordedBy: recorderName,
@@ -3611,36 +3619,83 @@ function initInsurerCombo(){
     choose(Number(el.dataset.i));
   });
   document.addEventListener('click', (e) => { if (!e.target.closest('.combo')) close(); });
-}// แผนปรับชื่อเคสเก่า: คืนรายการเคสที่ชื่อยังไม่ตรงมาตรฐาน และกลุ่มสรุปสำหรับแสดงตัวอย่าง
-function buildInsurerCleanupPlan(){
-  const changes = [], groups = {};
-  records.forEach(r => {
-    const cur = String(r.insuranceCompany || '');
-    if (!cur.trim()) return;
-    const to = normalizeInsurer(cur);
-    if (to === cur) return;
-    changes.push({ rec: r, from: cur, to });
-    const g = groups[to] = groups[to] || {};
-    g[cur] = (g[cur] || 0) + 1;
+}/* ===== เลขที่หนังสืออ้างอิง: ส่วนหน้าตายตัว "ที่ สทล.14 ขท.ระยอง.1/" ระบบใส่ให้ เจ้าหน้าที่พิมพ์เฉพาะส่วนที่เหลือ ===== */
+const REF_PREFIX = 'ที่ สทล.14 ขท.ระยอง.1/';
+const REF_PREFIX_RE = /^\s*ที่?\s*สทล\.?\s*14\s*ขท\.?\s*ระยอง\.?\s*1\s*\//;
+let refFree = false;   // เลขเก่าที่ขึ้นต้นไม่ตรงรูปแบบนี้: แสดงทั้งข้อความในช่อง ไม่ตัดส่วนหน้า
+function refRestOf(text){ return String(text || '').replace(REF_PREFIX_RE, '').replace(/\s+/g, ''); }
+// จัดรูปแบบเลขที่หนังสือเต็ม: แก้ ที→ที่, ระยอง1→ระยอง.1, เว้นวรรคหลัง สทล.14, ตัดช่องว่าง/ขึ้นบรรทัดใหม่ในส่วนท้าย — ถ้าไม่ตรงรูปแบบให้คงเดิม
+function normalizeRefNo(text){
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+  if (!REF_PREFIX_RE.test(raw)) return raw;
+  const rest = refRestOf(raw);
+  return rest ? REF_PREFIX + rest : '';
+}
+function setReferenceNoField(full){
+  const input = document.getElementById('f_referenceNo'), box = document.getElementById('refField');
+  const v = String(full || '').trim();
+  if (!v) { input.value = ''; refFree = false; }
+  else if (REF_PREFIX_RE.test(v)) { input.value = refRestOf(v); refFree = false; }
+  else { input.value = v; refFree = true; }
+  if (box) box.classList.toggle('ref-free', refFree);
+}
+function getReferenceNoField(){
+  const v = document.getElementById('f_referenceNo').value.trim();
+  if (!v) return '';
+  if (refFree) return v;
+  const rest = refRestOf(v);
+  return rest ? REF_PREFIX + rest : '';
+}
+function initReferenceNoField(){
+  const input = document.getElementById('f_referenceNo'), box = document.getElementById('refField');
+  if (!input || !box) return;
+  input.addEventListener('input', () => {
+    if (!refFree && REF_PREFIX_RE.test(input.value)) input.value = refRestOf(input.value);   // วางเลขเต็มลงมา ตัดส่วนหน้าที่ซ้ำให้
+    if (refFree && !input.value.trim()) { refFree = false; box.classList.remove('ref-free'); } // ล้างช่องแล้วกลับมาใช้ส่วนหน้ามาตรฐาน
   });
-  return { changes, groups };
+}
+
+/* ===== จัดระเบียบข้อมูลเดิม (เจ้าของระบบ): ชื่อบริษัทประกันที่พิมพ์ไม่เหมือนกัน + รูปแบบเลขที่หนังสืออ้างอิง ===== */
+function buildInsurerCleanupPlan(){
+  const changes = [], groups = {}, refPairs = {};
+  records.forEach(r => {
+    const patch = {};
+    const curIns = String(r.insuranceCompany || '');
+    if (curIns.trim()) {
+      const to = normalizeInsurer(curIns);
+      if (to !== curIns) { patch.insuranceCompany = to; const g = groups[to] = groups[to] || {}; g[curIns] = (g[curIns] || 0) + 1; }
+    }
+    const curRef = String(r.referenceNo || '');
+    if (curRef.trim()) {
+      const to = normalizeRefNo(curRef);
+      if (to !== curRef) { patch.referenceNo = to; const k = curRef.replace(/\s+/g, ' ') + '\u0001' + to; refPairs[k] = (refPairs[k] || 0) + 1; }
+    }
+    if (Object.keys(patch).length) changes.push({ rec: r, patch });
+  });
+  return { changes, groups, refPairs };
 }
 function openInsurerCleanupModal(){
   if (!isOwner()) { showToast('เฉพาะเจ้าของระบบเท่านั้น'); return; }
-  const { changes, groups } = buildInsurerCleanupPlan();
+  const { changes, groups, refPairs } = buildInsurerCleanupPlan();
   const root = document.getElementById('modalRoot');
   const names = Object.keys(groups).sort(naturalCompareTh);
-  const listHtml = names.map(to => `
+  const insHtml = names.length ? `<div class="em-sec" style="margin-top:0">ชื่อบริษัทประกัน</div>` + names.map(to => `
     <div class="ic-group"><div class="ic-to">${escapeHtml(to)}</div>
       ${Object.keys(groups[to]).map(v => `<div class="ic-from"><span>${escapeHtml(v)}</span><b>${groups[to][v]} เคส</b></div>`).join('')}
-    </div>`).join('');
+    </div>`).join('') : '';
+  const refKeys = Object.keys(refPairs);
+  const refHtml = refKeys.length ? `<div class="em-sec"${names.length ? '' : ' style="margin-top:0"'}>เลขที่หนังสืออ้างอิง</div>` + refKeys.map(k => {
+    const [from, to] = k.split('\u0001');
+    return `<div class="ic-group"><div class="ic-to" style="font-weight:500">${escapeHtml(to)}</div><div class="ic-from"><span>เดิม: ${escapeHtml(from)}</span><b>${refPairs[k]} เคส</b></div></div>`;
+  }).join('') : '';
   root.innerHTML = `
     <div class="modal-backdrop"><div class="modal edit-modal">
-      <div class="modal-head em-head"><div><div class="em-lbl">ตั้งค่า</div><h3>จัดระเบียบชื่อบริษัทประกัน</h3></div><button class="modal-close" id="icClose" type="button">×</button></div>
+      <div class="modal-head em-head"><div><div class="em-lbl">ตั้งค่า</div><h3>จัดระเบียบข้อมูล</h3></div><button class="modal-close" id="icClose" type="button">×</button></div>
       <div class="modal-body em-body">
         ${changes.length ? `
-          <p class="em-hint" style="margin:0 0 12px">พบ <b>${changes.length} เคส</b> ที่ชื่อบริษัทพิมพ์ไม่เหมือนกัน จะปรับเป็นชื่อมาตรฐานตามด้านล่าง (ดูตัวอย่างก่อน ยังไม่มีอะไรถูกแก้จนกว่าจะกดปุ่มยืนยัน)</p>
-          ${listHtml}` : `<p class="em-hint" style="margin:0">ชื่อบริษัทประกันทุกเคสเป็นรูปแบบเดียวกันแล้ว ไม่ต้องปรับ</p>`}
+          <p class="em-hint" style="margin:0 0 12px">พบ <b>${changes.length} เคส</b> ที่รูปแบบข้อมูลไม่ตรงกัน จะปรับตามด้านล่าง (ดูตัวอย่างก่อน ยังไม่มีอะไรถูกแก้จนกว่าจะกดปุ่มยืนยัน)</p>
+          ${insHtml}${refHtml}` : `<p class="em-hint" style="margin:0">ข้อมูลทุกเคสเป็นรูปแบบเดียวกันแล้ว ไม่ต้องปรับ</p>`}
       </div>
       <div class="cd-foot">
         <span style="flex:1" id="icStatus" class="em-hint"></span>
@@ -3659,15 +3714,15 @@ function openInsurerCleanupModal(){
     for (let i = 0; i < changes.length; i++) {
       const c = changes[i];
       status.textContent = 'กำลังปรับ ' + (i + 1) + ' / ' + changes.length + ' …';
-      const next = Object.assign({}, c.rec, { insuranceCompany: c.to, updatedAt: new Date().toISOString() });
-      if (await apiUpdateRecord(next)) { c.rec.insuranceCompany = c.to; ok++; } else { fail++; }
+      const next = Object.assign({}, c.rec, c.patch, { updatedAt: new Date().toISOString() });
+      if (await apiUpdateRecord(next)) { Object.assign(c.rec, c.patch); ok++; } else { fail++; }
     }
     refreshVisibleViews();
     status.textContent = 'ปรับแล้ว ' + ok + ' เคส' + (fail ? ' · ไม่สำเร็จ ' + fail + ' เคส' : '');
     btn.textContent = fail ? 'ลองใหม่' : '✓ เสร็จแล้ว';
     btn.disabled = !fail;
     if (fail) btn.onclick = () => { close(); openInsurerCleanupModal(); };
-    showToast('จัดระเบียบชื่อบริษัทประกันแล้ว ' + ok + ' เคส');
+    showToast('จัดระเบียบข้อมูลแล้ว ' + ok + ' เคส');
   };
 }
 function shortInsurerName(name, maxLen){
@@ -3754,7 +3809,7 @@ function openCaseDetailModal(id){
         <div class="modal-head cd-hd">
           <div>
             <div class="cd-lbl">รายการอุบัติเหตุ</div>
-            <h3>${escapeHtml(caseNo)} <span class="cd-dt">· ${escapeHtml(formatThaiDate(rec.dateIncident))}</span></h3>
+            <h3>${escapeHtml(caseNo)} <span class="cd-dt">· ${escapeHtml(formatThaiDate(rec.dateIncident))}${rec.time ? ' · ' + escapeHtml(String(rec.time).replace(/\s*น\.?$/, '')) + ' น.' : ''}</span></h3>
             <div class="cd-loc">📍 ทล.${escapeHtml(rec.highway)} ตอน ${escapeHtml(rec.section)} · กม.${escapeHtml(formatKm(rec.km))}</div>
           </div>
           <button class="modal-close" id="caseDetailCloseX" type="button">×</button>
@@ -3765,8 +3820,6 @@ function openCaseDetailModal(id){
             <div>
               <div class="cd-card"><div class="cd-sec">ข้อมูลอุบัติเหตุ</div>
                 <dl class="cd-dl">
-                  <dt>วันที่เกิดเหตุ</dt><dd>${escapeHtml(formatThaiDate(rec.dateIncident)) || '-'}</dd>
-                  <dt>เวลา</dt><dd>${escapeHtml(rec.time) || '-'}</dd>
                   <dt>ตำแหน่ง</dt><dd>${escapeHtml(formatPosition(rec)) || '-'}</dd>
                   <dt>วันที่พบ</dt><dd>${escapeHtml(formatThaiDate(rec.dateFound)) || '-'}</dd>
                 </dl></div>
@@ -5367,6 +5420,7 @@ async function init(){
   document.getElementById('btnOpenTrash').addEventListener('click', openTrashModal);
   document.getElementById('btnInsurerCleanup').addEventListener('click', openInsurerCleanupModal);
   initInsurerCombo();
+  initReferenceNoField();
   document.getElementById('f_insuranceCompany').addEventListener('change', e => { e.target.value = normalizeInsurer(e.target.value); });
   populateMaterialCategorySelect();
   initItemEntryUi();
