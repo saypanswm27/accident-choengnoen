@@ -857,10 +857,14 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 
       <div class="party-block" data-role="main">
         <div class="party-block-title"><span>ผู้ละเมิดหลัก</span></div>
-        <div class="grid grid-2">
+        <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,110px) minmax(0,1.3fr)">
           <div class="field">
             <label>ชื่อผู้ขับขี่ / ผู้ละเมิด</label>
             <input type="text" id="f_driverName">
+          </div>
+          <div class="field">
+            <label>อายุ (ปี)</label>
+            <input type="text" id="f_driverAge" inputmode="numeric" maxlength="3" placeholder="เช่น 35">
           </div>
           <div class="field">
             <label>เบอร์โทร</label>
@@ -916,7 +920,6 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 
       <button class="btn btn-outline" id="btnAddOtherParty" type="button">+ คู่กรณีร่วม</button>
 
-      <input type="hidden" id="f_driverAge">
     </div>
 
     <div class="card" id="fsec3">
@@ -1001,10 +1004,14 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
           <input type="date" id="f_closedDate">
         </div>
       </div>
-      <div class="grid grid-2" style="margin-top:12px">
+      <div class="grid grid-3" style="margin-top:12px">
         <div class="field">
           <label>เลขที่หนังสืออ้างอิง</label>
           <input type="text" id="f_referenceNo" placeholder="ที่ สทล.14ขท.ระยอง.1/xx-xx/ส.3/xxxx">
+        </div>
+        <div class="field">
+          <label>เลขที่แจ้งความ</label>
+          <input type="text" id="f_policeReportNo" placeholder="เช่น 123/2569 สภ.ระยอง">
         </div>
         <div class="field">
           <label>หมายเหตุ</label>
@@ -2679,6 +2686,7 @@ function clearForm(){
   document.getElementById('f_repairStatus').value = '';
   document.getElementById('f_closedDate').value = '';
   document.getElementById('f_referenceNo').value = '';
+  document.getElementById('f_policeReportNo').value = '';
   document.getElementById('f_note').value = '';
   currentFallbackTotal = null;
   document.getElementById('f_costMethod').value = 'percent30';
@@ -2733,6 +2741,7 @@ function loadRecordIntoForm(rec){
   document.getElementById('f_repairStatus').value = rec.repairStatus || '';
   document.getElementById('f_closedDate').value = rec.closedDate && /^\d{4}-\d{2}-\d{2}$/.test(rec.closedDate) ? rec.closedDate : '';
   document.getElementById('f_referenceNo').value = rec.referenceNo || '';
+  document.getElementById('f_policeReportNo').value = rec.policeReportNo || '';
   document.getElementById('f_note').value = rec.note || '';
   currentFallbackTotal = rec.totalPrice || null;
   document.getElementById('f_costMethod').value = rec.costMethod === 'laborMachine' ? 'laborMachine' : 'percent30';
@@ -2843,6 +2852,7 @@ async function saveForm(){
     repairStatus: document.getElementById('f_repairStatus').value,
     closedDate: document.getElementById('f_closedDate').value,
     referenceNo: document.getElementById('f_referenceNo').value.trim(),
+    policeReportNo: document.getElementById('f_policeReportNo').value.trim(),
     note: document.getElementById('f_note').value.trim(),
     recordedBy: recorderName,
     createdAt: editingId ? (records.find(r=>r.id===editingId)||{}).createdAt || now : now,
@@ -3225,7 +3235,7 @@ function caseDetailPersonHtml(p, label){
     : `<dt>ทะเบียนรถ</dt><dd>${p.plate ? `<span class="cd-plate">${escapeHtml(p.plate)}</span>` : '-'}</dd>`;
   return `
     <div class="cd-person"><div class="cd-av">${escapeHtml(initial)}</div>
-      <div><b>${escapeHtml(name) || 'ไม่ระบุชื่อ'}</b><div class="cd-k">${label ? escapeHtml(label) + ' · ' : ''}โทร ${escapeHtml(p.driverPhone) || '-'}</div></div></div>
+      <div><b>${escapeHtml(name) || 'ไม่ระบุชื่อ'}</b><div class="cd-k">${label ? escapeHtml(label) + ' · ' : ''}โทร ${escapeHtml(p.driverPhone) || '-'}${p.driverAge ? ' · อายุ ' + escapeHtml(p.driverAge) + ' ปี' : ''}</div></div></div>
     <dl class="cd-dl"><dt>ประเภทรถ</dt><dd>${escapeHtml(p.vehicleType) || '-'}</dd><dt>ยี่ห้อ / สี</dt><dd>${escapeHtml(p.vehicleBrand) || '-'}</dd>${plateRows}</dl>`;
 }
 
@@ -3275,7 +3285,7 @@ function openCaseDetailModal(id){
 
   const others = rec.otherPartiesList || [];
   const insuranceHtml = `<dl class="cd-dl" style="margin-top:6px"><dt>ประกันภัย</dt><dd>${escapeHtml(rec.hasInsurance) || 'ไม่ระบุ'}</dd>${rec.hasInsurance === 'มี' ? `<dt>บริษัทประกัน</dt><dd>${escapeHtml(rec.insuranceCompany) || '-'}</dd>` : ''}</dl>`;
-  const mainParty = { vehicleType: rec.vehicleType, vehicleBrand: rec.vehicleBrand, plate: rec.plate, trailerPlate: rec.trailerPlate, driverName: rec.driverName, driverPhone: rec.driverPhone };
+  const mainParty = { vehicleType: rec.vehicleType, vehicleBrand: rec.vehicleBrand, plate: rec.plate, trailerPlate: rec.trailerPlate, driverName: rec.driverName, driverPhone: rec.driverPhone, driverAge: rec.driverAge };
 
   const root = document.getElementById('modalRoot');
   root.innerHTML = `
@@ -3307,6 +3317,7 @@ function openCaseDetailModal(id){
               <div class="cd-card"><div class="cd-sec">อ้างอิงและหมายเหตุ</div>
                 <dl class="cd-dl">
                   <dt>เลขที่อ้างอิง</dt><dd style="font-size:13px">${escapeHtml(rec.referenceNo) || '-'}</dd>
+                  <dt>เลขที่แจ้งความ</dt><dd style="font-size:13px">${escapeHtml(rec.policeReportNo) || '-'}</dd>
                   <dt>วันที่ปิดเคส</dt><dd>${rec.closedDate ? escapeHtml(formatThaiDate(rec.closedDate)) : '-'}</dd>
                   <dt>หมายเหตุ</dt><dd>${escapeHtml(rec.note) || '-'}</dd>
                   <dt>ผู้บันทึก</dt><dd>${escapeHtml(rec.recordedBy) || '-'}</dd>
@@ -3634,6 +3645,7 @@ async function exportExcel(){
     'การจัดซ่อม': r.repairStatus,
     'ยุติเรื่อง': r.closedDate,
     'เลขที่หนังสืออ้างอิง': r.referenceNo,
+    'เลขที่แจ้งความ': r.policeReportNo,
     'หมายเหตุ': r.note,
     'ผู้บันทึก': r.recordedBy,
   }));
@@ -4362,6 +4374,7 @@ async function init(){
   });
 
   document.getElementById('f_costMethod').addEventListener('change', updateCostMethodVisibility);
+  document.getElementById('f_driverAge').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
   attachThousandsFormatting(document.getElementById('f_laborCost'), updateItemsSum);
   attachThousandsFormatting(document.getElementById('f_machineCost'), updateItemsSum);
   document.getElementById('btnAddItem').addEventListener('click', () => addItemRow());
