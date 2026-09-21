@@ -133,7 +133,43 @@
     } catch (e) { throw new Error(thErr(e)); }
   };
 
-  FBL.logout = async function () { await auth.signOut(); FBL.stopAll(); };
+  FBL.logout = async function () {
+    // แจ้งว่าออฟไลน์ก่อนออกจากระบบ (รอไม่เกิน 2 วินาที ถ้าเน็ตหลุดก็ข้ามไป)
+    try { await Promise.race([presenceWrite(false), new Promise(function (r) { setTimeout(r, 2000); })]); } catch (e) { /* ข้าม */ }
+    FBL.stopPresence();
+    await auth.signOut();
+    FBL.stopAll();
+  };
+
+  /* ---------- สถานะออนไลน์ (เจ้าของระบบเห็นใน "ระบบควบคุมการเข้าใช้งาน") ----------
+     ทุกคนที่ล็อกอินอยู่เขียนเอกสาร presence/{uid} ของตัวเอง 1 ครั้งทุก 2 นาที เฉพาะตอนที่เปิดหน้าเว็บอยู่
+     (เขียนแบบไม่รอผล ล้มเหลวก็ข้ามเงียบๆ ไม่กระทบการใช้งาน) — เจ้าของระบบเท่านั้นที่อ่านได้ (ดู firestore.rules) */
+  const PRESENCE_EVERY_MS = 120000;
+  let presenceTimer = null;
+  let presenceOnVisible = null;
+  let presenceOnHide = null;
+  function presenceWrite(online) {
+    if (!FBL.user) return Promise.resolve();
+    return db.collection('presence').doc(FBL.user.uid).set({
+      name: FBL.user.name,
+      online: online,
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function () { /* ข้ามเงียบๆ */ });
+  }
+  FBL.startPresence = function () {
+    FBL.stopPresence();
+    presenceWrite(true);
+    presenceTimer = setInterval(function () { if (document.visibilityState === 'visible') presenceWrite(true); }, PRESENCE_EVERY_MS);
+    presenceOnVisible = function () { if (document.visibilityState === 'visible') presenceWrite(true); };
+    presenceOnHide = function () { presenceWrite(false); };
+    document.addEventListener('visibilitychange', presenceOnVisible);
+    window.addEventListener('pagehide', presenceOnHide);
+  };
+  FBL.stopPresence = function () {
+    if (presenceTimer) { clearInterval(presenceTimer); presenceTimer = null; }
+    if (presenceOnVisible) { document.removeEventListener('visibilitychange', presenceOnVisible); presenceOnVisible = null; }
+    if (presenceOnHide) { window.removeEventListener('pagehide', presenceOnHide); presenceOnHide = null; }
+  };
 
   // ตั้งเจ้าของระบบคนแรก — Rules อนุญาตเฉพาะตอนที่ยังไม่มีเอกสาร config/bootstrap และจะปิดประตูนี้ทันทีหลังสำเร็จ
   FBL.bootstrapOwner = async function (name, password) {
@@ -231,7 +267,7 @@
         else if (s.onChange) { try { s.onChange(col, s.docs); } catch (e) { console.error(e); } }
       }, function (err) {
         console.error('watch ' + col + ' failed', err);
-        if (FBL.onError) FBL.onError(thErr(err));
+        if (FBL.onError && col !== 'presence') FBL.onError(thErr(err));   // presence: ยังไม่ได้ประกาศ Rules ก็ไม่ต้องเตือน
         if (!s.firstDone) { s.firstDone = true; resolve([]); }
       });
     });

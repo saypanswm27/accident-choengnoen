@@ -308,8 +308,9 @@ table.data tr:hover td{background:#f2f5f8}
 .empty-state h3{margin:0 0 6px}
 
  
-.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
-@media(max-width:820px){.stat-cards{grid-template-columns:repeat(2,1fr)}}
+.stat-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:1000px){.stat-cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:820px){.stat-cards{grid-template-columns:repeat(2,1fr)}.stat-card.ins{grid-column:span 2}}
 .stat-card{background:linear-gradient(180deg,#ffffff,var(--paper) 130%);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);transition:box-shadow .15s ease,transform .15s ease}
 .stat-card:hover{box-shadow:0 4px 10px rgba(10,37,64,.06),0 16px 30px -16px rgba(10,37,64,.2);transform:translateY(-2px)}
 .stat-card .big{font-family:'Kanit',sans-serif;font-weight:700;font-size:30px;line-height:1;color:var(--navy-900)}
@@ -318,6 +319,8 @@ table.data tr:hover td{background:#f2f5f8}
 .stat-card.rust .big{color:var(--rust)}
 .stat-card.green .big{color:var(--green)}
 .stat-card.clickable{cursor:pointer}
+.stat-card.ins .big{color:var(--navy-800)}
+.stat-card.ins.clickable{border-color:var(--navy-800);border-width:1.5px}
 .stat-card.green.clickable{border-color:var(--green);border-width:1.5px}
 .stat-card.rust.clickable{border-color:var(--rust);border-width:1.5px}
 
@@ -699,6 +702,27 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .settings-row .card{margin-bottom:0;display:flex;flex-direction:column;align-items:flex-start}
 .settings-row .card .hint{margin:0 0 12px;flex:1}
 .routes-total td{font-weight:700;background:var(--paper-2);border-top:2px solid var(--line)}
+.presence-chip{font-size:12.5px;font-weight:400;font-family:'Sarabun',sans-serif;padding:3px 12px;border-radius:999px;background:var(--green-bg);color:var(--green)}
+.presence-chip.none{background:var(--paper-2);color:var(--ink-mute)}
+.p-dot{width:10px;height:10px;border-radius:50%;flex:none;background:#c3c8c1;margin-right:2px}
+.p-dot.on{background:#1d9e75;box-shadow:0 0 0 3px rgba(29,158,117,.2)}
+.p-line{display:flex;align-items:center;gap:12px;min-width:0}
+.p-sub{display:block;font-size:12px;color:var(--ink-mute);line-height:1.3}
+.p-sub.on{color:var(--green)}
+.quick-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px}
+.qf-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink-soft);display:inline-flex;gap:8px;align-items:center}
+.qf-chip b{font-family:'Kanit',sans-serif;font-weight:600;background:var(--paper-2);border-radius:999px;padding:0 8px;color:var(--ink)}
+.qf-chip:hover{border-color:var(--navy-800)}
+.qf-chip.on{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+.qf-chip.on b{background:rgba(255,255,255,.2);color:#fff}
+.export-group{margin-left:auto;display:flex;gap:8px;position:relative}
+.export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(10,37,64,.28);padding:6px;z-index:40;min-width:290px;max-width:360px}
+.export-menu-h{font-size:12px;color:var(--ink-mute);padding:6px 10px 4px}
+.export-menu button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:none;border-radius:8px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}
+.export-menu button:hover{background:var(--amber-glow)}
+.export-menu button span{color:var(--ink-mute);margin-left:6px}
+.export-menu button small{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:2px;white-space:normal}
+.ins-badge{margin-left:5px;font-size:13px;cursor:help}
 .routes-dbl-hint{font-size:12.5px;color:var(--ink-mute);align-self:center;margin-right:auto}
 tr.route-editable{cursor:pointer;user-select:none}
 tr.route-editable:hover td{background:var(--amber-glow)}
@@ -1028,7 +1052,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
       <div class="table-toolbar">
         <div class="assets-search-wrap" id="searchWrap" style="min-width:220px;flex:1">
           <span class="assets-search-icon">🔍</span>
-          <input type="text" id="searchBox" placeholder="ค้นหา ที่, วันที่, กม., ชื่อ, ทะเบียนรถ">
+          <input type="text" id="searchBox" name="list-filter" autocomplete="off" placeholder="ค้นหา ที่, วันที่, กม., ชื่อ, ทะเบียนรถ">
           <button type="button" class="assets-search-clear" id="searchClear" title="ล้างคำค้นหา">✕</button>
         </div>
         <div class="field">
@@ -1046,6 +1070,34 @@ tr.route-editable:hover td{background:var(--amber-glow)}
             <option value="open">ยังไม่ยุติเรื่อง</option>
             <option value="closed">ยุติเรื่องแล้ว</option>
           </select>
+        </div>
+        <div class="field">
+          <label style="text-align:center">ประกันภัย</label>
+          <select id="filterInsurance">
+            <option value="">ทั้งหมด</option>
+            <option value="yes">มี</option>
+            <option value="no">ไม่มี</option>
+            <option value="unknown">ยังไม่ระบุ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label style="text-align:center">การจัดซ่อม</label>
+          <select id="filterRepair">
+            <option value="">ทั้งหมด</option>
+            <option value="pending">รอจัดซ่อม (รวมยังไม่ระบุ)</option>
+            <option value="done">จัดซ่อมแล้ว</option>
+            <option value="notdone">ยังไม่จัดซ่อม</option>
+            <option value="unknown">ยังไม่ระบุ</option>
+          </select>
+        </div>
+      </div>
+      <div class="quick-filters">
+        <button type="button" class="qf-chip" id="qfInsRepair">🛡 มีประกัน · รอจัดซ่อม <b id="qfInsRepairCount">0</b></button>
+        <a class="link-btn" id="qfClear" style="display:none">ล้างตัวกรองประกัน/ซ่อม</a>
+        <div class="export-group">
+          <button type="button" class="btn btn-outline btn-sm" id="btnExportXlsx">⬇ ส่งออก Excel</button>
+          <button type="button" class="btn btn-outline btn-sm" id="btnExportPdf">🖨 ส่งออก PDF</button>
+          <div class="export-menu" id="exportMenu" style="display:none"></div>
         </div>
       </div>
       <div class="table-wrap">
@@ -1075,6 +1127,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
       <div class="stat-card amber"><div class="big mono" id="statValue">0</div><div class="lbl">มูลค่าความเสียหาย (บาท)</div></div>
       <div class="stat-card green clickable" id="cardClosed"><div class="big mono" id="statClosed">0</div><div class="lbl">ยุติเรื่องแล้ว (ครั้ง)</div></div>
       <div class="stat-card rust clickable" id="cardOpen"><div class="big mono" id="statOpen">0</div><div class="lbl">ยังไม่ยุติเรื่อง (ครั้ง)</div></div>
+      <div class="stat-card ins clickable" id="cardInsRepair" title="เคสที่มีประกันภัยแต่ยังไม่จัดซ่อม (รวมที่ยังไม่ระบุสถานะซ่อม)"><div class="big mono" id="statInsRepair">0</div><div class="lbl">🛡 มีประกัน รอจัดซ่อม (ครั้ง)</div></div>
     </div>
 
     <div class="grid grid-2" id="dashFirstRow">
@@ -1132,7 +1185,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
       <div class="assets-toolbar">
         <div class="assets-search-wrap" id="assetsSearchWrap">
           <span class="assets-search-icon">🔍</span>
-          <input type="text" id="assetsSearchBox" placeholder="พิมพ์ค้นหารายการทรัพย์สิน...">
+          <input type="text" id="assetsSearchBox" name="asset-filter" autocomplete="off" placeholder="พิมพ์ค้นหารายการทรัพย์สิน...">
           <button type="button" class="assets-search-clear" id="assetsSearchClear" title="ล้างคำค้นหา">✕</button>
         </div>
         <button class="btn btn-outline btn-sm" id="btnAddAsset" type="button">+ เพิ่มรายการทรัพย์สิน</button>
@@ -1154,16 +1207,11 @@ tr.route-editable:hover td{background:var(--amber-glow)}
   
   <div class="view" id="view-settings">
     <div class="card" id="cardTeamPanel">
-      <div class="section-title">ระบบควบคุมการเข้าใช้งาน</div>
+      <div class="section-title" style="justify-content:space-between"><span>ระบบควบคุมการเข้าใช้งาน</span><span class="presence-chip" id="presenceChip" style="display:none"></span></div>
       <div id="teamPanel"></div>
     </div>
-    <!-- แถวเดียว 3 ส่วน: ส่งออก / ถังขยะ / นำเข้าข้อมูล (นำเข้าเห็นเฉพาะเจ้าของระบบ) -->
+    <!-- แถวเดียว: ถังขยะ / นำเข้าข้อมูล (นำเข้าเห็นเฉพาะเจ้าของระบบ) — ปุ่มส่งออก Excel/PDF ย้ายไปหน้ารายการอุบัติเหตุ -->
     <div class="settings-row">
-      <div class="card" id="cardExport">
-        <div class="section-title">⬇ ส่งออกข้อมูล</div>
-        <p class="hint">ส่งออกรายการอุบัติเหตุทั้งหมดเป็นไฟล์ Excel</p>
-        <button class="btn btn-primary" id="btnExport">ส่งออกเป็น Excel</button>
-      </div>
       <div class="card" id="cardTrash">
         <div class="section-title">🗑 ถังขยะ</div>
         <p class="hint">เคสที่ลบไว้ กู้คืนหรือลบถาวรได้</p>
@@ -1488,9 +1536,9 @@ function renderTrendChart(years, totalByYear){
  
 function uid(){ return 'r-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); }
 
-function pwField(id, placeholder){
+function pwField(id, placeholder, ac){
   return `<div class="pw-wrap">
-    <input type="password" id="${id}" ${placeholder ? `placeholder="${escapeHtml(placeholder)}"` : ''}>
+    <input type="password" id="${id}" autocomplete="${ac || 'new-password'}" ${placeholder ? `placeholder="${escapeHtml(placeholder)}"` : ''}>
     <button type="button" class="pw-toggle" data-target="${id}" title="แสดง/ซ่อนรหัสผ่าน">👁</button>
   </div>`;
 }
@@ -1837,10 +1885,8 @@ function updateWhoDisplay(){
   }
   
   const teamCard = document.getElementById('cardTeamPanel');
-  const exportCard = document.getElementById('cardExport');
   const trashCard = document.getElementById('cardTrash');
   if (teamCard) teamCard.style.display = recorderName ? '' : 'none';
-  if (exportCard) exportCard.style.display = recorderName ? '' : 'none';
   if (trashCard) trashCard.style.display = recorderName ? '' : 'none';
   const importCard = document.getElementById('cardImport');
   if (importCard) importCard.style.display = isOwner() ? '' : 'none';
@@ -1941,7 +1987,75 @@ async function resetMemberPassword(name, newPassword){
     showToast('ตั้งรหัสผ่านไม่สำเร็จ: ' + e.message);
   }
 }
+/* ----- สถานะออนไลน์ของเจ้าหน้าที่ (เจ้าของระบบเห็นคนเดียว) -----
+   ทุกเครื่องส่งสัญญาณ "ยังอยู่" ทุก 2 นาที (FBL.startPresence) — เจ้าของระบบอ่านเอกสาร presence แล้วแสดงจุดเขียว/เทา
+   ถือว่าออนไลน์ = สัญญาณล่าสุดไม่เกิน 3 นาที และไม่ได้กดออกจากระบบ */
+const PRESENCE_ONLINE_MS = 180000;
+let presenceMap = {};     // ชื่อ -> { online, lastSeen(ms) }
+let presenceUiTimer = null;
+function applyPresenceDocs(docs){
+  const map = {};
+  (docs || []).forEach(d => {
+    if (!d || !d.name) return;
+    // lastSeen เป็น null ชั่วคราวในเครื่องที่เพิ่งเขียน (รอเซิร์ฟเวอร์ตีเวลา) — ถือว่าเพิ่งเห็นเมื่อกี้
+    const ms = d.lastSeen && d.lastSeen.toMillis ? d.lastSeen.toMillis() : (d.lastSeen ? Number(d.lastSeen) : Date.now());
+    map[d.name] = { online: d.online !== false, lastSeen: ms };
+  });
+  presenceMap = map;
+  refreshPresenceUi();
+}
+function lastSeenText(ms){
+  const dt = new Date(ms);
+  const pad = n => String(n).padStart(2, '0');
+  const hhmm = pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+  const startOf = x => { const c = new Date(x); c.setHours(0, 0, 0, 0); return c.getTime(); };
+  const days = Math.round((startOf(Date.now()) - startOf(ms)) / 86400000);
+  if (days <= 0) return 'วันนี้ ' + hhmm;
+  if (days === 1) return 'เมื่อวาน ' + hhmm;
+  return formatThaiDate(dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate())) + ' ' + hhmm;
+}
+function presenceStatusOf(name){
+  if (name === recorderName) return { on: true, text: 'ออนไลน์อยู่ (คุณ)' };
+  const p = presenceMap[name];
+  if (!p) return { on: false, text: 'ยังไม่มีข้อมูลการเข้าใช้' };
+  const age = Date.now() - p.lastSeen;
+  if (p.online && age < PRESENCE_ONLINE_MS) {
+    const min = Math.floor(age / 60000);
+    return { on: true, text: min >= 1 ? 'ออนไลน์อยู่ · เห็นล่าสุด ' + min + ' นาทีที่แล้ว' : 'ออนไลน์อยู่' };
+  }
+  return { on: false, text: 'ออฟไลน์ · ใช้งานล่าสุด ' + lastSeenText(p.lastSeen) };
+}
+function refreshPresenceUi(){
+  if (!isOwner()) return;
+  let online = 0, total = 0;
+  document.querySelectorAll('#teamPanel [data-pstatus]').forEach(sub => {
+    const st = presenceStatusOf(sub.dataset.pstatus);
+    total++; if (st.on) online++;
+    sub.textContent = st.text;
+    sub.classList.toggle('on', st.on);
+    const dot = sub.closest('.p-line').querySelector('.p-dot');
+    if (dot) dot.classList.toggle('on', st.on);
+  });
+  const chip = document.getElementById('presenceChip');
+  if (chip) {
+    chip.style.display = total ? '' : 'none';
+    chip.textContent = 'ออนไลน์ตอนนี้ ' + online + ' คน';
+    chip.classList.toggle('none', online === 0);
+  }
+}
+function startPresenceTracking(){
+  if (!window.FBL || !FBL.startPresence) return;
+  FBL.startPresence();                       // ทุกคนส่งสัญญาณของตัวเอง
+  if (isOwner()) {                           // เจ้าของระบบรับสถานะของทุกคน
+    FBL.watch('presence', (col, docs) => applyPresenceDocs(docs)).then(docs => applyPresenceDocs(docs)).catch(() => {});
+    if (!presenceUiTimer) presenceUiTimer = setInterval(refreshPresenceUi, 30000);  // ให้สถานะหมดอายุเองแม้ไม่มีสัญญาณใหม่
+  }
+}
 function renderTeamPanel(){
+  renderTeamPanelInner();
+  refreshPresenceUi();
+}
+function renderTeamPanelInner(){
   const el = document.getElementById('teamPanel');
   if (!el) return;
   if (!teamConfig.ownerName) {
@@ -1963,7 +2077,9 @@ function renderTeamPanel(){
   }
   const memberRows = teamConfig.members.map(m => `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">
-      <span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : ''}</span>
+      ${isOwner()
+        ? `<span class="p-line"><i class="p-dot" data-pdot="${escapeHtml(m.name)}"></i><span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : ''}<small class="p-sub" data-pstatus="${escapeHtml(m.name)}"></small></span></span>`
+        : `<span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : ''}</span>`}
       ${isOwner() ? `
         <span style="display:flex;gap:6px">
           <button class="btn btn-outline btn-sm" data-resetpw="${escapeHtml(m.name)}">ตั้งรหัสผ่านใหม่</button>
@@ -2948,10 +3064,14 @@ function renderAuthGate(errorMsg){
       ${head}
       <h3 class="auth-h3">เข้าสู่ระบบ</h3>
       <div class="field" style="margin-bottom:12px"><label>ชื่อผู้ใช้งาน</label><select id="gateName"><option value="">— เลือกชื่อของคุณ —</option>${options}</select></div>
-      <div class="field" style="margin-bottom:14px"><label>รหัสผ่าน</label>${pwField('gatePass')}</div>
+      <div class="field" style="margin-bottom:14px"><label>รหัสผ่าน</label><input type="text" id="gateUserShadow" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">${pwField('gatePass', '', 'current-password')}</div>
       ${errHtml}
       <button class="btn btn-primary auth-btn" id="gateOk">เข้าสู่ระบบ</button>
     </div>`;
+  // ช่องชื่อผู้ใช้ซ่อนไว้คู่กับช่องรหัสผ่าน ให้ตัวจัดการรหัสผ่านของเบราว์เซอร์กรอกชื่อลงตรงนี้ (แทนที่จะไปกรอกลงช่องค้นหาในหน้าอื่น) แล้วซิงก์กับรายการเลือกชื่อ
+  const gSel = document.getElementById('gateName'), gShadow = document.getElementById('gateUserShadow');
+  gSel.addEventListener('change', () => { gShadow.value = gSel.value; });
+  gShadow.addEventListener('input', () => { if ([...gSel.options].some(o => o.value === gShadow.value)) gSel.value = gShadow.value; });
   const login = async () => {
     const name = document.getElementById('gateName').value;
     const pass = document.getElementById('gatePass').value;
@@ -2989,7 +3109,24 @@ function handleAuthResult(user, errorMsg){
 // เดิมเปิดหน้าต่างล็อกอิน — ตอนนี้ระบบบังคับล็อกอินตั้งแต่ต้น จึงแค่เปิดหน้าล็อกอินอีกครั้ง
 function openRecorderModal(onDone){ renderAuthGate(); }
 
-async function startAuth(){
+// กันเบราว์เซอร์กรอกชื่อผู้ใช้ที่จำไว้ลงช่องค้นหาเอง (พบที่ช่องค้นหาทรัพย์สิน): ถ้าช่องมีค่าทั้งที่ผู้ใช้ยังไม่ได้พิมพ์/วางเอง ให้ล้างทิ้ง
+function guardSearchAutofill(){
+  const ids = ['searchBox', 'assetsSearchBox'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el._guarded) return;
+    el._guarded = true;
+    ['keydown', 'paste', 'compositionstart'].forEach(ev => el.addEventListener(ev, () => { el._typed = true; }, { once: true }));
+  });
+  const clear = () => ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value && !el._typed && document.activeElement !== el) {
+      el.value = '';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+  [0, 300, 1000, 2500, 5000].forEach(ms => setTimeout(clear, ms));
+}async function startAuth(){
   if (!window.FBL) {
     hideLoadingOverlay();
     const g = gateEl();
@@ -2999,6 +3136,7 @@ async function startAuth(){
     }
     return;
   }
+  guardSearchAutofill();
   FBL.onError = msg => showToast(msg);
   await loadTeamConfig();   // รายชื่อทีมอ่านได้ก่อนล็อกอิน (ใช้แสดงในหน้าล็อกอิน)
   FBL.onAuth(handleAuthResult);
@@ -3007,6 +3145,7 @@ async function startAuth(){
 async function startApp(){
   if (appStarted) return;
   appStarted = true;
+  guardSearchAutofill();
   const overlay = document.getElementById('pageLoadingOverlay');
   if (overlay) overlay.classList.remove('hide');
   try {
@@ -3023,6 +3162,7 @@ async function startApp(){
   renderTable();
   renderRoutesTable();
   renderDashboard();
+  startPresenceTracking();
 }
 
 /* ============ นำเข้าข้อมูลจากไฟล์ Excel ของระบบเดิม (เจ้าของระบบ ครั้งเดียว) ============ */
@@ -3062,6 +3202,8 @@ function computeSeqMap(){
   });
   return map;
 }
+// เคสที่มีประกันภัยแต่ยังไม่จัดซ่อม — นับรวมเคสที่ยังไม่ระบุสถานะซ่อมด้วย (ต้องตามต่อเหมือนกัน)
+function isInsuredUnrepaired(r){ return r.hasInsurance === 'มี' && r.repairStatus !== 'จัดซ่อมแล้ว'; }
 function statusPill(status, type){
   if (!status) return `<span class="status-pill unknown">ไม่ระบุ</span>`;
   const isDone = type === 'comp' ? status === 'ชดใช้แล้ว' : status === 'จัดซ่อมแล้ว';
@@ -3073,24 +3215,18 @@ function renderTable(){
   const fYear = document.getElementById('filterYear').value;
   const fHw = document.getElementById('filterHighway').value;
   const fStatus = document.getElementById('filterStatus').value;
+  const fIns = document.getElementById('filterInsurance').value;
+  const fRepair = document.getElementById('filterRepair').value;
   const seqMap = computeSeqMap();
 
-  let rows = records.filter(r => {
-    if (fYear && String(r.fiscalYear) !== fYear) return false;
-    if (fHw && String(r.highway) !== fHw) return false;
-    if (fStatus === 'open' && r.closedDate) return false;
-    if (fStatus === 'closed' && !r.closedDate) return false;
-    if (q) {
-      const otherPlates = (r.otherPartiesList || []).map(p => p.plate).join(' ');
-      const otherNames = (r.otherPartiesList || []).map(p => p.driverName).join(' ');
-      const dateText = formatThaiDate(r.dateIncident) + ' ' + (r.dateIncident || '');
-      const caseNo = (r.fiscalYear || '') + '-' + (seqMap[r.id] || '');
-      const kmText = formatKm(r.km);
-      const hay = [r.plate, r.trailerPlate, otherPlates, r.driverName, otherNames, r.section, r.vehicleBrand, r.note, dateText, caseNo, kmText].join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
+  // จำนวนบนปุ่มลัด = เคสที่มีประกัน + รอจัดซ่อม ภายใต้ตัวกรองปีงบ/ทล. ที่เลือกอยู่
+  const qfCount = records.filter(r => (!fYear || String(r.fiscalYear) === fYear) && (!fHw || String(r.highway) === fHw) && isInsuredUnrepaired(r)).length;
+  document.getElementById('qfInsRepairCount').textContent = qfCount;
+  document.getElementById('qfInsRepair').classList.toggle('on', fIns === 'yes' && fRepair === 'pending');
+  document.getElementById('qfClear').style.display = (fIns || fRepair) ? '' : 'none';
+
+  const fState = listFilterState();
+  let rows = records.filter(r => recordMatchesList(r, fState, seqMap));
   rows.sort((a,b) => (b.dateIncident||'').localeCompare(a.dateIncident||''));
 
   const tbody = document.getElementById('tableBody');
@@ -3105,7 +3241,7 @@ function renderTable(){
       <td class="mono nowrap-cell center-cell">${formatThaiDate(r.dateIncident)}</td>
       <td class="hw-cell">ทล.${escapeHtml(r.highway)}<br><span class="hint">${escapeHtml(r.section)}</span></td>
       <td class="nowrap-cell center-cell"><span class="km-badge">${escapeHtml(formatKm(r.km))}</span></td>
-      <td class="nowrap-cell violator-cell">${escapeHtml(r.driverName || '-')}</td>
+      <td class="nowrap-cell violator-cell">${escapeHtml(r.driverName || '-')}${r.hasInsurance === 'มี' ? '<span class="ins-badge" title="มีประกันภัย' + (r.insuranceCompany ? ': ' + escapeHtml(r.insuranceCompany) : '') + '">🛡</span>' : ''}</td>
       <td class="mono plate-cell">${formatPlateCellHtml(r)}</td>
       <td class="mono nowrap-cell center-cell">${formatMoney(r.totalPrice)}</td>
       <td class="nowrap-cell center-cell">${statusPill(r.compensationStatus,'comp')}</td>
@@ -3383,6 +3519,8 @@ function renderDashboard(){
   document.getElementById('statClosed').textContent = rows.filter(r=>r.closedDate).length;
   document.getElementById('statOpen').textContent = rows.filter(r=>!r.closedDate).length;
   
+  document.getElementById('statInsRepair').textContent = rows.filter(isInsuredUnrepaired).length;
+  document.getElementById('cardInsRepair').onclick = () => goToInsuredUnrepaired(dashYear);
   document.getElementById('cardClosed').onclick = () => goToFilteredList(dashYear, 'closed');
   document.getElementById('cardOpen').onclick = () => goToFilteredList(dashYear, 'open');
 
@@ -3561,6 +3699,15 @@ function goToFilteredList(fiscalYear, status){
   document.querySelector('.tab-btn[data-view="list"]').click();
   document.getElementById('filterYear').value = (fiscalYear === 'ทั้งหมด') ? '' : String(fiscalYear);
   document.getElementById('filterStatus').value = status;
+  document.getElementById('filterInsurance').value = '';
+  document.getElementById('filterRepair').value = '';
+  renderTable();
+}
+// ไปหน้ารายการ พร้อมตัวกรอง "มีประกัน + รอจัดซ่อม" (ใช้จากการ์ดภาพรวม)
+function goToInsuredUnrepaired(fiscalYear){
+  goToFilteredList(fiscalYear, '');
+  document.getElementById('filterInsurance').value = 'yes';
+  document.getElementById('filterRepair').value = 'pending';
   renderTable();
 }
 
@@ -3607,77 +3754,522 @@ function findMaterialPriceMatch(itemName){
   return null;
 }
 
-async function exportExcel(){
-  if (!window.XLSX) { showToast('กำลังโหลดเครื่องมือส่งออก ลองใหม่อีกครั้งใน 2 วินาที'); return; }
-  const seqMap = computeSeqMap();
-  const rows = records.slice().sort((a,b) => (a.fiscalYear-b.fiscalYear) || (a.dateIncident||'').localeCompare(b.dateIncident||''));
+/* ============ ส่งออก Excel / PDF (เจ้าหน้าที่ทุกคนใช้ได้ — ปุ่มอยู่หน้ารายการอุบัติเหตุ) ============
+   - ตัวกรองหน้ารายการ (recordMatchesList) ใช้ร่วมกันทั้งตารางและการส่งออก เพื่อให้ "สิ่งที่เห็น = สิ่งที่ได้"
+   - Excel สร้างด้วย ExcelJS (โหลดตอนกดส่งออกครั้งแรก): 3 ชีต สรุปภาพรวม / รายการอุบัติเหตุ / รายการทรัพย์สิน
+   - PDF = หน้ารายงานที่จัดหน้า A4 แนวนอน แล้วเปิดหน้าต่างพิมพ์ ให้เลือก "บันทึกเป็น PDF" (ฟอนต์ไทยชัวร์ ไม่ต้องใช้ไลบรารีเพิ่ม) */
+const EXCELJS_URL = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+const EXCELJS_SRI = 'sha384-Pqp51FUN2/qzfxZxBCtF0stpc9ONI6MYZpVqmo8m20SoaQCzf+arZvACkLkirlPz';
+let excelJsLoading = null;
+function loadExcelJs(){
+  if (window.ExcelJS) return Promise.resolve();
+  if (!excelJsLoading) excelJsLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = EXCELJS_URL; s.integrity = EXCELJS_SRI; s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer';
+    s.onload = () => resolve();
+    s.onerror = () => { excelJsLoading = null; reject(new Error('โหลดเครื่องมือส่งออกไม่สำเร็จ')); };
+    document.head.appendChild(s);
+  });
+  return excelJsLoading;
+}
 
-  
-  const summaryData = rows.map(r => ({
-    'ที่': seqMap[r.id],
-    'ปีงบประมาณ': r.fiscalYear,
-    'วันที่เกิดเหตุ': r.dateIncident,
-    'วันที่ตรวจพบ': r.dateFound,
-    'เวลา': r.time,
-    'ทล.': r.highway,
-    'ตอน': r.section,
-    'กม.': formatKm(r.km),
-    'ด้าน': r.side,
-    'บริเวณโดยสังเขป': r.location,
-    'จำนวนรายการวัสดุเสียหาย': (r.items || []).length,
-    'ราคาประเมินรวม': r.totalPrice,
-    'ประเภทรถ': r.vehicleType,
-    'ยี่ห้อรถ': r.vehicleBrand,
-    'ทะเบียนรถ': (r.vehicleType === 'รถพ่วง' && r.trailerPlate) ? `หัว ${r.plate} / หาง ${r.trailerPlate}` : r.plate,
-    'ผู้ขับขี่/ผู้ละเมิด': r.driverName,
-    'อายุ': r.driverAge,
-    'เบอร์โทร': r.driverPhone,
-    'คู่กรณีร่วม': (r.otherPartiesList || []).map(p =>
-      `${p.driverName || 'ไม่ทราบชื่อ'} (${p.vehicleType || '-'} ${p.vehicleBrand || ''} ${p.plate || '-'}${p.trailerPlate ? ' / หาง ' + p.trailerPlate : ''})`
-    ).join('; '),
-    'การชดใช้': r.compensationStatus,
-    'การจัดซ่อม': r.repairStatus,
-    'ยุติเรื่อง': r.closedDate,
-    'เลขที่หนังสืออ้างอิง': r.referenceNo,
-    'เลขที่แจ้งความ': r.policeReportNo,
-    'หมายเหตุ': r.note,
-    'ผู้บันทึก': r.recordedBy,
-  }));
+/* ----- ตัวกรองหน้ารายการ (ใช้ร่วมกับ renderTable) ----- */
+function listFilterState(){
+  return {
+    q: document.getElementById('searchBox').value.trim().toLowerCase(),
+    year: document.getElementById('filterYear').value,
+    hw: document.getElementById('filterHighway').value,
+    status: document.getElementById('filterStatus').value,
+    ins: document.getElementById('filterInsurance').value,
+    repair: document.getElementById('filterRepair').value
+  };
+}
+function recordMatchesList(r, f, seqMap){
+  if (f.year && String(r.fiscalYear) !== f.year) return false;
+  if (f.hw && String(r.highway) !== f.hw) return false;
+  if (f.status === 'open' && r.closedDate) return false;
+  if (f.status === 'closed' && !r.closedDate) return false;
+  if (f.ins === 'yes' && r.hasInsurance !== 'มี') return false;
+  if (f.ins === 'no' && r.hasInsurance !== 'ไม่มี') return false;
+  if (f.ins === 'unknown' && r.hasInsurance) return false;
+  if (f.repair === 'pending' && r.repairStatus === 'จัดซ่อมแล้ว') return false;
+  if (f.repair === 'done' && r.repairStatus !== 'จัดซ่อมแล้ว') return false;
+  if (f.repair === 'notdone' && r.repairStatus !== 'ยังไม่จัดซ่อม') return false;
+  if (f.repair === 'unknown' && r.repairStatus) return false;
+  if (f.q) {
+    const otherPlates = (r.otherPartiesList || []).map(p => p.plate).join(' ');
+    const otherNames = (r.otherPartiesList || []).map(p => p.driverName).join(' ');
+    const dateText = formatThaiDate(r.dateIncident) + ' ' + (r.dateIncident || '');
+    const caseNo = (r.fiscalYear || '') + '-' + (seqMap[r.id] || '');
+    const kmText = formatKm(r.km);
+    const hay = [r.plate, r.trailerPlate, otherPlates, r.driverName, otherNames, r.section, r.vehicleBrand, r.note, dateText, caseNo, kmText].join(' ').toLowerCase();
+    if (!hay.includes(f.q)) return false;
+  }
+  return true;
+}
+function hasListFilters(){
+  const f = listFilterState();
+  return !!(f.q || f.year || f.hw || f.status || f.ins || f.repair);
+}
+function getListRecords(scope){
+  if (scope === 'all') return records.slice();
+  const f = listFilterState(), seqMap = computeSeqMap();
+  return records.filter(r => recordMatchesList(r, f, seqMap));
+}
+function describeListFilters(){
+  const f = listFilterState(), out = [];
+  if (f.year) out.push('ปีงบประมาณ ' + f.year);
+  if (f.hw) out.push('ทล.' + f.hw);
+  if (f.status) out.push(f.status === 'open' ? 'ยังไม่ยุติเรื่อง' : 'ยุติเรื่องแล้ว');
+  if (f.ins) out.push('ประกันภัย: ' + ({ yes: 'มี', no: 'ไม่มี', unknown: 'ยังไม่ระบุ' })[f.ins]);
+  if (f.repair) out.push('การจัดซ่อม: ' + ({ pending: 'รอจัดซ่อม (รวมยังไม่ระบุ)', done: 'จัดซ่อมแล้ว', notdone: 'ยังไม่จัดซ่อม', unknown: 'ยังไม่ระบุ' })[f.repair]);
+  if (f.q) out.push('คำค้น "' + document.getElementById('searchBox').value.trim() + '"');
+  return out;
+}
 
-  // ชีต 2: รายการทรัพย์สินเสียหาย แยกแถว 1 แถว/1 รายการ — ราคาต่อหน่วยได้จาก fuzzy match กับราคากลางสด ณ ตอน export (ไม่เก็บถาวร กันราคาค้าง)
-  const itemsData = [];
+/* ----- เมนูเลือกขอบเขต (แสดงเฉพาะตอนมีตัวกรองอยู่ ไม่งั้นส่งออกทั้งหมดทันที) ----- */
+function closeExportMenu(){
+  const m = document.getElementById('exportMenu');
+  if (m) { m.style.display = 'none'; m.innerHTML = ''; }
+}
+function openExportMenu(kind){
+  if (!hasListFilters()) { runExport(kind, 'all'); return; }
+  const menu = document.getElementById('exportMenu');
+  const nFiltered = getListRecords('filtered').length;
+  menu.innerHTML = `
+    <div class="export-menu-h">ส่งออก ${kind === 'xlsx' ? 'Excel' : 'PDF'} — เลือกขอบเขต</div>
+    <button type="button" data-scope="filtered"><b>ตามตัวกรองที่เลือกอยู่</b> <span>${nFiltered} เคส</span><small>${escapeHtml(describeListFilters().join(' · '))}</small></button>
+    <button type="button" data-scope="all"><b>ทั้งหมด</b> <span>${records.length} เคส</span></button>`;
+  menu.style.display = 'block';
+  menu.dataset.kind = kind;
+}
+async function runExport(kind, scope){
+  closeExportMenu();
+  const rows = getListRecords(scope);
+  if (!rows.length) { showToast('ไม่มีเคสให้ส่งออก'); return; }
+  const meta = { scope, filters: scope === 'filtered' ? describeListFilters() : [] };
+  try {
+    if (kind === 'xlsx') await exportExcel(rows, meta);
+    else exportPdf(rows, meta);
+  } catch (e) {
+    console.error('export failed', e);
+    showToast('ส่งออกไม่สำเร็จ: ' + (e && e.message ? e.message : e));
+  }
+}
+function exportFileBase(rows, meta){
+  const parts = ['อุบัติเหตุ'];
+  const tag = meta.filters.map(s => s.replace(/^.*: /, '').replace(/[\\/:*?"<>|]/g, '')).filter(Boolean).slice(0, 3).join('_');
+  parts.push(meta.scope === 'all' || !tag ? 'ทั้งหมด' : tag);
+  parts.push(new Date().toISOString().slice(0, 10));
+  return parts.join('_');
+}
+
+/* ----- ตัวช่วยจัดข้อมูลเคส ----- */
+function caseMoney(r){
+  const items = r.items || [];
+  const materials = r.materialsTotal != null ? r.materialsTotal : items.reduce((s, i) => s + (i.price || 0), 0);
+  const isLM = r.costMethod === 'laborMachine';
+  const operation = isLM ? (Number(r.laborCost) || 0) + (Number(r.machineCost) || 0)
+                         : (r.operationCost != null ? r.operationCost : Math.round(materials * 0.3));
+  const total = r.totalPrice != null ? r.totalPrice : materials + operation;
+  return { materials, operation, total };
+}
+function plateText(r){
+  return (r.vehicleType === 'รถพ่วง' && r.trailerPlate) ? `หัว ${r.plate || '-'} / หาง ${r.trailerPlate}` : (r.plate || '');
+}
+function otherPartiesText(r){
+  return (r.otherPartiesList || []).map(p =>
+    `${p.driverName || 'ไม่ทราบชื่อ'} (${[p.vehicleType, p.vehicleBrand, p.plate].filter(Boolean).join(' ') || '-'}${p.trailerPlate ? ' / หาง ' + p.trailerPlate : ''})`
+  ).join('; ');
+}
+function xlDate(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || '');
+  return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
+}
+function thaiLongNow(){
+  const d = new Date();
+  return d.getDate() + ' ' + THAI_MONTHS_SHORT[d.getMonth()] + ' ' + (d.getFullYear() + 543) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' น.';
+}
+function summarizeRows(rows){
+  const s = { total: rows.length, value: 0, closed: 0, open: 0, insUnrep: 0, byYear: {}, byHw: {} };
+  rows.forEach(r => {
+    const v = caseMoney(r).total || 0;
+    s.value += v;
+    const closed = !!r.closedDate;
+    if (closed) s.closed++; else s.open++;
+    if (isInsuredUnrepaired(r)) s.insUnrep++;
+    const y = s.byYear[r.fiscalYear || '-'] = s.byYear[r.fiscalYear || '-'] || { n: 0, v: 0, c: 0, o: 0 };
+    y.n++; y.v += v; if (closed) y.c++; else y.o++;
+    const h = s.byHw[r.highway] = s.byHw[r.highway] || { n: 0, v: 0, c: 0, o: 0, section: '' };
+    h.n++; h.v += v; if (closed) h.c++; else h.o++;
+    if (!h.section && r.section) h.section = r.section;
+  });
+  return s;
+}
+
+/* ============ Excel ============ */
+const XL = {
+  font: 'Tahoma',
+  navy: 'FF123A5E', navyText: 'FFFFFFFF', line: 'FFDFE2DD', zebra: 'FFF7F8F6',
+  groupFill: ['FFDCE6F0', 'FFE8EEDD', 'FFF6E7D3', 'FFFCEBDA', 'FFE2E0F0', 'FFE6E6E0'],
+  dateFmt: '[$-107041E]dd/mm/yyyy',   // แสดงปี พ.ศ. ใน Excel ภาษาไทย
+  moneyFmt: '#,##0.00'
+};
+function xlBorder(){ const c = { style: 'thin', color: { argb: XL.line } }; return { top: c, left: c, bottom: c, right: c }; }
+function xlStatusStyle(cell, value, doneWord){
+  if (!value) { cell.value = 'ไม่ระบุ'; cell.font = { name: XL.font, size: 10, color: { argb: 'FF8792A0' } }; return; }
+  const done = value === doneWord;
+  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: done ? 'FFE1F5EE' : 'FFFCEBEB' } };
+  cell.font = { name: XL.font, size: 10, bold: true, color: { argb: done ? 'FF0F6E56' : 'FFA32D2D' } };
+}
+
+function buildSummarySheet(wb, rows, meta){
+  const ws = wb.addWorksheet('สรุปภาพรวม', { views: [{ showGridLines: false }] });
+  ws.columns = [{ width: 30 }, { width: 26 }, { width: 14 }, { width: 26 }, { width: 15 }, { width: 14 }];
+  const s = summarizeRows(rows);
+  const F = (o) => Object.assign({ name: XL.font, size: 11 }, o || {});
+  let r = 1;
+  ws.mergeCells(r, 1, r, 6);
+  ws.getCell(r, 1).value = 'รายงานอุบัติเหตุ หมวดทางหลวงเชิงเนิน';
+  ws.getCell(r, 1).font = F({ size: 18, bold: true, color: { argb: XL.navy } });
+  ws.getRow(r).height = 30; r++;
+  ws.mergeCells(r, 1, r, 6);
+  ws.getCell(r, 1).value = 'สำนักงานทางหลวงที่ 14 (ชลบุรี) · แขวงทางหลวงระยอง';
+  ws.getCell(r, 1).font = F({ color: { argb: 'FF5C6773' } }); r++;
+  ws.mergeCells(r, 1, r, 6);
+  ws.getCell(r, 1).value = 'ส่งออกเมื่อ ' + thaiLongNow() + (recorderName ? ' · โดย ' + recorderName : '');
+  ws.getCell(r, 1).font = F({ size: 10, color: { argb: 'FF5C6773' } }); r++;
+  ws.mergeCells(r, 1, r, 6);
+  ws.getCell(r, 1).value = 'ขอบเขตข้อมูล: ' + (meta.filters.length ? 'ตามตัวกรอง — ' + meta.filters.join(' · ') : 'ทั้งหมด') + ' (' + rows.length + ' เคส)';
+  ws.getCell(r, 1).font = F({ size: 10, bold: true, color: { argb: 'FFB45309' } }); r += 2;
+
+  // ตัวเลขสำคัญ
+  const kpis = [
+    ['จำนวนเคสทั้งหมด', s.total, '#,##0 "เคส"'],
+    ['มูลค่าความเสียหายรวม', s.value, '#,##0.00 "บาท"'],
+    ['ยุติเรื่องแล้ว', s.closed, '#,##0 "เคส"'],
+    ['ยังไม่ยุติเรื่อง', s.open, '#,##0 "เคส"'],
+    ['มีประกันภัย แต่ยังไม่จัดซ่อม (รวมยังไม่ระบุ)', s.insUnrep, '#,##0 "เคส"']
+  ];
+  ws.mergeCells(r, 1, r, 6);
+  ws.getCell(r, 1).value = 'ตัวเลขสำคัญ';
+  ws.getCell(r, 1).font = F({ bold: true, size: 12, color: { argb: XL.navy } }); r++;
+  kpis.forEach(([label, val, fmt]) => {
+    ws.mergeCells(r, 1, r, 2);
+    const a = ws.getCell(r, 1), b = ws.getCell(r, 3);
+    ws.mergeCells(r, 3, r, 4);
+    a.value = label; a.font = F(); a.border = xlBorder();
+    ws.getCell(r, 2).border = xlBorder();
+    b.value = val; b.numFmt = fmt; b.font = F({ bold: true }); b.alignment = { horizontal: 'right' }; b.border = xlBorder();
+    ws.getCell(r, 4).border = xlBorder();
+    r++;
+  });
+  r++;
+
+  const table = (title, headers, dataRows, totalRow) => {
+    ws.mergeCells(r, 1, r, 6);
+    ws.getCell(r, 1).value = title;
+    ws.getCell(r, 1).font = F({ bold: true, size: 12, color: { argb: XL.navy } }); r++;
+    headers.forEach((h, i) => {
+      const c = ws.getCell(r, i + 1);
+      c.value = h; c.font = F({ bold: true, color: { argb: XL.navyText } });
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.navy } };
+      c.alignment = { horizontal: i === 0 ? 'left' : 'center', vertical: 'middle' }; c.border = xlBorder();
+    });
+    r++;
+    dataRows.concat(totalRow ? [totalRow] : []).forEach((row, ri) => {
+      const isTotal = totalRow && ri === dataRows.length;
+      row.forEach((v, i) => {
+        const c = ws.getCell(r, i + 1);
+        c.value = v; c.border = xlBorder(); c.font = F({ bold: !!isTotal });
+        if (typeof v === 'number') { c.numFmt = (headers[i].indexOf('มูลค่า') >= 0) ? XL.moneyFmt : (i === 0 ? '0' : '#,##0'); c.alignment = { horizontal: i === 0 ? 'left' : 'right' }; }
+        if (isTotal) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECEEE9' } };
+      });
+      r++;
+    });
+    r++;
+  };
+  const years = Object.keys(s.byYear).sort();
+  table('แยกตามปีงบประมาณ', ['ปีงบประมาณ', 'มูลค่าความเสียหาย (บาท)', 'จำนวนเคส', 'ยุติเรื่องแล้ว', 'ยังไม่ยุติ'],
+    years.map(y => [Number(y) || y, s.byYear[y].v, s.byYear[y].n, s.byYear[y].c, s.byYear[y].o]),
+    ['รวม', s.value, s.total, s.closed, s.open]);
+  const hws = Object.keys(s.byHw).sort((a, b) => Number(a) - Number(b));
+  table('แยกตามสายทาง', ['ทางหลวงหมายเลข', 'ตอน', 'จำนวนเคส', 'มูลค่าความเสียหาย (บาท)', 'ยุติเรื่องแล้ว', 'ยังไม่ยุติ'],
+    hws.map(h => ['ทล.' + h, s.byHw[h].section, s.byHw[h].n, s.byHw[h].v, s.byHw[h].c, s.byHw[h].o]),
+    ['รวม', '', s.total, s.value, s.closed, s.open]);
+  ws.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+}
+
+function buildCasesSheet(wb, rows, seqMap){
+  const ws = wb.addWorksheet('รายการอุบัติเหตุ');
+  // [หัวคอลัมน์, กลุ่ม, ความกว้าง, ชนิด, ตัวดึงค่า]
+  const C = [
+    ['เลขที่เคส', 0, 11, 'text', r => (r.fiscalYear || '') + '-' + (seqMap[r.id] || '')],
+    ['ปีงบ', 0, 7, 'year', r => Number(r.fiscalYear) || null],
+    ['วันที่เกิดเหตุ', 0, 13, 'date', r => xlDate(r.dateIncident)],
+    ['วันที่ตรวจพบ', 0, 13, 'date', r => xlDate(r.dateFound)],
+    ['เวลา', 0, 8, 'text', r => r.time || ''],
+    ['ทล.', 0, 7, 'text', r => String(r.highway || '')],
+    ['ตอน', 0, 24, 'text', r => r.section || ''],
+    ['กม.', 0, 10, 'text', r => formatKm(r.km)],
+    ['ด้าน', 0, 10, 'text', r => r.side || ''],
+    ['บริเวณโดยสังเขป', 0, 26, 'text', r => r.location || ''],
+    ['ผู้ละเมิด', 1, 22, 'text', r => r.driverName || ''],
+    ['อายุ', 1, 7, 'int', r => Number(r.driverAge) || null],
+    ['เบอร์โทร', 1, 13, 'text', r => r.driverPhone || ''],
+    ['ประเภทรถ', 1, 15, 'text', r => r.vehicleType || ''],
+    ['ยี่ห้อ / สี', 1, 16, 'text', r => r.vehicleBrand || ''],
+    ['ทะเบียนรถ', 1, 18, 'text', r => plateText(r)],
+    ['คู่กรณีร่วม', 1, 34, 'text', r => otherPartiesText(r)],
+    ['มีประกันภัย', 2, 11, 'text', r => r.hasInsurance || ''],
+    ['บริษัทประกัน', 2, 20, 'text', r => r.insuranceCompany || ''],
+    ['จำนวนรายการ', 3, 10, 'int', r => (r.items || []).length],
+    ['ค่าวัสดุ', 3, 14, 'money', r => caseMoney(r).materials],
+    ['ค่าดำเนินการ', 3, 14, 'money', r => caseMoney(r).operation],
+    ['ราคาประเมินรวม', 3, 16, 'money', r => caseMoney(r).total],
+    ['การชดใช้', 4, 13, 'comp', r => r.compensationStatus || ''],
+    ['การจัดซ่อม', 4, 13, 'repair', r => r.repairStatus || ''],
+    ['วันที่ยุติเรื่อง', 4, 14, 'date', r => xlDate(r.closedDate)],
+    ['เลขที่หนังสืออ้างอิง', 5, 28, 'text', r => r.referenceNo || ''],
+    ['เลขที่แจ้งความ', 5, 20, 'text', r => r.policeReportNo || ''],
+    ['หมายเหตุ', 5, 30, 'text', r => r.note || ''],
+    ['ผู้บันทึก', 5, 20, 'text', r => r.recordedBy || '']
+  ];
+  const GROUPS = ['เหตุการณ์', 'ผู้ละเมิดและรถ', 'ประกันภัย', 'ความเสียหาย (บาท)', 'สถานะ', 'อ้างอิง'];
+  ws.columns = C.map(c => ({ width: c[2] }));
+  // แถว 1 = หัวกลุ่ม (รวมเซลล์), แถว 2 = ชื่อคอลัมน์
+  let start = 0;
+  for (let g = 0; g < GROUPS.length; g++) {
+    const idxs = C.map((c, i) => c[1] === g ? i : -1).filter(i => i >= 0);
+    const a = idxs[0] + 1, b = idxs[idxs.length - 1] + 1;
+    if (b > a) ws.mergeCells(1, a, 1, b);
+    const cell = ws.getCell(1, a);
+    cell.value = GROUPS[g];
+    cell.font = { name: XL.font, size: 10, bold: true, color: { argb: XL.navy } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    for (let k = a; k <= b; k++) { ws.getCell(1, k).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.groupFill[g] } }; ws.getCell(1, k).border = xlBorder(); }
+  }
+  C.forEach((c, i) => {
+    const cell = ws.getCell(2, i + 1);
+    cell.value = c[0];
+    cell.font = { name: XL.font, size: 10, bold: true, color: { argb: XL.navyText } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.navy } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = xlBorder();
+  });
+  ws.getRow(1).height = 20; ws.getRow(2).height = 32;
+
+  rows.forEach((rec, ri) => {
+    const rowNo = ri + 3;
+    C.forEach((c, i) => {
+      const cell = ws.getCell(rowNo, i + 1);
+      const v = c[4](rec);
+      cell.value = (v === null || v === undefined || v === '') ? null : v;
+      cell.font = { name: XL.font, size: 10 };
+      cell.border = xlBorder();
+      cell.alignment = { vertical: 'top', wrapText: c[3] === 'text' && (i === 6 || i === 9 || i === 16 || i === 28) };
+      if (ri % 2) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.zebra } };
+      if (c[3] === 'date') { cell.numFmt = XL.dateFmt; cell.alignment = { horizontal: 'center', vertical: 'top' }; }
+      else if (c[3] === 'money') { cell.numFmt = XL.moneyFmt; cell.alignment = { horizontal: 'right', vertical: 'top' }; }
+      else if (c[3] === 'int') { cell.numFmt = '#,##0'; cell.alignment = { horizontal: 'center', vertical: 'top' }; }
+      else if (c[3] === 'year') { cell.numFmt = '0'; cell.alignment = { horizontal: 'center', vertical: 'top' }; }
+      else if (i === 0 || i === 5 || i === 7 || i === 4) { cell.alignment = { horizontal: 'center', vertical: 'top' }; }
+      if (c[3] === 'comp') xlStatusStyle(cell, v, 'ชดใช้แล้ว');
+      if (c[3] === 'repair') xlStatusStyle(cell, v, 'จัดซ่อมแล้ว');
+      if (c[3] === 'comp' || c[3] === 'repair') cell.alignment = { horizontal: 'center', vertical: 'top' };
+    });
+  });
+  const last = rows.length + 2;
+  // แถวรวม — SUBTOTAL คำนวณเฉพาะแถวที่มองเห็นหลังกรองในชีตนี้
+  const totRow = last + 1;
+  const colOf = (title) => C.findIndex(c => c[0] === title) + 1;
+  const L = (n) => ws.getColumn(n).letter;
+  const sumCell = (title, fn, fmt, cachedFn) => {
+    const n = colOf(title), cell = ws.getCell(totRow, n);
+    cell.value = { formula: `SUBTOTAL(${fn},${L(n)}3:${L(n)}${last})`, result: cachedFn() };
+    cell.numFmt = fmt; cell.font = { name: XL.font, size: 10, bold: true };
+  };
+  ws.getCell(totRow, 1).value = { formula: `SUBTOTAL(103,A3:A${last})`, result: rows.length };
+  ws.getCell(totRow, 1).numFmt = '"รวม "0" เคส"';
+  ws.getCell(totRow, 1).font = { name: XL.font, size: 10, bold: true };
+  sumCell('จำนวนรายการ', 109, '#,##0', () => rows.reduce((s, r) => s + (r.items || []).length, 0));
+  sumCell('ค่าวัสดุ', 109, XL.moneyFmt, () => rows.reduce((s, r) => s + (caseMoney(r).materials || 0), 0));
+  sumCell('ค่าดำเนินการ', 109, XL.moneyFmt, () => rows.reduce((s, r) => s + (caseMoney(r).operation || 0), 0));
+  sumCell('ราคาประเมินรวม', 109, XL.moneyFmt, () => rows.reduce((s, r) => s + (caseMoney(r).total || 0), 0));
+  for (let k = 1; k <= C.length; k++) {
+    const cell = ws.getCell(totRow, k);
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECEEE9' } };
+    cell.border = { top: { style: 'medium', color: { argb: XL.navy } }, bottom: { style: 'thin', color: { argb: XL.line } } };
+  }
+  ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 2, activeCell: 'B3' }];
+  ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: last, column: C.length } };
+  ws.pageSetup = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: '1:2' };
+}
+
+function buildItemsSheet(wb, rows, seqMap){
+  const ws = wb.addWorksheet('รายการทรัพย์สิน');
+  const H = [['เลขที่เคส', 11], ['วันที่เกิดเหตุ', 13], ['ทล.', 7], ['ตอน', 24], ['กม.', 10], ['รายการทรัพย์สินเสียหาย', 52], ['จำนวน', 9], ['หน่วย', 9], ['ราคา/หน่วย (บาท)', 16], ['เป็นเงิน (บาท)', 16], ['ที่มาของราคา', 34]];
+  ws.columns = H.map(h => ({ width: h[1] }));
+  H.forEach((h, i) => {
+    const cell = ws.getCell(1, i + 1);
+    cell.value = h[0];
+    cell.font = { name: XL.font, size: 10, bold: true, color: { argb: XL.navyText } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.navy } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = xlBorder();
+  });
+  ws.getRow(1).height = 30;
+  let n = 1;
   rows.forEach(r => {
     (r.items || []).forEach(item => {
-      const match = findMaterialPriceMatch(item.name);
-      const qtyNum = Number(item.qty) || 0;
-      const unitPrice = match ? match.price : (item.price != null ? item.price : null);
-      const lineTotal = unitPrice != null ? qtyNum * unitPrice : null;
-      itemsData.push({
-        'ที่ (อ้างอิงเคส)': seqMap[r.id],
-        'วันที่เกิดเหตุ': r.dateIncident,
-        'ทล.': r.highway,
-        'ตอน': r.section,
-        'กม.': formatKm(r.km),
-        'รายการ': item.name,
-        'จำนวน': item.qty,
-        'หน่วย': item.unit,
-        'ราคาต่อหน่วย': unitPrice,
-        'เป็นเงิน': lineTotal,
-        'จับคู่ราคากลางจาก': match ? match.matchedName : (item.price != null ? '(ราคาที่กรอกไว้เดิมในเคส)' : '- ไม่พบราคากลางที่ตรงพอ -'),
-        'ความมั่นใจการจับคู่ (%)': match ? Math.round(match.score * 100) : '',
+      n++;
+      const qtyNum = Number(String(item.qty).replace(/,/g, ''));
+      const hasQty = item.qty !== '' && item.qty !== null && item.qty !== undefined && isFinite(qtyNum);
+      let unitPrice = item.unitPrice != null ? item.unitPrice : null;
+      let lineTotal = item.price != null ? item.price : null;
+      let source = '';
+      if (unitPrice != null || lineTotal != null) {
+        source = 'ตามที่บันทึกในเคส';
+        if (unitPrice == null && hasQty && qtyNum) unitPrice = lineTotal / qtyNum;
+        if (lineTotal == null && hasQty) lineTotal = qtyNum * unitPrice;
+      } else {
+        const match = findMaterialPriceMatch(item.name);
+        if (match) { unitPrice = match.price; if (hasQty) lineTotal = qtyNum * unitPrice; source = 'ราคากลางล่าสุด: ' + match.matchedName; }
+        else source = 'ไม่พบราคา';
+      }
+      const vals = [(r.fiscalYear || '') + '-' + (seqMap[r.id] || ''), xlDate(r.dateIncident), String(r.highway || ''), r.section || '', formatKm(r.km),
+        item.name || '', hasQty ? qtyNum : (item.qty || null), item.unit || '', unitPrice, lineTotal, source];
+      vals.forEach((v, i) => {
+        const cell = ws.getCell(n, i + 1);
+        cell.value = (v === '' || v === undefined) ? null : v;
+        cell.font = { name: XL.font, size: 10, color: (i === 10 && source === 'ไม่พบราคา') ? { argb: 'FFA32D2D' } : undefined };
+        cell.border = xlBorder();
+        cell.alignment = { vertical: 'top', wrapText: i === 5 || i === 10, horizontal: (i === 0 || i === 2 || i === 4 || i === 7) ? 'center' : (i === 6 ? 'center' : undefined) };
+        if (i === 1) { cell.numFmt = XL.dateFmt; cell.alignment = { horizontal: 'center', vertical: 'top' }; }
+        if (i === 8 || i === 9) { cell.numFmt = XL.moneyFmt; cell.alignment = { horizontal: 'right', vertical: 'top' }; }
+        if (i === 6 && typeof v === 'number') cell.numFmt = 'General';
+        if (i === 10) cell.alignment = { vertical: 'top', wrapText: true, indent: 1 };
+        if ((n % 2) === 0) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: XL.zebra } };
       });
     });
   });
-
-  const ws1 = window.XLSX.utils.json_to_sheet(summaryData);
-  const ws2 = window.XLSX.utils.json_to_sheet(itemsData);
-  const wb = window.XLSX.utils.book_new();
-  window.XLSX.utils.book_append_sheet(wb, ws1, 'สรุปเคส');
-  window.XLSX.utils.book_append_sheet(wb, ws2, 'รายการทรัพย์สินเสียหาย');
-  const fname = 'ฐานข้อมูล_อบ_' + new Date().toISOString().slice(0,10) + '.xlsx';
-  window.XLSX.writeFile(wb, fname);
-  showToast('ส่งออกไฟล์ Excel แล้ว (2 ชีต)');
+  if (n === 1) { ws.getCell(2, 1).value = 'ไม่มีรายการทรัพย์สินในเคสที่เลือก'; ws.getCell(2, 1).font = { name: XL.font, size: 10, italic: true, color: { argb: 'FF8792A0' } }; n = 2; }
+  ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 1, activeCell: 'B2' }];
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: n, column: H.length } };
+  ws.pageSetup = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: '1:1' };
 }
+
+async function exportExcel(rows, meta){
+  meta = meta || { scope: 'all', filters: [] };
+  rows = rows || getListRecords('all');
+  showToast('กำลังสร้างไฟล์ Excel…');
+  try { await loadExcelJs(); }
+  catch (e) { showToast('โหลดเครื่องมือส่งออกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'); return; }
+  const seqMap = computeSeqMap();
+  const sorted = rows.slice().sort((a, b) => (a.fiscalYear - b.fiscalYear) || (a.dateIncident || '').localeCompare(b.dateIncident || '') || (seqMap[a.id] || 0) - (seqMap[b.id] || 0));
+  const wb = new ExcelJS.Workbook();
+  wb.creator = recorderName || 'ระบบงานอุบัติเหตุ';
+  wb.created = new Date();
+  buildSummarySheet(wb, sorted, meta);
+  buildCasesSheet(wb, sorted, seqMap);
+  buildItemsSheet(wb, sorted, seqMap);
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = exportFileBase(sorted, meta) + '.xlsx';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  showToast('ส่งออก Excel แล้ว (' + sorted.length + ' เคส · 3 ชีต)');
+}
+
+/* ============ PDF (หน้ารายงาน A4 แนวนอน → พิมพ์เป็น PDF) ============ */
+function buildReportHtml(rows, meta){
+  const seqMap = computeSeqMap();
+  const s = summarizeRows(rows);
+  const th = escapeHtml;
+  const pill = (val, doneWord) => !val ? '<span class="pl na">ไม่ระบุ</span>' : `<span class="pl ${val === doneWord ? 'ok' : 'bad'}">${th(val)}</span>`;
+  const body = rows.map(r => {
+    const m = caseMoney(r);
+    return `<tr>
+      <td class="c">${th((r.fiscalYear || '') + '-' + (seqMap[r.id] || ''))}</td>
+      <td class="c nw">${th(formatThaiDate(r.dateIncident))}</td>
+      <td>ทล.${th(r.highway)}<div class="sub">${th(r.section)}</div></td>
+      <td class="c nw">${th(formatKm(r.km))}</td>
+      <td>${th(r.driverName || '-')}${r.hasInsurance === 'มี' ? `<div class="sub">🛡 ${th(r.insuranceCompany || 'มีประกัน')}</div>` : ''}</td>
+      <td class="nw">${th(plateText(r) || '-')}</td>
+      <td class="r nw">${th(formatMoney(m.total))}</td>
+      <td class="c">${pill(r.compensationStatus, 'ชดใช้แล้ว')}</td>
+      <td class="c">${pill(r.repairStatus, 'จัดซ่อมแล้ว')}</td>
+      <td class="c nw">${r.closedDate ? th(formatThaiDate(r.closedDate)) : '-'}</td>
+    </tr>`;
+  }).join('');
+  const title = 'รายงานอุบัติเหตุ_' + exportFileBase(rows, meta).replace(/^อุบัติเหตุ_/, '');
+  return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${th(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@600&family=Sarabun:wght@400;600;700&display=swap">
+<style>
+@page{size:A4 landscape;margin:12mm 10mm 14mm}
+*{box-sizing:border-box}
+body{font-family:'Sarabun','Tahoma',sans-serif;font-size:10.5pt;color:#182430;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1{font-family:'Kanit','Sarabun',sans-serif;font-size:17pt;margin:0;color:#123a5e}
+.sub0{color:#5c6773;font-size:9.5pt;margin-top:2px}
+.scope{margin-top:6px;font-size:9.5pt;color:#b45309;font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0 10px}
+.tile{border:1px solid #dfe2dd;border-radius:8px;padding:6px 10px;background:#f7f8f6;break-inside:avoid}
+.tile b{display:block;font-family:'Kanit','Sarabun',sans-serif;font-size:15pt;line-height:1.15;color:#123a5e}
+.tile span{font-size:8.5pt;color:#5c6773}
+table{width:100%;border-collapse:collapse;font-size:9.5pt}
+thead{display:table-header-group}
+th{background:#123a5e;color:#fff;font-weight:600;padding:5px 6px;border:1px solid #123a5e;font-size:9pt}
+td{padding:4px 6px;border:1px solid #dfe2dd;vertical-align:top}
+tr{break-inside:avoid}
+tbody tr:nth-child(even) td{background:#f7f8f6}
+.c{text-align:center}.r{text-align:right}.nw{white-space:nowrap}
+.sub{font-size:8.5pt;color:#7a8592}
+.pl{display:inline-block;white-space:nowrap;padding:0 7px;border-radius:9px;font-size:8.5pt;font-weight:600}
+.pl.ok{background:#e1f5ee;color:#0f6e56}.pl.bad{background:#fceaea;color:#a32d2d}.pl.na{background:#eceee9;color:#7a8592;font-weight:400}
+tfoot{display:table-row-group}
+tfoot td{font-weight:700;background:#ecefe9;border-top:2px solid #123a5e}
+.foot{margin-top:8px;font-size:8.5pt;color:#7a8592}
+</style></head><body>
+<h1>รายงานอุบัติเหตุ หมวดทางหลวงเชิงเนิน</h1>
+<div class="sub0">สำนักงานทางหลวงที่ 14 (ชลบุรี) · แขวงทางหลวงระยอง · ส่งออกเมื่อ ${th(thaiLongNow())}${recorderName ? ' · โดย ' + th(recorderName) : ''}</div>
+<div class="scope">ขอบเขตข้อมูล: ${meta.filters.length ? 'ตามตัวกรอง — ' + th(meta.filters.join(' · ')) : 'ทั้งหมด'}</div>
+<div class="tiles">
+  <div class="tile"><b>${s.total.toLocaleString('th-TH')}</b><span>เคสทั้งหมด</span></div>
+  <div class="tile"><b>${th(formatMoney(s.value))}</b><span>มูลค่าความเสียหาย (บาท)</span></div>
+  <div class="tile"><b>${s.closed.toLocaleString('th-TH')}</b><span>ยุติเรื่องแล้ว</span></div>
+  <div class="tile"><b>${s.open.toLocaleString('th-TH')}</b><span>ยังไม่ยุติเรื่อง</span></div>
+  <div class="tile"><b>${s.insUnrep.toLocaleString('th-TH')}</b><span>มีประกัน รอจัดซ่อม</span></div>
+</div>
+<table>
+<thead><tr><th style="width:9%">เลขที่เคส</th><th style="width:8%">วันที่</th><th style="width:16%">ทล. / ตอน</th><th style="width:7%">กม.</th><th>ผู้ละเมิด</th><th style="width:11%">ทะเบียนรถ</th><th style="width:10%">ราคาประเมิน (บาท)</th><th style="width:8.5%">ชดใช้</th><th style="width:9.5%">จัดซ่อม</th><th style="width:8%">ยุติเรื่อง</th></tr></thead>
+<tbody>${body}</tbody>
+<tfoot><tr><td colspan="6" class="r">รวม ${s.total.toLocaleString('th-TH')} เคส</td><td class="r nw">${th(formatMoney(s.value))}</td><td colspan="3"></td></tr></tfoot>
+</table>
+<div class="foot">ข้อมูลจากระบบงานอุบัติเหตุ หมวดทางหลวงเชิงเนิน — ราคาประเมินรวมค่าวัสดุและค่าดำเนินการ</div>
+</body></html>`;
+}
+function exportPdf(rows, meta){
+  meta = meta || { scope: 'all', filters: [] };
+  // เรียงตามที่เห็นบนหน้าจอ (วันที่ล่าสุดก่อน)
+  const sorted = rows.slice().sort((a, b) => (b.dateIncident || '').localeCompare(a.dateIncident || ''));
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  iframe.srcdoc = buildReportHtml(sorted, meta);
+  iframe.onload = () => {
+    const w = iframe.contentWindow;
+    const go = () => { try { w.focus(); w.print(); } catch (e) { console.error(e); showToast('เปิดหน้าต่างพิมพ์ไม่สำเร็จ'); } };
+    const ready = (w.document.fonts && w.document.fonts.ready) ? w.document.fonts.ready : Promise.resolve();
+    Promise.race([ready, new Promise(r => setTimeout(r, 3000))]).then(() => setTimeout(go, 200));
+    setTimeout(() => iframe.remove(), 120000);
+  };
+  document.body.appendChild(iframe);
+  showToast('กำลังเตรียมรายงาน — ในหน้าต่างพิมพ์ให้เลือก "บันทึกเป็น PDF"');
+}
+
 
 /* ============ reset all ============ */
 /* ============ routes reference view ============ */
@@ -4390,7 +4982,27 @@ async function init(){
   document.getElementById('filterYear').addEventListener('change', renderTable);
   document.getElementById('filterHighway').addEventListener('change', renderTable);
   document.getElementById('filterStatus').addEventListener('change', renderTable);
-  document.getElementById('btnExport').addEventListener('click', exportExcel);
+  document.getElementById('filterInsurance').addEventListener('change', renderTable);
+  document.getElementById('filterRepair').addEventListener('change', renderTable);
+  document.getElementById('qfInsRepair').addEventListener('click', () => {
+    const on = document.getElementById('filterInsurance').value === 'yes' && document.getElementById('filterRepair').value === 'pending';
+    document.getElementById('filterInsurance').value = on ? '' : 'yes';
+    document.getElementById('filterRepair').value = on ? '' : 'pending';
+    renderTable();
+  });
+  document.getElementById('qfClear').addEventListener('click', () => {
+    document.getElementById('filterInsurance').value = '';
+    document.getElementById('filterRepair').value = '';
+    renderTable();
+  });
+  document.getElementById('btnExportXlsx').addEventListener('click', (e) => { e.stopPropagation(); openExportMenu('xlsx'); });
+  document.getElementById('btnExportPdf').addEventListener('click', (e) => { e.stopPropagation(); openExportMenu('pdf'); });
+  document.getElementById('exportMenu').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const b = e.target.closest('button[data-scope]');
+    if (b) runExport(document.getElementById('exportMenu').dataset.kind, b.dataset.scope);
+  });
+  document.addEventListener('click', closeExportMenu);
   document.getElementById('btnImport').addEventListener('click', runImport);
   document.getElementById('btnOpenTrash').addEventListener('click', openTrashModal);
   populateMaterialCategorySelect();
