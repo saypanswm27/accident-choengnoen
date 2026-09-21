@@ -3222,45 +3222,64 @@ function renderDashboard(){
   try { renderFollowUp(); } catch (e) { console.error('follow-up render failed', e); }
 }
 
-// กล่อง "เคสที่ต้องติดตาม" — ตัวเลขสรุป 4 ช่อง + เคสค้างใหม่ (เกิดเหตุใน 12 เดือนล่าสุด เรียงค้างนานสุด 5 เคส) + เคสค้างเก่ากว่า 1 ปีแยกตามปีงบ
-// นับเฉพาะเคสที่ยังไม่ยุติเรื่อง (ไม่มีวันที่ยุติ) บนสายทางที่หมวดฯ ดูแล — ไม่ขึ้นกับตัวกรองปีงบของหน้าภาพรวม
+// กล่อง "เคสที่ต้องติดตาม" — ตัวเลขสรุป 4 ช่อง + รายการเคสค้าง + แท่งสรุปด้านล่าง
+// นับเฉพาะเคสที่ยังไม่ยุติเรื่อง (ไม่มีวันที่ยุติ) บนสายทางที่หมวดฯ ดูแล และ "ตามตัวกรองปีงบของหน้าภาพรวม":
+//  - ทุกปีงบ: ช่องแรก = ค้างใน 12 เดือน, รายการ = เคสที่เกิดใน 12 เดือนล่าสุด, แท่ง = เคสค้างเก่าแยกตามปีงบ
+//  - เลือกปีงบเดียว: เฉพาะเคสของปีงบนั้น — ช่องแรก = ค้างทั้งหมดของปีงบ, รายการ = เคสค้างเรียงตามค้างนานสุด, แท่ง = แยกตามสายทาง
 function renderFollowUp(){
   const el = document.getElementById('followList');
   if (!el) return;
+  const fyMode = dashYear !== 'ทั้งหมด';
   const DAY = 86400000;
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const openAll = records.filter(r => !r.closedDate && ROUTE_HIGHWAYS.has(String(r.highway)));
+  const openAll = records.filter(r => !r.closedDate && ROUTE_HIGHWAYS.has(String(r.highway)) &&
+    (!fyMode || String(r.fiscalYear) === String(dashYear)));
   const aged = openAll
     .map(r => ({ r, age: Math.floor((today - new Date((r.dateIncident || '') + 'T00:00:00')) / DAY) }))
     .filter(x => !isNaN(x.age) && x.age >= 0);
   const recent = aged.filter(x => x.age <= 365).sort((a, b) => b.age - a.age);
   const older = aged.filter(x => x.age > 365);
+  const listSource = fyMode ? aged.slice().sort((a, b) => b.age - a.age) : recent;
   const noComp = openAll.filter(r => r.compensationStatus !== 'ชดใช้แล้ว').length;
   const noRepair = openAll.filter(r => r.repairStatus !== 'จัดซ่อมแล้ว').length;
 
   const sub = document.getElementById('followSub');
-  if (sub) sub.textContent = 'ยังไม่ยุติเรื่อง ' + openAll.length + ' เคส';
+  if (sub) sub.textContent = (fyMode ? 'ปีงบ ' + dashYear + ' · ' : '') + 'ยังไม่ยุติเรื่อง ' + openAll.length + ' เคส';
 
+  const firstN = fyMode ? openAll.length : recent.length;
+  const firstLabel = fyMode ? 'ค้างในปีงบนี้' : 'ค้างใน 12 เดือน';
   const statsHtml = `
     <div class="fstat-grid">
-      <div class="fstat ${recent.length ? 'acc' : 'ok'}"><b>${recent.length}</b><span>ค้างใน 12 เดือน</span></div>
+      <div class="fstat ${firstN ? 'acc' : 'ok'}"><b>${firstN}</b><span>${firstLabel}</span></div>
       <div class="fstat bad"><b>${older.length}</b><span>ค้างเกิน 1 ปี</span></div>
       <div class="fstat"><b>${noComp}</b><span>รอชดใช้</span></div>
       <div class="fstat"><b>${noRepair}</b><span>รอจัดซ่อม</span></div>
     </div>`;
 
-  const rowsHtml = recent.slice(0, 5).map(({ r, age }) => `
+  const rowsHtml = listSource.slice(0, 5).map(({ r, age }) => `
     <div class="follow-row" data-id="${escapeHtml(r.id)}">
       <div class="f-main"><b>ทล.${escapeHtml(String(r.highway))} กม.${escapeHtml(formatKm(r.km))}</b>${r.plate ? ' <span style="color:var(--ink-mute)">· ' + escapeHtml(r.plate) + '</span>' : ''}
         <div class="f-sub">${escapeHtml(r.compensationStatus || 'ยังไม่ระบุการชดใช้')} · ${escapeHtml(r.repairStatus || 'ยังไม่ระบุการจัดซ่อม')}</div></div>
       <div class="f-right"><b class="mono">${formatMoney(r.totalPrice || 0)}</b><span class="age-pill ${age > 60 ? 'bad' : age > 30 ? 'warn' : ''}">ค้าง ${age} วัน</span></div>
     </div>`).join('');
-  const recentHtml = recent.length
-    ? rowsHtml + (recent.length > 5 ? `<div class="follow-foot"><span>แสดง 5 จาก ${recent.length} เคส</span><a class="link-btn" id="followMoreLink">ดูทั้งหมด →</a></div>` : '')
-    : '<p class="hint" style="padding:2px 2px 8px;color:var(--green)">✓ ไม่มีเคสค้างในรอบ 12 เดือนล่าสุด</p>';
+  const emptyMsg = fyMode ? '✓ ปีงบนี้ไม่มีเคสค้าง' : '✓ ไม่มีเคสค้างในรอบ 12 เดือนล่าสุด';
+  const recentHtml = listSource.length
+    ? rowsHtml + (listSource.length > 5 ? `<div class="follow-foot"><span>แสดง 5 จาก ${listSource.length} เคส</span><a class="link-btn" id="followMoreLink">ดูทั้งหมด →</a></div>` : '')
+    : `<p class="hint" style="padding:2px 2px 8px;color:var(--green)">${emptyMsg}</p>`;
 
+  // แท่งสรุปด้านล่าง
   let backlogHtml = '';
-  if (older.length) {
+  if (fyMode) {
+    if (openAll.length) {
+      const byHw = {};
+      openAll.forEach(r => { const h = String(r.highway); byHw[h] = (byHw[h] || 0) + 1; });
+      const hws = Object.keys(byHw).sort((a, b) => Number(a) - Number(b));
+      const maxN = Math.max(...hws.map(h => byHw[h]));
+      backlogHtml = `
+        <div class="backlog-head"><span>เคสค้างของปีงบ ${escapeHtml(String(dashYear))} แยกตามสายทาง</span><a class="link-btn" id="followOlderLink">ดูทั้งหมด →</a></div>
+        ${hws.map(h => `<div class="backlog-row" data-hw="${escapeHtml(h)}" style="grid-template-columns:72px 1fr 30px"><span>ทล.${escapeHtml(h)}</span><div class="mini-track"><i style="width:${Math.round(byHw[h] / maxN * 100)}%"></i></div><b class="mono" style="text-align:right">${byHw[h]}</b></div>`).join('')}`;
+    }
+  } else if (older.length) {
     const byFy = {};
     older.forEach(({ r }) => { const y = r.fiscalYear || '-'; byFy[y] = (byFy[y] || 0) + 1; });
     const years = Object.keys(byFy).sort();
@@ -3271,12 +3290,18 @@ function renderFollowUp(){
   }
 
   el.innerHTML = statsHtml + recentHtml + backlogHtml;
+  const goList = (year, hw) => {
+    goToFilteredList(year, 'open');
+    if (hw !== undefined) { document.getElementById('filterHighway').value = hw; renderTable(); }
+  };
   el.querySelectorAll('.follow-row').forEach(row => { row.onclick = () => openCaseDetailModal(row.dataset.id); });
-  el.querySelectorAll('.backlog-row').forEach(row => { row.onclick = () => goToFilteredList(row.dataset.fy, 'open'); });
+  el.querySelectorAll('.backlog-row').forEach(row => {
+    row.onclick = () => row.dataset.hw !== undefined ? goList(dashYear, row.dataset.hw) : goList(row.dataset.fy);
+  });
   const more = document.getElementById('followMoreLink');
-  if (more) more.onclick = () => goToFilteredList('ทั้งหมด', 'open');
+  if (more) more.onclick = () => goList(fyMode ? dashYear : 'ทั้งหมด');
   const olderLink = document.getElementById('followOlderLink');
-  if (olderLink) olderLink.onclick = () => goToFilteredList('ทั้งหมด', 'open');
+  if (olderLink) olderLink.onclick = () => goList(fyMode ? dashYear : 'ทั้งหมด');
 }
 
 
