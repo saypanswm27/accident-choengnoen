@@ -768,6 +768,9 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 #view-form :not(.section-title):not(.section-title *):not(.form-savebar):not(.form-savebar *){font-family:'Sarabun',sans-serif}
 /* หน้าต่างรายละเอียดเคส: เนื้อหาภายใน (หัวข้อการ์ด ยอดรวมสุทธิ ฯลฯ) ใช้ Sarabun ทั้งหมด — หัวสีกรมท่าและปุ่มด้านล่างคงเดิม */
 .case-modal .modal-body,.case-modal .modal-body *{font-family:'Sarabun',sans-serif}
+.combo{position:relative}
+.combo .it-dd{top:calc(100% + 4px)}
+.combo input{width:100%;box-sizing:border-box}
 .ic-group{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:#fff}
 .ic-to{font-weight:600;margin-bottom:6px}
 .ic-from{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:var(--ink-soft);padding:2px 0}
@@ -999,8 +1002,10 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           </div>
           <div class="field" id="f_insuranceCompanyWrap" style="display:none">
             <label>บริษัทประกันภัย</label>
-            <input type="text" id="f_insuranceCompany" list="insurerList" autocomplete="off" placeholder="เลือกจากรายชื่อ หรือพิมพ์ชื่อบริษัท">
-            <datalist id="insurerList"></datalist>
+            <div class="combo">
+              <input type="text" id="f_insuranceCompany" autocomplete="off" placeholder="เลือกจากรายชื่อ หรือพิมพ์ชื่อบริษัท">
+              <div class="it-dd" id="insurerDd" style="display:none"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1816,7 +1821,7 @@ function refreshVisibleViews(){
   const scrollY = window.scrollY;
   try {
     populateYearFilter();
-    populateInsurerList();
+    updateInsurerCard();
     if (v === 'list') renderTable();
     if (v === 'dash') renderDashboard();
     if (v === 'assets') renderAssetsPanel();
@@ -1944,8 +1949,7 @@ function updateWhoDisplay(){
   if (trashCard) trashCard.style.display = recorderName ? '' : 'none';
   const importCard = document.getElementById('cardImport');
   if (importCard) importCard.style.display = isOwner() ? '' : 'none';
-  const insurerCard = document.getElementById('cardInsurer');
-  if (insurerCard) insurerCard.style.display = isOwner() ? '' : 'none';
+  updateInsurerCard();
   renderTeamPanel(); 
   
   
@@ -3211,7 +3215,6 @@ async function startApp(){
     await Promise.all([loadMaterialPrices(), loadRoutesData(), loadRecords()]);
     populateHighwaySelect();
     populateYearFilter();
-    populateInsurerList();
     updateWhoDisplay();
   } catch (e) {
     console.error('startApp failed', e);
@@ -3439,11 +3442,58 @@ function insurerOptions(){
   (typeof records !== 'undefined' ? records : []).forEach(r => { const n = normalizeInsurer(r.insuranceCompany); if (n) set.add(n); });
   return [...set].sort(naturalCompareTh);
 }
-function populateInsurerList(){
-  const dl = document.getElementById('insurerList');
-  if (dl) dl.innerHTML = insurerOptions().map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+// การ์ด "ชื่อบริษัทประกัน" ในหน้าตั้งค่า แสดงเฉพาะเจ้าของระบบ และเฉพาะตอนที่ยังมีเคสที่ชื่อไม่ตรงมาตรฐาน — จัดระเบียบเสร็จแล้วการ์ดหายไปเอง
+function updateInsurerCard(){
+  const card = document.getElementById('cardInsurer');
+  if (!card) return;
+  card.style.display = (isOwner() && buildInsurerCleanupPlan().changes.length) ? '' : 'none';
 }
-// แผนปรับชื่อเคสเก่า: คืนรายการเคสที่ชื่อยังไม่ตรงมาตรฐาน และกลุ่มสรุปสำหรับแสดงตัวอย่าง
+// ช่องเลือกบริษัทประกัน: รายการตัวเลือกแบบเดียวกับช่องค้นหาทรัพย์สิน (พิมพ์กรอง / ลูกศรขึ้นลง / Enter / คลิก) แทนรายการเลือกของเบราว์เซอร์
+function initInsurerCombo(){
+  const input = document.getElementById('f_insuranceCompany');
+  const dd = document.getElementById('insurerDd');
+  if (!input || !dd) return;
+  let hits = [], active = -1;
+  const close = () => { dd.style.display = 'none'; active = -1; };
+  const paint = () => {
+    [...dd.querySelectorAll('.it-dd-item')].forEach((el, i) => el.classList.toggle('active', i === active));
+    const el = dd.querySelector('.it-dd-item.active');
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  };
+  const render = () => {
+    const q = input.value.trim();
+    const qk = insurerKey(q);
+    hits = insurerOptions().filter(n => !q || n.toLowerCase().includes(q.toLowerCase()) || (qk && insurerKey(n).includes(qk)));
+    active = hits.length && q ? 0 : -1;
+    dd.innerHTML = hits.length
+      ? hits.map((n, i) => `<div class="it-dd-item" data-i="${i}"><span class="nm">${escapeHtml(n)}</span></div>`).join('')
+      : `<div class="it-dd-empty">ไม่พบในรายชื่อ — พิมพ์ชื่อเองได้ ระบบจะจัดรูปแบบให้ตอนบันทึก</div>`;
+    dd.style.display = '';
+    paint();
+  };
+  const choose = (i) => {
+    if (!hits[i]) return;
+    input.value = hits[i];
+    close();
+    input.dispatchEvent(new Event('change'));
+  };
+  input.addEventListener('focus', render);
+  input.addEventListener('input', render);
+  input.addEventListener('keydown', (e) => {
+    const open = dd.style.display !== 'none';
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (!open) render(); else if (hits.length) { active = (active + 1) % hits.length; paint(); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (open && hits.length) { active = (active - 1 + hits.length) % hits.length; paint(); } }
+    else if (e.key === 'Enter') { if (open && active >= 0) { e.preventDefault(); choose(active); } }
+    else if (e.key === 'Escape' || e.key === 'Tab') { close(); }
+  });
+  dd.addEventListener('mousedown', (e) => {
+    const el = e.target.closest('.it-dd-item');
+    if (!el) return;
+    e.preventDefault();               // ไม่ให้ช่องกรอกเสียโฟกัสก่อนเลือก
+    choose(Number(el.dataset.i));
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.combo')) close(); });
+}// แผนปรับชื่อเคสเก่า: คืนรายการเคสที่ชื่อยังไม่ตรงมาตรฐาน และกลุ่มสรุปสำหรับแสดงตัวอย่าง
 function buildInsurerCleanupPlan(){
   const changes = [], groups = {};
   records.forEach(r => {
@@ -3494,7 +3544,6 @@ function openInsurerCleanupModal(){
       const next = Object.assign({}, c.rec, { insuranceCompany: c.to, updatedAt: new Date().toISOString() });
       if (await apiUpdateRecord(next)) { c.rec.insuranceCompany = c.to; ok++; } else { fail++; }
     }
-    populateInsurerList();
     refreshVisibleViews();
     status.textContent = 'ปรับแล้ว ' + ok + ' เคส' + (fail ? ' · ไม่สำเร็จ ' + fail + ' เคส' : '');
     btn.textContent = fail ? 'ลองใหม่' : '✓ เสร็จแล้ว';
@@ -5198,6 +5247,7 @@ async function init(){
   document.getElementById('btnImport').addEventListener('click', runImport);
   document.getElementById('btnOpenTrash').addEventListener('click', openTrashModal);
   document.getElementById('btnInsurerCleanup').addEventListener('click', openInsurerCleanupModal);
+  initInsurerCombo();
   document.getElementById('f_insuranceCompany').addEventListener('change', e => { e.target.value = normalizeInsurer(e.target.value); });
   populateMaterialCategorySelect();
   initItemEntryUi();
