@@ -768,7 +768,24 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 #view-form :not(.section-title):not(.section-title *):not(.form-savebar):not(.form-savebar *){font-family:'Sarabun',sans-serif}
 /* หน้าต่างรายละเอียดเคส: เนื้อหาภายใน (หัวข้อการ์ด ยอดรวมสุทธิ ฯลฯ) ใช้ Sarabun ทั้งหมด — หัวสีกรมท่าและปุ่มด้านล่างคงเดิม */
 .case-modal .modal-body,.case-modal .modal-body *{font-family:'Sarabun',sans-serif}
-.combo{position:relative}
+/* ช่องเลือกแบบเดียวกันทั้งระบบ (แทน select ของเบราว์เซอร์) */
+.dsel-native{display:none !important}
+.dsel{position:relative;width:100%}
+.dsel-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;font-family:'Sarabun',sans-serif;font-size:14.5px;line-height:1.3;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink);cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease}
+.dsel-btn:hover:not(:disabled){border-color:#c9cec7}
+.dsel-btn:focus{outline:none;border-color:var(--amber-500);box-shadow:0 0 0 3px rgba(224,98,15,.14)}
+.dsel-btn:disabled{background:var(--paper);color:var(--ink-mute);cursor:not-allowed}
+.dsel-stack{display:grid;min-width:0}
+.dsel-stack > span{grid-area:1/1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsel-size{visibility:hidden;height:0}
+.dsel-caret{font-size:12px;color:var(--ink-mute);flex:none}
+.dsel-menu{position:absolute;left:0;top:calc(100% + 4px);min-width:100%;width:max-content;max-width:min(420px,92vw);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px -10px rgba(0,0,0,.25);z-index:60;max-height:280px;overflow:auto}
+.dsel.dsel-up .dsel-menu{top:auto;bottom:calc(100% + 4px)}
+.dsel-item{justify-content:space-between}
+.dsel-item.sel{font-weight:600}
+.dsel-tick{color:var(--amber);font-size:13px;margin-left:12px}
+.dsel.it-preset{width:190px;padding:0;border:0;border-radius:0;background:none}
+.dsel.it-preset .dsel-btn{border-radius:10px;padding:9px 12px;font-size:14px}.combo{position:relative}
 .combo .it-dd{top:calc(100% + 4px)}
 .combo input{width:100%;box-sizing:border-box}
 .ic-group{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:#fff}
@@ -3448,6 +3465,107 @@ function updateInsurerCard(){
   if (!card) return;
   card.style.display = (isOwner() && buildInsurerCleanupPlan().changes.length) ? '' : 'none';
 }
+/* ===== ช่องเลือก (select) แบบเดียวกันทั้งระบบ =====
+   แทนรายการเลือกของเบราว์เซอร์ด้วยรายการพื้นขาวขอบบาง แถวที่ชี้เป็นสีส้มอ่อน เหมือนช่องค้นหาทรัพย์สิน/บริษัทประกัน
+   - ตัว <select> เดิมยังอยู่ในหน้า (ซ่อนไว้) โค้ดเดิมที่อ่าน/ตั้งค่า .value หรือฟัง event change ทำงานเหมือนเดิมทุกอย่าง
+   - ช่องที่สร้างทีหลัง (แถวทรัพย์สิน คู่กรณีร่วม หน้าล็อกอิน) ถูกแปลงอัตโนมัติ ช่องที่ซ่อนไว้ตั้งแต่แรกไม่แปลง
+   - ทุกช่องข้อความปิดการจำ/แนะนำค่าเดิมของเบราว์เซอร์ (กล่องดำที่เด้งใต้ช่องกรอก) */
+const DSEL_DESC = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+const DSEL_IDX = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+function closeAllDropdownMenus(except){
+  document.querySelectorAll('.dsel-menu').forEach(m => { if (m !== except) m.style.display = 'none'; });
+}
+function enhanceSelect(sel){
+  if (sel._dsel || sel.style.display === 'none' || sel.hidden) return;
+  sel._dsel = true;
+  const wrap = document.createElement('div');
+  wrap.className = 'dsel' + (sel.className ? ' ' + sel.className : '');
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'dsel-btn';
+  btn.innerHTML = '<span class="dsel-stack"><span class="dsel-label"></span><span class="dsel-size" aria-hidden="true"></span></span><span class="dsel-caret" aria-hidden="true">▾</span>';
+  const menu = document.createElement('div');
+  menu.className = 'dsel-menu'; menu.style.display = 'none'; menu.setAttribute('role', 'listbox');
+  wrap.appendChild(btn); wrap.appendChild(menu);
+  sel.parentNode.insertBefore(wrap, sel);
+  sel.classList.add('dsel-native'); sel.tabIndex = -1;
+  const label = btn.querySelector('.dsel-label'), size = btn.querySelector('.dsel-size');
+  let active = -1, typed = '', typedTimer = null;
+
+  const refresh = () => {
+    const o = sel.options[sel.selectedIndex];
+    label.textContent = o ? o.textContent : '';
+    size.textContent = [...sel.options].reduce((m, x) => x.textContent.length > m.length ? x.textContent : m, '');
+    btn.disabled = sel.disabled;
+  };
+  // ตั้งค่าด้วยโค้ด (sel.value = ...) ต้องอัปเดตป้ายที่เห็นด้วย
+  Object.defineProperty(sel, 'value', { configurable: true, get(){ return DSEL_DESC.get.call(this); }, set(v){ DSEL_DESC.set.call(this, v); refresh(); } });
+  Object.defineProperty(sel, 'selectedIndex', { configurable: true, get(){ return DSEL_IDX.get.call(this); }, set(v){ DSEL_IDX.set.call(this, v); refresh(); } });
+  new MutationObserver(refresh).observe(sel, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled'] });
+
+  const isOpen = () => menu.style.display !== 'none';
+  const paint = () => {
+    [...menu.children].forEach((el, i) => el.classList.toggle('active', i === active));
+    const el = menu.children[active];
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  };
+  const open = () => {
+    if (sel.disabled) return;
+    closeAllDropdownMenus(menu);
+    menu.innerHTML = [...sel.options].map((o, i) => `<div class="it-dd-item dsel-item${i === sel.selectedIndex ? ' sel' : ''}" data-i="${i}" role="option">${escapeHtml(o.textContent)}${i === sel.selectedIndex ? '<span class="dsel-tick">✓</span>' : ''}</div>`).join('');
+    menu.style.display = '';
+    // ที่ว่างด้านล่างไม่พอ (เช่นชิดแถบบันทึกล่างจอ) ให้เปิดขึ้นด้านบน
+    const r = wrap.getBoundingClientRect();
+    const need = Math.min(menu.scrollHeight, 280) + 90;
+    wrap.classList.toggle('dsel-up', window.innerHeight - r.bottom < need && r.top > window.innerHeight - r.bottom);
+    active = sel.selectedIndex;
+    paint();
+  };
+  const close = () => { menu.style.display = 'none'; active = -1; };
+  const choose = (i) => {
+    if (i < 0 || i >= sel.options.length) return;
+    const changed = i !== sel.selectedIndex;
+    DSEL_IDX.set.call(sel, i);
+    refresh(); close();
+    if (changed) { sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+    btn.focus();
+  };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); if (isOpen()) close(); else open(); });
+  menu.addEventListener('mousedown', (e) => { e.preventDefault(); });
+  menu.addEventListener('click', (e) => { e.stopPropagation(); const el = e.target.closest('.dsel-item'); if (el) choose(Number(el.dataset.i)); });
+  btn.addEventListener('keydown', (e) => {
+    const n = sel.options.length;
+    if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key) && !isOpen()) { e.preventDefault(); open(); return; }
+    if (isOpen()) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(n - 1, active + 1); paint(); return; }
+      if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(0, active - 1); paint(); return; }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(active); return; }
+      if (e.key === 'Escape' || e.key === 'Tab') { close(); return; }
+    }
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && e.key !== ' ') {   // พิมพ์ตัวอักษรเพื่อข้ามไปตัวเลือกที่ขึ้นต้นด้วยตัวนั้น
+      typed += e.key.toLowerCase(); clearTimeout(typedTimer); typedTimer = setTimeout(() => { typed = ''; }, 700);
+      const i = [...sel.options].findIndex(o => o.textContent.trim().toLowerCase().startsWith(typed));
+      if (i >= 0) { if (isOpen()) { active = i; paint(); } else { choose(i); } }
+    }
+  });
+  refresh();
+}
+function applyNoAutofill(root){
+  root.querySelectorAll('input:not([type=password]):not([type=file]):not([type=checkbox]):not([type=radio]):not([type=hidden]), textarea').forEach(el => {
+    if (!el.hasAttribute('autocomplete')) el.setAttribute('autocomplete', 'off');
+  });
+}
+function enhanceTree(root){
+  if (root.nodeType !== 1) return;
+  if (root.tagName === 'SELECT') enhanceSelect(root);
+  root.querySelectorAll && root.querySelectorAll('select').forEach(enhanceSelect);
+  if (root.matches && root.matches('input,textarea')) applyNoAutofill({ querySelectorAll: () => [root] });
+  else if (root.querySelectorAll) applyNoAutofill(root);
+}
+function initCustomSelects(){
+  enhanceTree(document.body);
+  new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(enhanceTree))).observe(document.body, { childList: true, subtree: true });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.dsel')) closeAllDropdownMenus(); });
+}
 // ช่องเลือกบริษัทประกัน: รายการตัวเลือกแบบเดียวกับช่องค้นหาทรัพย์สิน (พิมพ์กรอง / ลูกศรขึ้นลง / Enter / คลิก) แทนรายการเลือกของเบราว์เซอร์
 function initInsurerCombo(){
   const input = document.getElementById('f_insuranceCompany');
@@ -5174,6 +5292,7 @@ function syncFiscalYearFromDate(){
 
 async function init(){
   initModalScroll();
+  initCustomSelects();
   document.getElementById('f_dateIncident').addEventListener('change', syncFiscalYearFromDate);
   initTabs();
   initPasswordToggles();
