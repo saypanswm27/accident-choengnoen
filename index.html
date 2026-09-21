@@ -292,7 +292,7 @@ table.data td.nowrap-cell{white-space:nowrap}
 table.data td.center-cell{text-align:center}
 table.data td.wrap-cell{white-space:normal;min-width:140px}
 table.data td.hw-cell{white-space:normal;min-width:80px}
-table.data td.plate-cell{white-space:normal;max-width:110px}
+table.data td.plate-cell{white-space:normal}
 table.data td.plate-cell .plate-entry{margin-bottom:4px}
 table.data td.plate-cell .plate-entry:last-child{margin-bottom:0}
 table.data td.plate-cell .plate-num{font-weight:600}
@@ -763,10 +763,8 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .list-count{text-align:right;font-size:12.5px;color:var(--ink-mute);margin:-4px 2px 8px}
 /* ตารางรายการ 7 คอลัมน์: ช่องหลักบรรทัดบน + ข้อมูลรองบรรทัดล่างสีเทา */
 #dataTable th,#dataTable td{text-align:left}
-#dataTable th.r-th,#dataTable td.r-cell{text-align:right}
 #dataTable td.case-cell b{font-weight:600}
 .c-sub{display:block;font-size:11.5px;color:var(--ink-mute);line-height:1.3;margin-top:1px}
-.c-closed{display:inline-block;font-size:10.5px;background:var(--paper-2);color:var(--ink-soft);border-radius:6px;padding:0 7px;margin-top:3px}
 .quick-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px}
 .export-group{margin-left:auto;display:flex;gap:8px;position:relative}
 .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(10,37,64,.28);padding:6px;z-index:40;min-width:290px;max-width:360px}
@@ -776,7 +774,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .export-menu button span{color:var(--ink-mute);margin-left:6px}
 .export-menu button small{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:2px;white-space:normal}
 table.data td.repair-cell,table.data th.repair-th{text-align:left}
-.ins-sub{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:3px;line-height:1.3;white-space:normal}
+.ins-sub{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:3px;line-height:1.3;white-space:nowrap}
 tr.route-editable{cursor:pointer;user-select:none}
 tr.route-editable:hover td{background:var(--amber-glow)}
 .row-edit-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-soft)}
@@ -1155,8 +1153,8 @@ tr.route-editable:hover td{background:var(--amber-glow)}
         <table class="data" id="dataTable">
           <thead>
             <tr>
-              <th>เลขที่เคส</th><th>สายทาง / กม.</th><th>ผู้ละเมิด</th>
-              <th>ทะเบียนรถ</th><th class="r-th">ราคาประเมิน</th><th>ชดใช้</th><th class="repair-th">จัดซ่อม</th>
+              <th style="width:11%">เลขที่เคส</th><th style="width:18%">สายทาง / กม.</th><th style="width:20%">ผู้ละเมิด</th>
+              <th style="width:14%">ทะเบียนรถ</th><th style="width:12%">ราคาประเมิน</th><th style="width:10%">ชดใช้</th><th class="repair-th" style="width:15%">จัดซ่อม</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -1178,7 +1176,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
       <div class="stat-card amber"><div class="big mono" id="statValue">0</div><div class="lbl">มูลค่าความเสียหาย (บาท)</div></div>
       <div class="stat-card green clickable" id="cardClosed"><div class="big mono" id="statClosed">0</div><div class="lbl">ยุติเรื่องแล้ว (ครั้ง)</div></div>
       <div class="stat-card rust clickable" id="cardOpen"><div class="big mono" id="statOpen">0</div><div class="lbl">ยังไม่ยุติเรื่อง (ครั้ง)</div></div>
-      <div class="stat-card ins clickable" id="cardInsRepair" title="เคสที่มีประกันภัยแต่ยังไม่จัดซ่อม (รวมที่ยังไม่ระบุสถานะซ่อม)"><div class="big mono" id="statInsRepair">0</div><div class="lbl">🛡 มีประกัน รอจัดซ่อม (ครั้ง)</div></div>
+      <div class="stat-card ins clickable" id="cardInsRepair" title="เคสที่มีประกันภัยแต่ยังไม่จัดซ่อม (รวมที่ยังไม่ระบุสถานะซ่อม)"><div class="big mono" id="statInsRepair">0</div><div class="lbl">มีประกัน รอจัดซ่อม (ครั้ง)</div></div>
     </div>
 
     <div class="grid grid-2" id="dashFirstRow">
@@ -3282,11 +3280,11 @@ function renderTable(){
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
     tr.innerHTML = `
-      <td class="case-cell nowrap-cell"><b>${r.fiscalYear || ''}-${seqMap[r.id] || ''}</b><span class="c-sub">${formatThaiDate(r.dateIncident)}</span>${r.closedDate ? `<span class="c-closed">ยุติ ${formatThaiDate(r.closedDate)}</span>` : ''}</td>
+      <td class="case-cell nowrap-cell"><b>${r.fiscalYear || ''}-${seqMap[r.id] || ''}</b><span class="c-sub">${formatThaiDate(r.dateIncident)}</span></td>
       <td class="hw-cell nowrap-cell">ทล.${escapeHtml(r.highway)} · กม.${escapeHtml(formatKm(r.km))}<span class="c-sub">${escapeHtml(r.section)}</span></td>
       <td class="nowrap-cell violator-cell">${escapeHtml(r.driverName || '-')}</td>
       <td class="mono plate-cell">${formatPlateCellHtml(r)}</td>
-      <td class="mono nowrap-cell r-cell">${formatMoney(r.totalPrice)}</td>
+      <td class="mono nowrap-cell">${formatMoney(r.totalPrice)}</td>
       <td class="nowrap-cell">${statusPill(r.compensationStatus,'comp')}</td>
       <td class="repair-cell">${statusPill(r.repairStatus,'repair')}${r.hasInsurance === 'มี' ? '<span class="ins-sub" title="' + escapeHtml(r.insuranceCompany || 'มีประกันภัย') + '">ประกัน: ' + (escapeHtml(shortInsurerName(r.insuranceCompany, 14)) || 'มี') + '</span>' : ''}</td>
     `;
