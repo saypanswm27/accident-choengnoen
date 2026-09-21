@@ -322,6 +322,10 @@
       asphalt: r.asphalt === undefined ? null : r.asphalt,
       concrete: r.concrete === undefined ? null : r.concrete,
       workQty: r.workQty === undefined ? null : r.workQty,
+      // สถานะสายทาง: active = หมวดฯ ดูแลอยู่ / transferred = โอนให้หมวดอื่นแล้ว (เก็บไว้เพื่อคงเคสอุบัติเหตุเก่า)
+      status: r.status === 'transferred' ? 'transferred' : 'active',
+      transferredDate: r.transferredDate || '',
+      transferNote: r.transferNote || '',
       updatedAt: r.updatedAt || ''
     });
     await db.collection('routes').doc(id).set(data, { merge: true });
@@ -402,7 +406,7 @@
     let done = 0;
     for (let i = 0; i < writes.length; i += CHUNK) {
       const batch = db.batch();
-      writes.slice(i, i + CHUNK).forEach(function (w) { batch.set(w.ref, w.data); });
+      writes.slice(i, i + CHUNK).forEach(function (w) { if (w.merge) batch.set(w.ref, w.data, { merge: true }); else batch.set(w.ref, w.data); });
       await batch.commit();
       done += Math.min(CHUNK, writes.length - i);
       if (progress) progress(label + ': ' + done + '/' + writes.length);
@@ -441,7 +445,7 @@
     const routes = rows('routes');
     if (routes) {
       const w = routes.filter(function (r) { return String(r.highway || '').trim() !== ''; }).map(function (r) {
-        const d = mapRoute(r); return { ref: db.collection('routes').doc(d.highway), data: d };
+        const d = mapRoute(r); return { ref: db.collection('routes').doc(d.highway), data: d, merge: true };
       });
       await commitInChunks(w, progress, 'สายทาง');
       report.push('สายทาง ' + w.length + ' รายการ');
