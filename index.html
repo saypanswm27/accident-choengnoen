@@ -666,6 +666,40 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .routes-total td{font-weight:700;background:var(--paper-2);border-top:2px solid var(--line)}
 .row-edit-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-soft)}
 .row-edit-btn:hover{background:var(--navy-900);color:#fff;border-color:var(--navy-900)}
+/* ===== หน้าต่างรายละเอียดเคส (แบบ ข: หัวสีกรมท่า + แผ่นสถานะ + ใบสรุปเงิน) ===== */
+.modal.case-modal{padding:0;max-width:920px}
+.case-modal .cd-hd{background:radial-gradient(700px 240px at 10% -40%,#1c4b73 0%,#0a2540 65%);color:#fff;padding:20px 26px 18px;margin:0;align-items:flex-start}
+.case-modal .cd-hd .cd-lbl{font-size:12.5px;color:#9db0c4}
+.case-modal .cd-hd h3{font-size:30px;color:#fff;line-height:1.15;margin:0}
+.case-modal .cd-hd .cd-dt{color:#c7d3df;font-size:16px;font-weight:400;font-family:'Sarabun',sans-serif}
+.case-modal .cd-hd .cd-loc{margin-top:8px;color:#dbe4ee;font-size:14px}
+.case-modal .cd-hd .modal-close{background:#ffffff26;color:#fff}
+.case-modal .cd-hd .modal-close:hover{background:#fff;color:var(--navy-900)}
+.case-modal > .modal-body{background:var(--paper);padding:18px 20px 8px 26px;margin-right:0}
+.cd-foot{display:flex;gap:10px;align-items:center;padding:14px 24px;border-top:1px solid var(--line);background:#fff;flex:none}
+.cd-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.cd-tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.cd-tile .cd-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex:none}
+.cd-tile.warn .cd-ic{background:var(--spot2-bg)}.cd-tile.ok .cd-ic{background:var(--green-bg)}.cd-tile.bad .cd-ic{background:var(--rust-bg)}.cd-tile.n .cd-ic{background:var(--paper-2)}
+.cd-tile b{display:block;font-size:14px;line-height:1.3}.cd-tile span{font-size:12px;color:var(--ink-mute)}
+.cd-cols{display:grid;grid-template-columns:1fr 1.1fr;gap:14px;align-items:start}
+.cd-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.cd-sec{font-family:'Kanit',sans-serif;font-weight:600;font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px;color:var(--ink)}
+.cd-count{margin-left:auto;font-family:'Sarabun',sans-serif;font-weight:600;font-size:12.5px;background:var(--paper-2);color:var(--ink-soft);border-radius:999px;padding:2px 11px}
+.cd-dl{margin:0;display:grid;grid-template-columns:104px 1fr;gap:6px 10px;font-size:14px}
+.cd-dl dt{color:var(--ink-mute)}.cd-dl dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+.cd-k{font-size:12px;color:var(--ink-mute)}
+.cd-person{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.cd-av{width:38px;height:38px;border-radius:50%;background:var(--amber-glow);color:var(--amber);display:grid;place-items:center;font-family:'Kanit',sans-serif;font-weight:700;flex:none}
+.cd-plate{display:inline-block;border:2px solid var(--ink);border-radius:8px;padding:1px 12px;font-weight:700;letter-spacing:.5px;background:#fff}
+.cd-divider{height:1px;background:var(--line);margin:14px 0 12px}
+.cd-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.cd-item b{font-size:14px}.cd-q{font-size:12.5px;color:var(--ink-mute)}
+.cd-receipt{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:12px 16px;margin-top:10px}
+.cd-ln{display:flex;align-items:baseline;gap:8px;font-size:14px;padding:3px 0}
+.cd-ln i{flex:1;border-bottom:2px dotted #e4cfae;transform:translateY(-3px)}
+.cd-grand{font-family:'Kanit',sans-serif;font-size:24px;color:var(--amber);font-weight:600}
+@media(max-width:760px){.cd-tiles{grid-template-columns:repeat(2,1fr)}.cd-cols{grid-template-columns:1fr}.case-modal .cd-hd h3{font-size:24px}}
 /* ===== หน้าล็อกอิน (ต้องล็อกอินก่อนเห็นข้อมูล) ===== */
 .auth-gate{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px;overflow:auto;
   background:radial-gradient(1100px 520px at 15% -10%, var(--navy-800) 0%, var(--ink-2) 60%)}
@@ -3003,105 +3037,110 @@ async function openTrashModal(){
 }
 
  
+// ผู้ละเมิด/คู่กรณี 1 คน ในหน้าต่างรายละเอียดเคส (อวาตาร์ + ชื่อ/โทร + ประเภทรถ/ยี่ห้อ/ทะเบียนเป็นป้าย)
+function caseDetailPersonHtml(p, label){
+  const name = p.driverName || '';
+  const initial = name.replace(/^(นางสาว|นาง|นาย|น\.ส\.)\s*/, '').charAt(0) || '?';
+  const plateRows = (p.vehicleType === 'รถพ่วง' && p.trailerPlate)
+    ? `<dt>ทะเบียนหัว</dt><dd>${p.plate ? `<span class="cd-plate">${escapeHtml(p.plate)}</span>` : '-'}</dd>
+       <dt>ทะเบียนหาง</dt><dd><span class="cd-plate">${escapeHtml(p.trailerPlate)}</span></dd>`
+    : `<dt>ทะเบียนรถ</dt><dd>${p.plate ? `<span class="cd-plate">${escapeHtml(p.plate)}</span>` : '-'}</dd>`;
+  return `
+    <div class="cd-person"><div class="cd-av">${escapeHtml(initial)}</div>
+      <div><b>${escapeHtml(name) || 'ไม่ระบุชื่อ'}</b><div class="cd-k">${label ? escapeHtml(label) + ' · ' : ''}โทร ${escapeHtml(p.driverPhone) || '-'}</div></div></div>
+    <dl class="cd-dl"><dt>ประเภทรถ</dt><dd>${escapeHtml(p.vehicleType) || '-'}</dd><dt>ยี่ห้อ / สี</dt><dd>${escapeHtml(p.vehicleBrand) || '-'}</dd>${plateRows}</dl>`;
+}
+
+// หน้าต่างรายละเอียดเคส (แบบ ข): หัวสีกรมท่า → แผ่นสถานะ 4 ช่อง → การ์ดข้อมูล/ผู้ละเมิด + รายการทรัพย์สินพร้อมใบสรุปเงิน → ปุ่มตรึงด้านล่าง
 function openCaseDetailModal(id){
   const rec = records.find(r => r.id === id);
   if (!rec) return;
   const seqMap = computeSeqMap();
   const caseNo = `${rec.fiscalYear || ''}-${seqMap[rec.id] || ''}`;
 
-  const itemRowsHtml = (rec.items || []).length
-    ? rec.items.map(i => `
-        <tr>
-          <td>${escapeHtml(i.name)}</td>
-          <td class="num">${escapeHtml(i.qty)}</td>
-          <td class="num">${escapeHtml(i.unit)}</td>
-          <td class="num">${i.unitPrice != null ? formatMoney(i.unitPrice) : '-'}</td>
-          <td class="num">${i.price != null ? formatMoney(i.price) : '-'}</td>
-        </tr>`).join('')
-    : `<tr><td colspan="5" style="color:var(--ink-soft);text-align:center;padding:10px 0">ไม่มีรายการทรัพย์สิน</td></tr>`;
-
-  const materialsTotal = rec.materialsTotal != null ? rec.materialsTotal : (rec.items || []).reduce((s,i)=>s+(i.price||0),0);
+  const items = rec.items || [];
+  const materialsTotal = rec.materialsTotal != null ? rec.materialsTotal : items.reduce((s,i)=>s+(i.price||0),0);
   const operationCost = rec.operationCost != null ? rec.operationCost : Math.round(materialsTotal * 0.3);
   const isLaborMachine = rec.costMethod === 'laborMachine';
+
+  // ระยะเวลา: เคสที่ยังไม่ยุติ = นับถึงวันนี้ / เคสที่ยุติแล้ว = นับถึงวันที่ยุติ
+  const isClosed = !!rec.closedDate;
+  const start = new Date((rec.dateIncident || '') + 'T00:00:00');
+  const end = isClosed ? new Date(rec.closedDate + 'T00:00:00') : new Date();
+  const days = isNaN(start.getTime()) ? null : Math.max(0, Math.floor((end - start) / 86400000));
+
+  const tile = (cls, icon, label, value) => `<div class="cd-tile ${cls}"><div class="cd-ic">${icon}</div><div><span>${label}</span><b>${value}</b></div></div>`;
+  const doneCls = (v, ok) => !v ? 'n' : (v === ok ? 'ok' : 'warn');
+  const tilesHtml = `<div class="cd-tiles">
+      ${tile(doneCls(rec.compensationStatus, 'ชดใช้แล้ว'), '💰', 'การชดใช้', escapeHtml(rec.compensationStatus || 'ไม่ระบุ'))}
+      ${tile(doneCls(rec.repairStatus, 'จัดซ่อมแล้ว'), '🔧', 'การจัดซ่อม', escapeHtml(rec.repairStatus || 'ไม่ระบุ'))}
+      ${tile(isClosed ? 'ok' : 'bad', '📁', 'การยุติเรื่อง', isClosed ? 'ยุติแล้ว ' + escapeHtml(formatThaiDate(rec.closedDate)) : 'ยังไม่ยุติ')}
+      ${tile('n', '⏱', isClosed ? 'ใช้เวลาจนยุติ' : 'ระยะเวลาค้าง', days === null ? '-' : days.toLocaleString('th-TH') + ' วัน')}
+    </div>`;
+
+  const itemsHtml = items.length
+    ? items.map(i => `
+        <div class="cd-item"><div><b>${escapeHtml(i.name)}</b>
+          <div class="cd-q">${escapeHtml(i.qty)} ${escapeHtml(i.unit)}${i.unitPrice != null ? ' × ' + formatMoney(i.unitPrice) + ' บาท' : ''}</div></div>
+          <b class="mono">${i.price != null ? formatMoney(i.price) : '-'}</b></div>`).join('')
+    : '<p class="hint" style="text-align:center;padding:8px 0">ไม่มีรายการทรัพย์สิน</p>';
+  const receiptLine = (label, value, grand) => grand
+    ? `<div class="cd-ln" style="padding-top:8px"><b>${label}</b><i></i><span class="cd-grand mono">${value}</span><span class="cd-k">บาท</span></div>`
+    : `<div class="cd-ln"><span>${label}</span><i></i><b class="mono">${value}</b><span class="cd-k">บาท</span></div>`;
+  const receiptHtml = `<div class="cd-receipt">
+      ${receiptLine('รวมค่าวัสดุ', formatMoney(materialsTotal))}
+      ${isLaborMachine
+        ? receiptLine('ค่าแรง', formatMoney(rec.laborCost || 0)) + receiptLine('ค่าเครื่องจักร', formatMoney(rec.machineCost || 0))
+        : receiptLine('ค่าดำเนินการ 30%', formatMoney(operationCost))}
+      ${receiptLine('รวมทั้งสิ้น', formatMoney(rec.totalPrice), true)}
+    </div>`;
+
+  const others = rec.otherPartiesList || [];
+  const insuranceHtml = `<dl class="cd-dl" style="margin-top:6px"><dt>ประกันภัย</dt><dd>${escapeHtml(rec.hasInsurance) || 'ไม่ระบุ'}</dd>${rec.hasInsurance === 'มี' ? `<dt>บริษัทประกัน</dt><dd>${escapeHtml(rec.insuranceCompany) || '-'}</dd>` : ''}</dl>`;
+  const mainParty = { vehicleType: rec.vehicleType, vehicleBrand: rec.vehicleBrand, plate: rec.plate, trailerPlate: rec.trailerPlate, driverName: rec.driverName, driverPhone: rec.driverPhone };
 
   const root = document.getElementById('modalRoot');
   root.innerHTML = `
     <div class="modal-backdrop">
-      <div class="modal modal-lg">
-        <div class="modal-head"><h3>รายการ ${escapeHtml(caseNo)} — ${escapeHtml(formatThaiDate(rec.dateIncident))}</h3><button class="modal-close" id="caseDetailCloseX" type="button">×</button></div>
-        <p>ทล.${escapeHtml(rec.highway)} ตอน ${escapeHtml(rec.section)} — กม.${escapeHtml(formatKm(rec.km))}</p>
-
-        <div class="detail-section-title">ข้อมูลอุบัติเหตุ</div>
-        <div class="detail-grid">
-          <div><div class="k">วันที่เกิดเหตุ</div><div class="v">${escapeHtml(formatThaiDate(rec.dateIncident)) || '-'}</div></div>
-          <div><div class="k">เวลา</div><div class="v">${escapeHtml(rec.time) || '-'}</div></div>
-          <div><div class="k">ตำแหน่ง / จุดเกิดเหตุ</div><div class="v">${escapeHtml(formatPosition(rec)) || '-'}</div></div>
-          <div><div class="k">วันที่พบ</div><div class="v">${escapeHtml(formatThaiDate(rec.dateFound)) || '-'}</div></div>
+      <div class="modal modal-lg case-modal">
+        <div class="modal-head cd-hd">
+          <div>
+            <div class="cd-lbl">รายการอุบัติเหตุ</div>
+            <h3>${escapeHtml(caseNo)} <span class="cd-dt">· ${escapeHtml(formatThaiDate(rec.dateIncident))}</span></h3>
+            <div class="cd-loc">📍 ทล.${escapeHtml(rec.highway)} ตอน ${escapeHtml(rec.section)} · กม.${escapeHtml(formatKm(rec.km))}</div>
+          </div>
+          <button class="modal-close" id="caseDetailCloseX" type="button">×</button>
         </div>
-
-        <div class="detail-section-title">รถ / คู่กรณี</div>
-        ${partyDetailBlockHtml({
-          vehicleType: rec.vehicleType, vehicleBrand: rec.vehicleBrand, plate: rec.plate,
-          trailerPlate: rec.trailerPlate, driverName: rec.driverName, driverPhone: rec.driverPhone
-        }, (rec.otherPartiesList && rec.otherPartiesList.length) ? 'ผู้ละเมิดหลัก' : 'ผู้ละเมิด')}
-        <div class="detail-grid" style="margin-top:-6px;margin-bottom:14px">
-          <div><div class="k">ประกันภัย</div><div class="v">${escapeHtml(rec.hasInsurance) || 'ไม่ระบุ'}</div></div>
-          ${rec.hasInsurance === 'มี' ? `<div><div class="k">บริษัทประกัน</div><div class="v">${escapeHtml(rec.insuranceCompany) || '-'}</div></div>` : ''}
+        <div class="modal-body">
+          ${tilesHtml}
+          <div class="cd-cols">
+            <div>
+              <div class="cd-card"><div class="cd-sec">ข้อมูลอุบัติเหตุ</div>
+                <dl class="cd-dl">
+                  <dt>วันที่เกิดเหตุ</dt><dd>${escapeHtml(formatThaiDate(rec.dateIncident)) || '-'}</dd>
+                  <dt>เวลา</dt><dd>${escapeHtml(rec.time) || '-'}</dd>
+                  <dt>ตำแหน่ง</dt><dd>${escapeHtml(formatPosition(rec)) || '-'}</dd>
+                  <dt>วันที่พบ</dt><dd>${escapeHtml(formatThaiDate(rec.dateFound)) || '-'}</dd>
+                </dl></div>
+              <div class="cd-card"><div class="cd-sec">${others.length ? 'ผู้ละเมิดหลัก' : 'ผู้ละเมิด'}</div>
+                ${caseDetailPersonHtml(mainParty)}${insuranceHtml}
+                ${others.map((p, i) => `<div class="cd-divider"></div>${caseDetailPersonHtml(p, 'คู่กรณีร่วมที่ ' + (i + 2))}`).join('')}
+              </div>
+            </div>
+            <div>
+              <div class="cd-card"><div class="cd-sec">รายการทรัพย์สินเสียหาย <span class="cd-count">${items.length} รายการ</span></div>
+                ${itemsHtml}${receiptHtml}</div>
+              <div class="cd-card"><div class="cd-sec">อ้างอิงและหมายเหตุ</div>
+                <dl class="cd-dl">
+                  <dt>เลขที่อ้างอิง</dt><dd style="font-size:13px">${escapeHtml(rec.referenceNo) || '-'}</dd>
+                  <dt>วันที่ปิดเคส</dt><dd>${rec.closedDate ? escapeHtml(formatThaiDate(rec.closedDate)) : '-'}</dd>
+                  <dt>หมายเหตุ</dt><dd>${escapeHtml(rec.note) || '-'}</dd>
+                  <dt>ผู้บันทึก</dt><dd>${escapeHtml(rec.recordedBy) || '-'}</dd>
+                </dl></div>
+            </div>
+          </div>
         </div>
-        ${(rec.otherPartiesList || []).map((p, i) => partyDetailBlockHtml(p, 'คู่กรณีร่วมที่ ' + (i + 2))).join('')}
-
-        <div class="detail-section-title">รายการทรัพย์สินเสียหาย</div>
-        <table class="detail-items-table">
-          <thead><tr><th>รายการ</th><th class="num">จำนวน</th><th class="num">หน่วย</th><th class="num">ราคา/หน่วย</th><th class="num">เป็นเงิน</th></tr></thead>
-          <tbody>${itemRowsHtml}</tbody>
-          <tfoot>
-            <tr class="totals-row totals-row-first">
-              <td></td>
-              <td colspan="2" class="dt-label">รวมค่าวัสดุ</td>
-              <td class="dt-colon">:</td>
-              <td class="dt-value"><span class="dt-num">${formatMoney(materialsTotal)}</span><span class="dt-unit">บาท</span></td>
-            </tr>
-            ${isLaborMachine ? `
-            <tr class="totals-row">
-              <td></td>
-              <td colspan="2" class="dt-label">ค่าแรง</td>
-              <td class="dt-colon">:</td>
-              <td class="dt-value"><span class="dt-num">${formatMoney(rec.laborCost || 0)}</span><span class="dt-unit">บาท</span></td>
-            </tr>
-            <tr class="totals-row">
-              <td></td>
-              <td colspan="2" class="dt-label">ค่าเครื่องจักร</td>
-              <td class="dt-colon">:</td>
-              <td class="dt-value"><span class="dt-num">${formatMoney(rec.machineCost || 0)}</span><span class="dt-unit">บาท</span></td>
-            </tr>
-            ` : `
-            <tr class="totals-row">
-              <td></td>
-              <td colspan="2" class="dt-label">ค่าดำเนินการ 30%</td>
-              <td class="dt-colon">:</td>
-              <td class="dt-value"><span class="dt-num">${formatMoney(operationCost)}</span><span class="dt-unit">บาท</span></td>
-            </tr>
-            `}
-            <tr class="totals-row totals-row-grand">
-              <td></td>
-              <td colspan="2" class="dt-label">รวมทั้งสิ้น</td>
-              <td class="dt-colon">:</td>
-              <td class="dt-value"><b class="dt-num">${formatMoney(rec.totalPrice)}</b><span class="dt-unit">บาท</span></td>
-            </tr>
-          </tfoot>
-        </table>
-
-        <div class="detail-section-title">ผลการติดตาม</div>
-        <div class="detail-grid">
-          <div><div class="k">การชดใช้</div><div class="v">${statusPill(rec.compensationStatus,'comp')}</div></div>
-          <div><div class="k">การจัดซ่อม</div><div class="v">${statusPill(rec.repairStatus,'repair')}</div></div>
-          <div><div class="k">วันที่ปิดเคส</div><div class="v">${rec.closedDate ? formatThaiDate(rec.closedDate) : '-'}</div></div>
-          <div><div class="k">เลขที่อ้างอิง</div><div class="v">${escapeHtml(rec.referenceNo) || '-'}</div></div>
-          <div class="full"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(rec.note) || '-'}</div></div>
-          <div class="full"><div class="k">ผู้บันทึก</div><div class="v">${escapeHtml(rec.recordedBy) || '-'}</div></div>
-        </div>
-
-        <div class="actions" style="margin-top:18px">
+        <div class="cd-foot">
           <button class="btn btn-danger" id="caseDetailDelete" style="margin-right:auto">ลบรายการ</button>
           <button class="btn btn-outline" id="caseDetailClose">ปิด</button>
           <button class="btn btn-primary" id="caseDetailEdit">แก้ไขรายการ</button>
@@ -3120,7 +3159,6 @@ function openCaseDetailModal(id){
   };
 }
 
- 
 function renderDashYearFilter(){
   const years = Array.from(new Set(records.map(r => r.fiscalYear).filter(Boolean))).sort((a,b)=>b-a);
   const el = document.getElementById('dashYearFilter');
@@ -3278,10 +3316,11 @@ function renderFollowUp(){
 
   const firstN = fyMode ? openAll.length : recent.length;
   const firstLabel = fyMode ? 'ค้างในปีงบนี้' : 'ค้างใน 12 เดือน';
+  // เลือกปีงบเดียวไม่แสดงช่อง "ค้างเกิน 1 ปี" — ซ้ำกับช่องแรก (ปีงบเก่าทั้งปีเกิน 1 ปีอยู่แล้ว / ปีงบปัจจุบันเป็น 0 เสมอ)
   const statsHtml = `
-    <div class="fstat-grid">
+    <div class="fstat-grid"${fyMode ? ' style="grid-template-columns:repeat(3,1fr)"' : ''}>
       <div class="fstat ${firstN ? 'acc' : 'ok'}"><b>${firstN}</b><span>${firstLabel}</span></div>
-      <div class="fstat bad"><b>${older.length}</b><span>ค้างเกิน 1 ปี</span></div>
+      ${fyMode ? '' : `<div class="fstat bad"><b>${older.length}</b><span>ค้างเกิน 1 ปี</span></div>`}
       <div class="fstat"><b>${noComp}</b><span>รอชดใช้</span></div>
       <div class="fstat"><b>${noRepair}</b><span>รอจัดซ่อม</span></div>
     </div>`;
