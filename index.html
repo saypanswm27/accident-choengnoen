@@ -643,6 +643,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .follow-row .f-main{min-width:0}
 .follow-row .f-sub{font-size:12.5px;color:var(--ink-mute)}
 .follow-row .f-right{text-align:right;white-space:nowrap}
+.follow-row .f-unit{font-size:12.5px;color:var(--ink-mute)}
 .age-pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600;background:var(--paper-2);color:var(--ink-soft);margin-left:6px}
 .age-pill.warn{background:var(--spot2-bg);color:var(--spot2-fg)}
 .age-pill.bad{background:var(--rust-bg);color:var(--rust)}
@@ -1976,7 +1977,35 @@ function renderTeamPanel(){
 }
 
 /* ============ tabs ============ */
+// ประวัติการสลับแท็บ: ระบบเป็นหน้าเดียวที่สลับแท็บ เดิมปุ่มย้อนกลับของเบราว์เซอร์จึงพาออกจากระบบไปเลย
+// ตอนนี้ทุกครั้งที่สลับแท็บจะบันทึกเป็นรายการในประวัติ (พร้อมตำแหน่งที่เลื่อนอยู่) ปุ่มย้อนกลับ/ไปข้างหน้าจึงสลับแท็บให้
+let currentViewName = 'dash';
+let suppressViewHistory = false;
+function recordViewInHistory(view){
+  if (suppressViewHistory || view === currentViewName) return;
+  try {
+    history.replaceState({ view: currentViewName, scrollY: window.scrollY }, '');
+    history.pushState({ view }, '', '#' + view);
+  } catch (e) { /* บางสภาพแวดล้อมไม่รองรับ — ข้ามไป ระบบยังใช้งานได้ปกติ */ }
+  currentViewName = view;
+  window.scrollTo(0, 0);
+}
+function initViewHistory(){
+  try { history.replaceState({ view: 'dash' }, ''); } catch (e) {}
+  window.addEventListener('popstate', (e) => {
+    const st = e.state || {};
+    const btn = document.querySelector('.tab-btn[data-view="' + (st.view || 'dash') + '"]');
+    if (!btn) return;
+    suppressViewHistory = true;
+    try { btn.click(); } finally { suppressViewHistory = false; }
+    const active = document.querySelector('.tab-btn.active');
+    currentViewName = active ? active.dataset.view : 'dash';
+    if (st.scrollY) setTimeout(() => window.scrollTo(0, st.scrollY), 60);
+  });
+}
+
 function initTabs(){
+  initViewHistory();
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       // อนุญาตให้ดู "ภาพรวม" ได้โดยไม่ต้องล็อกอิน ส่วนแท็บอื่นต้องล็อกอินก่อนเสมอ
@@ -1997,6 +2026,7 @@ function initTabs(){
       if (btn.dataset.view === 'settings') renderTeamPanel();
       if (btn.dataset.view === 'assets') renderAssetsPanel();
       if (btn.dataset.view === 'routes') renderRoutesTable();
+      recordViewInHistory(btn.dataset.view);
     });
   });
 }
@@ -3260,7 +3290,7 @@ function renderFollowUp(){
     <div class="follow-row" data-id="${escapeHtml(r.id)}">
       <div class="f-main"><b>ทล.${escapeHtml(String(r.highway))} กม.${escapeHtml(formatKm(r.km))}</b>${r.plate ? ' <span style="color:var(--ink-mute)">· ' + escapeHtml(r.plate) + '</span>' : ''}
         <div class="f-sub">${escapeHtml(r.compensationStatus || 'ยังไม่ระบุการชดใช้')} · ${escapeHtml(r.repairStatus || 'ยังไม่ระบุการจัดซ่อม')}</div></div>
-      <div class="f-right"><b class="mono">${formatMoney(r.totalPrice || 0)}</b><span class="age-pill ${age > 60 ? 'bad' : age > 30 ? 'warn' : ''}">ค้าง ${age} วัน</span></div>
+      <div class="f-right"><b class="mono">${formatMoney(r.totalPrice || 0)}</b> <span class="f-unit">บาท</span><span class="age-pill ${age > 60 ? 'bad' : age > 30 ? 'warn' : ''}">ค้าง ${age} วัน</span></div>
     </div>`).join('');
   const emptyMsg = fyMode ? '✓ ปีงบนี้ไม่มีเคสค้าง' : '✓ ไม่มีเคสค้างในรอบ 12 เดือนล่าสุด';
   const recentHtml = listSource.length
