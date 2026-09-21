@@ -768,6 +768,10 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 #view-form :not(.section-title):not(.section-title *):not(.form-savebar):not(.form-savebar *){font-family:'Sarabun',sans-serif}
 /* หน้าต่างรายละเอียดเคส: เนื้อหาภายใน (หัวข้อการ์ด ยอดรวมสุทธิ ฯลฯ) ใช้ Sarabun ทั้งหมด — หัวสีกรมท่าและปุ่มด้านล่างคงเดิม */
 .case-modal .modal-body,.case-modal .modal-body *{font-family:'Sarabun',sans-serif}
+.ic-group{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:10px;background:#fff}
+.ic-to{font-weight:600;margin-bottom:6px}
+.ic-from{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:var(--ink-soft);padding:2px 0}
+.ic-from b{font-weight:400;color:var(--ink-mute);white-space:nowrap}
 .quick-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px}
 .export-group{margin-left:auto;display:flex;gap:8px;position:relative}
 .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(10,37,64,.28);padding:6px;z-index:40;min-width:290px;max-width:360px}
@@ -995,7 +999,8 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           </div>
           <div class="field" id="f_insuranceCompanyWrap" style="display:none">
             <label>บริษัทประกันภัย</label>
-            <input type="text" id="f_insuranceCompany" placeholder="เช่น วิริยะประกันภัย">
+            <input type="text" id="f_insuranceCompany" list="insurerList" autocomplete="off" placeholder="เลือกจากรายชื่อ หรือพิมพ์ชื่อบริษัท">
+            <datalist id="insurerList"></datalist>
           </div>
         </div>
       </div>
@@ -1259,6 +1264,11 @@ tr.route-editable:hover td{background:var(--amber-glow)}
         <div class="section-title">🗑 ถังขยะ</div>
         <p class="hint">เคสที่ลบไว้ กู้คืนหรือลบถาวรได้</p>
         <button class="btn btn-outline" id="btnOpenTrash">เปิดถังขยะ</button>
+      </div>
+      <div class="card" id="cardInsurer" style="display:none">
+        <div class="section-title">🏷 ชื่อบริษัทประกัน</div>
+        <p class="hint">รวมชื่อบริษัทประกันที่พิมพ์ไม่เหมือนกันให้เป็นชื่อเดียว (ดูตัวอย่างก่อนปรับ)</p>
+        <button class="btn btn-outline" id="btnInsurerCleanup" type="button">จัดระเบียบชื่อบริษัท</button>
       </div>
       <div class="card" id="cardImport" style="display:none">
         <div class="section-title">⬆ นำเข้าจากระบบเดิม</div>
@@ -1806,6 +1816,7 @@ function refreshVisibleViews(){
   const scrollY = window.scrollY;
   try {
     populateYearFilter();
+    populateInsurerList();
     if (v === 'list') renderTable();
     if (v === 'dash') renderDashboard();
     if (v === 'assets') renderAssetsPanel();
@@ -1933,6 +1944,8 @@ function updateWhoDisplay(){
   if (trashCard) trashCard.style.display = recorderName ? '' : 'none';
   const importCard = document.getElementById('cardImport');
   if (importCard) importCard.style.display = isOwner() ? '' : 'none';
+  const insurerCard = document.getElementById('cardInsurer');
+  if (insurerCard) insurerCard.style.display = isOwner() ? '' : 'none';
   renderTeamPanel(); 
   
   
@@ -2999,7 +3012,7 @@ async function saveForm(){
     plate: document.getElementById('f_plate').value.trim(),
     trailerPlate: document.getElementById('f_trailerPlate').value.trim(),
     hasInsurance: document.getElementById('f_hasInsurance').value,
-    insuranceCompany: document.getElementById('f_insuranceCompany').value.trim(),
+    insuranceCompany: normalizeInsurer(document.getElementById('f_insuranceCompany').value),
     otherPartiesList: collectOtherPartiesFromForm(),
     driverName: document.getElementById('f_driverName').value.trim(),
     driverAge: document.getElementById('f_driverAge').value.trim(),
@@ -3198,6 +3211,7 @@ async function startApp(){
     await Promise.all([loadMaterialPrices(), loadRoutesData(), loadRecords()]);
     populateHighwaySelect();
     populateYearFilter();
+    populateInsurerList();
     updateWhoDisplay();
   } catch (e) {
     console.error('startApp failed', e);
@@ -3393,6 +3407,102 @@ async function openTrashModal(){
  
 // ย่อชื่อบริษัทประกัน: ตัดคำนำ (บริษัท/บมจ./บ./หจก.) และคำท้าย (จำกัด/(มหาชน)/ประกันภัย) แล้วจำกัดความยาวถ้าระบุ maxLen
 // ใช้แสดงในตาราง/รายงานเท่านั้น — ชื่อเต็มยังเก็บครบในฐานข้อมูลและแสดงในหน้ารายละเอียดเคส/ไฟล์ Excel
+/* ===== ชื่อบริษัทประกันภัย: จัดรูปแบบให้เหมือนกัน =====
+   ชื่อเดียวกันที่พิมพ์ต่างกัน (เช่น "บ.วิริยะประกันภัย จำกัด(มหาชน)" / "วิริยะประกันภัย" / พิมพ์ผิด) จะถูกจัดเป็นชื่อมาตรฐานเดียว
+   - ในฟอร์ม: เลือกจากรายชื่อที่มี หรือพิมพ์เอง แล้วระบบแปลงให้ตรงชื่อมาตรฐานทันทีที่พิมพ์เสร็จ/บันทึก
+   - เคสเก่า: เจ้าของระบบกด "จัดระเบียบชื่อบริษัทประกัน" ในหน้าตั้งค่า เพื่อดูตัวอย่างก่อนแล้วจึงปรับทีเดียว */
+const INSURER_KNOWN = ['วิริยะประกันภัย','ทิพยประกันภัย','ธนชาตประกันภัย','สินมั่นคงประกันภัย','เมืองไทยประกันภัย','ไทยประกันภัย','ไทยศรีประกันภัย','ไทยวิวัฒน์ประกันภัย','นำสินประกันภัย','นวกิจประกันภัย','เทเวศประกันภัย','ไอโออิ กรุงเทพประกันภัย','คุ้มภัยโตเกียวมารีนประกันภัย','ซับบ์สามัคคีประกันภัย','มิตรแท้ประกันภัย','ฟอลคอนประกันภัย','MIG ประกันภัย','แอล เอ็ม จี ประกันภัย'];
+// แกนชื่อสำหรับเทียบ: ตัดคำนำ (บ./บริษัท/บมจ.) วงเล็บ (มหาชน) จำกัด คำว่า ประกัน/ประกันภัย ช่องว่าง จุด แล้วแก้คำที่มักพิมพ์ผิด
+function insurerKey(s){
+  let k = String(s || '').trim().toLowerCase();
+  k = k.replace(/^(บริษัท|บมจ\.?|บจก\.?|หจก\.?|บ\.)\s*/, '').replace(/^บง(?=คุ้มภัย)/, '');
+  k = k.replace(/\(.*?\)/g, '').replace(/มหาชน|จำกัด/g, '').replace(/ประกันภัย|ประกัน/g, '').replace(/[\s.\-_,]+/g, '');
+  return k.replace(/มารรีน/g, 'มารีน').replace(/ศรรี/g, 'ศรี').replace(/เทเวศน์/g, 'เทเวศ').replace(/ทิพย์/g, 'ทิพย')
+          .replace(/ไอโอไอ/g, 'ไอโออิ').replace(/^แอลเอ็มจี$|^lmg$/, 'แอลเอ็มจี');
+}
+const INSURER_BY_KEY = {};
+INSURER_KNOWN.forEach(n => { INSURER_BY_KEY[insurerKey(n)] = n; });
+function normalizeInsurer(text){
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+  const key = insurerKey(raw);
+  if (key && INSURER_BY_KEY[key]) return INSURER_BY_KEY[key];
+  // ชื่อที่ยังไม่อยู่ในรายชื่อ: ตัดคำนำ/คำท้ายให้เหลือรูปแบบเดียวกัน แล้วปิดท้ายด้วย "ประกันภัย"
+  let core = raw.replace(/^(บริษัท|บมจ\.?|บจก\.?|หจก\.?|บ\.)\s*/, '').replace(/\(\s*มหาชน\s*\)|มหาชน|จำกัด/g, '').replace(/\s+/g, ' ').trim();
+  if (!core) return raw;
+  if (!/ประกัน/.test(core)) core += (/[A-Za-z0-9]$/.test(core) ? ' ' : '') + 'ประกันภัย';
+  return core;
+}
+// รายชื่อที่เสนอในช่องกรอก = รายชื่อมาตรฐาน + ชื่อที่พบในเคสปัจจุบัน (จัดรูปแบบแล้ว)
+function insurerOptions(){
+  const set = new Set(INSURER_KNOWN);
+  (typeof records !== 'undefined' ? records : []).forEach(r => { const n = normalizeInsurer(r.insuranceCompany); if (n) set.add(n); });
+  return [...set].sort(naturalCompareTh);
+}
+function populateInsurerList(){
+  const dl = document.getElementById('insurerList');
+  if (dl) dl.innerHTML = insurerOptions().map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+}
+// แผนปรับชื่อเคสเก่า: คืนรายการเคสที่ชื่อยังไม่ตรงมาตรฐาน และกลุ่มสรุปสำหรับแสดงตัวอย่าง
+function buildInsurerCleanupPlan(){
+  const changes = [], groups = {};
+  records.forEach(r => {
+    const cur = String(r.insuranceCompany || '');
+    if (!cur.trim()) return;
+    const to = normalizeInsurer(cur);
+    if (to === cur) return;
+    changes.push({ rec: r, from: cur, to });
+    const g = groups[to] = groups[to] || {};
+    g[cur] = (g[cur] || 0) + 1;
+  });
+  return { changes, groups };
+}
+function openInsurerCleanupModal(){
+  if (!isOwner()) { showToast('เฉพาะเจ้าของระบบเท่านั้น'); return; }
+  const { changes, groups } = buildInsurerCleanupPlan();
+  const root = document.getElementById('modalRoot');
+  const names = Object.keys(groups).sort(naturalCompareTh);
+  const listHtml = names.map(to => `
+    <div class="ic-group"><div class="ic-to">${escapeHtml(to)}</div>
+      ${Object.keys(groups[to]).map(v => `<div class="ic-from"><span>${escapeHtml(v)}</span><b>${groups[to][v]} เคส</b></div>`).join('')}
+    </div>`).join('');
+  root.innerHTML = `
+    <div class="modal-backdrop"><div class="modal edit-modal">
+      <div class="modal-head em-head"><div><div class="em-lbl">ตั้งค่า</div><h3>จัดระเบียบชื่อบริษัทประกัน</h3></div><button class="modal-close" id="icClose" type="button">×</button></div>
+      <div class="modal-body em-body">
+        ${changes.length ? `
+          <p class="em-hint" style="margin:0 0 12px">พบ <b>${changes.length} เคส</b> ที่ชื่อบริษัทพิมพ์ไม่เหมือนกัน จะปรับเป็นชื่อมาตรฐานตามด้านล่าง (ดูตัวอย่างก่อน ยังไม่มีอะไรถูกแก้จนกว่าจะกดปุ่มยืนยัน)</p>
+          ${listHtml}` : `<p class="em-hint" style="margin:0">ชื่อบริษัทประกันทุกเคสเป็นรูปแบบเดียวกันแล้ว ไม่ต้องปรับ</p>`}
+      </div>
+      <div class="cd-foot">
+        <span style="flex:1" id="icStatus" class="em-hint"></span>
+        <button class="btn btn-outline" id="icCancel" type="button">ปิด</button>
+        ${changes.length ? `<button class="btn btn-primary" id="icApply" type="button">ปรับ ${changes.length} เคส</button>` : ''}
+      </div>
+    </div></div>`;
+  const close = () => { root.innerHTML = ''; };
+  document.getElementById('icClose').onclick = close;
+  document.getElementById('icCancel').onclick = close;
+  const btn = document.getElementById('icApply');
+  if (btn) btn.onclick = async () => {
+    btn.disabled = true;
+    const status = document.getElementById('icStatus');
+    let ok = 0, fail = 0;
+    for (let i = 0; i < changes.length; i++) {
+      const c = changes[i];
+      status.textContent = 'กำลังปรับ ' + (i + 1) + ' / ' + changes.length + ' …';
+      const next = Object.assign({}, c.rec, { insuranceCompany: c.to, updatedAt: new Date().toISOString() });
+      if (await apiUpdateRecord(next)) { c.rec.insuranceCompany = c.to; ok++; } else { fail++; }
+    }
+    populateInsurerList();
+    refreshVisibleViews();
+    status.textContent = 'ปรับแล้ว ' + ok + ' เคส' + (fail ? ' · ไม่สำเร็จ ' + fail + ' เคส' : '');
+    btn.textContent = fail ? 'ลองใหม่' : '✓ เสร็จแล้ว';
+    btn.disabled = !fail;
+    if (fail) btn.onclick = () => { close(); openInsurerCleanupModal(); };
+    showToast('จัดระเบียบชื่อบริษัทประกันแล้ว ' + ok + ' เคส');
+  };
+}
 function shortInsurerName(name, maxLen){
   const full = String(name || '').trim();
   if (!full) return '';
@@ -5087,6 +5197,8 @@ async function init(){
   document.addEventListener('click', closeExportMenu);
   document.getElementById('btnImport').addEventListener('click', runImport);
   document.getElementById('btnOpenTrash').addEventListener('click', openTrashModal);
+  document.getElementById('btnInsurerCleanup').addEventListener('click', openInsurerCleanupModal);
+  document.getElementById('f_insuranceCompany').addEventListener('change', e => { e.target.value = normalizeInsurer(e.target.value); });
   populateMaterialCategorySelect();
   initItemEntryUi();
 
