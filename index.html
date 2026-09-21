@@ -3871,7 +3871,7 @@ function describeListFilters(){
   if (f.hw) out.push('ทล.' + f.hw);
   if (f.status) out.push(f.status === 'open' ? 'ยังไม่ยุติเรื่อง' : 'ยุติเรื่องแล้ว');
   if (f.ins) out.push('ประกันภัย: ' + ({ yes: 'มี', no: 'ไม่มี', unknown: 'ยังไม่ระบุ' })[f.ins]);
-  if (f.repair) out.push('การจัดซ่อม: ' + ({ pending: 'ยังไม่จัดซ่อม (รวมที่ยังไม่ระบุ)', done: 'จัดซ่อมแล้ว', unknown: 'ยังไม่ระบุ' })[f.repair]);
+  if (f.repair) out.push('การจัดซ่อม: ' + ({ pending: 'ยังไม่จัดซ่อม', done: 'จัดซ่อมแล้ว', unknown: 'ยังไม่ระบุ' })[f.repair]);
   if (f.q) out.push('คำค้น "' + document.getElementById('searchBox').value.trim() + '"');
   return out;
 }
@@ -3958,7 +3958,7 @@ function summarizeRows(rows){
 
 /* ============ Excel ============ */
 const XL = {
-  font: 'Tahoma',
+  font: 'Sarabun',
   navy: 'FF123A5E', navyText: 'FFFFFFFF', line: 'FFDFE2DD', zebra: 'FFF7F8F6',
   groupFill: ['FFDCE6F0', 'FFE8EEDD', 'FFF6E7D3', 'FFFCEBDA', 'FFE2E0F0', 'FFE6E6E0'],
   dateFmt: '[$-107041E]dd/mm/yyyy',   // แสดงปี พ.ศ. ใน Excel ภาษาไทย
@@ -3998,7 +3998,7 @@ function buildSummarySheet(wb, rows, meta){
     ['มูลค่าความเสียหายรวม', s.value, '#,##0.00 "บาท"'],
     ['ยุติเรื่องแล้ว', s.closed, '#,##0 "เคส"'],
     ['ยังไม่ยุติเรื่อง', s.open, '#,##0 "เคส"'],
-    ['มีประกันภัย แต่ยังไม่จัดซ่อม (รวมยังไม่ระบุ)', s.insUnrep, '#,##0 "เคส"']
+    ['มีประกันภัย แต่ยังไม่จัดซ่อม', s.insUnrep, '#,##0 "เคส"']
   ];
   ws.mergeCells(r, 1, r, 6);
   ws.getCell(r, 1).value = 'ตัวเลขสำคัญ';
@@ -4245,8 +4245,8 @@ function buildReportHtml(rows, meta){
       <td class="c nw">${th(formatThaiDate(r.dateIncident))}</td>
       <td>ทล.${th(r.highway)}<div class="sub">${th(r.section)}</div></td>
       <td class="c nw">${th(formatKm(r.km))}</td>
-      <td>${th(r.driverName || '-')}</td>
-      <td class="nw">${th(plateText(r) || '-')}</td>
+      <td class="nw">${th(r.driverName || '-')}</td>
+      <td class="nw">${th(plateText(r) || '-').split(' / ').join('<br>')}</td>
       <td class="r nw">${th(formatMoney(m.total))}</td>
       <td class="c">${pill(r.compensationStatus, 'ชดใช้แล้ว')}</td>
       <td class="c">${pill(r.repairStatus, 'จัดซ่อมแล้ว')}${r.hasInsurance === 'มี' ? `<div class="sub">ประกัน: ${th(shortInsurerName(r.insuranceCompany) || 'มี')}</div>` : ''}</td>
@@ -4258,9 +4258,10 @@ function buildReportHtml(rows, meta){
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@600&family=Sarabun:wght@400;600;700&display=swap">
 <style>
-@page{size:A4 landscape;margin:12mm 10mm 14mm}
+/* margin:0 = เบราว์เซอร์ไม่พิมพ์ส่วนหัว/ส่วนท้าย (ชื่อไฟล์ วันที่ เลขหน้า) ลงกระดาษ — ระยะขอบจริงทำด้วยแถวเว้นระยะในตารางที่ซ้ำทุกหน้าแทน */
+@page{size:A4 landscape;margin:0}
 *{box-sizing:border-box}
-body{font-family:'Sarabun','Tahoma',sans-serif;font-size:10.5pt;color:#182430;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'Sarabun','Tahoma',sans-serif;font-size:10.5pt;color:#182430;margin:0;padding:0 10mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 h1{font-family:'Kanit','Sarabun',sans-serif;font-size:17pt;margin:0;color:#123a5e}
 .sub0{color:#5c6773;font-size:9.5pt;margin-top:2px}
 .scope{margin-top:6px;font-size:9.5pt;color:#b45309;font-weight:600}
@@ -4278,10 +4279,14 @@ tbody tr:nth-child(even) td{background:#f7f8f6}
 .sub{font-size:8.5pt;color:#7a8592}
 .pl{display:inline-block;white-space:nowrap;padding:0 7px;border-radius:9px;font-size:8.5pt;font-weight:600}
 .pl.ok{background:#e1f5ee;color:#0f6e56}.pl.bad{background:#fceaea;color:#a32d2d}.pl.na{background:#eceee9;color:#7a8592;font-weight:400}
-tfoot{display:table-row-group}
-tfoot td{font-weight:700;background:#ecefe9;border-top:2px solid #123a5e}
+table.rep{margin-top:-12mm}
+tr.sp td{height:12mm;padding:0;border:0;background:none}
+tfoot tr.sp td{height:14mm}
+tbody tr.tot td{font-weight:700;background:#ecefe9;border-top:2px solid #123a5e}
+.top-gap{height:12mm}
 .foot{margin-top:8px;font-size:8.5pt;color:#7a8592}
 </style></head><body>
+<div class="top-gap"></div>
 <h1>รายงานอุบัติเหตุ หมวดทางหลวงเชิงเนิน</h1>
 <div class="sub0">สำนักงานทางหลวงที่ 14 (ชลบุรี) · แขวงทางหลวงระยอง · ส่งออกเมื่อ ${th(thaiLongNow())}${recorderName ? ' · โดย ' + th(recorderName) : ''}</div>
 <div class="scope">ขอบเขตข้อมูล: ${meta.filters.length ? 'ตามตัวกรอง — ' + th(meta.filters.join(' · ')) : 'ทั้งหมด'}</div>
@@ -4292,10 +4297,10 @@ tfoot td{font-weight:700;background:#ecefe9;border-top:2px solid #123a5e}
   <div class="tile"><b>${s.open.toLocaleString('th-TH')}</b><span>ยังไม่ยุติเรื่อง</span></div>
   <div class="tile"><b>${s.insUnrep.toLocaleString('th-TH')}</b><span>มีประกัน รอจัดซ่อม</span></div>
 </div>
-<table>
-<thead><tr><th style="width:9%">เลขที่เคส</th><th style="width:8%">วันที่</th><th style="width:16%">ทล. / ตอน</th><th style="width:7%">กม.</th><th>ผู้ละเมิด</th><th style="width:11%">ทะเบียนรถ</th><th style="width:10%">ราคาประเมิน (บาท)</th><th style="width:8.5%">ชดใช้</th><th style="width:9.5%">จัดซ่อม</th><th style="width:8%">ยุติเรื่อง</th></tr></thead>
-<tbody>${body}</tbody>
-<tfoot><tr><td colspan="6" class="r">รวม ${s.total.toLocaleString('th-TH')} เคส</td><td class="r nw">${th(formatMoney(s.value))}</td><td colspan="3"></td></tr></tfoot>
+<table class="rep">
+<thead><tr class="sp"><td colspan="10"></td></tr><tr><th style="width:8%">เลขที่เคส</th><th style="width:8%">วันที่</th><th style="width:13%">ทล. / ตอน</th><th style="width:6.5%">กม.</th><th style="width:19%">ผู้ละเมิด</th><th style="width:11.5%">ทะเบียนรถ</th><th style="width:9%">ราคาประเมิน (บาท)</th><th style="width:8%">ชดใช้</th><th style="width:10%">จัดซ่อม</th><th style="width:7%">ยุติเรื่อง</th></tr></thead>
+<tbody>${body}<tr class="tot"><td colspan="6" class="r">รวม ${s.total.toLocaleString('th-TH')} เคส</td><td class="r nw">${th(formatMoney(s.value))}</td><td colspan="3"></td></tr></tbody>
+<tfoot><tr class="sp"><td colspan="10"></td></tr></tfoot>
 </table>
 <div class="foot">ข้อมูลจากระบบงานอุบัติเหตุ หมวดทางหลวงเชิงเนิน — ราคาประเมินรวมค่าวัสดุและค่าดำเนินการ</div>
 </body></html>`;
