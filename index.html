@@ -618,6 +618,23 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 }
 
 /* ===== ภาพรวม: กล่อง "เคสที่ต้องติดตาม" ===== */
+.fstat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.fstat{background:var(--paper);border-radius:10px;padding:8px 12px}
+.fstat b{display:block;font-family:'Kanit',sans-serif;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
+.fstat span{font-size:12px;color:var(--ink-mute)}
+.fstat.ok b{color:var(--green)}.fstat.acc b{color:var(--amber)}.fstat.bad b{color:var(--rust)}
+.backlog-head{display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+.backlog-row{display:grid;grid-template-columns:52px 1fr 30px;gap:8px;align-items:center;margin:2px 0;padding:2px 4px;font-size:12.5px;cursor:pointer;border-radius:6px}
+.backlog-row:hover{background:var(--paper)}
+.mini-track{height:8px;background:var(--paper-2);border-radius:9px;overflow:hidden}
+.mini-track i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#f6a35c,#e0620f)}
+.spot-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+.spot-table th{text-align:left;font-size:12px;color:var(--ink-mute);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+.spot-table td{padding:8px;border-bottom:1px solid var(--line)}
+.spot-table tr:last-child td{border-bottom:0}
+.rank{width:22px;height:22px;border-radius:50%;background:var(--paper-2);display:inline-grid;place-items:center;font-size:12px;font-weight:700}
+.rank.top{background:var(--rust-bg);color:var(--rust)}
+.link-btn{color:var(--amber);font-weight:600;cursor:pointer;font-size:13px}
 .follow-head-sub{font-family:'Sarabun',sans-serif;font-weight:400;font-size:12.5px;color:var(--ink-mute)}
 .follow-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:8px}
 .follow-row:last-of-type{border-bottom:0}
@@ -738,10 +755,8 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
         <div class="field">
           <label>ทล. (สายทาง) <span class="req">*</span></label>
           <select id="f_highway"></select>
-        </div>
-        <div class="field">
-          <label>ตอน</label>
-          <input type="text" id="f_section" readonly>
+          <!-- ชื่อตอนแสดงอยู่ในรายการเลือกทล.แล้ว จึงไม่แสดงเป็นช่องแยก — เก็บเป็นช่องซ่อน (ตั้งอัตโนมัติจากทล.) เพื่อให้ยังบันทึกตอนลงเคสเหมือนเดิม -->
+          <input type="hidden" id="f_section">
         </div>
         <div class="field">
           <label>กม. ที่เกิดเหตุ <span class="req">*</span></label>
@@ -762,8 +777,6 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
             <option value="ขวาทาง ไหล่ทาง">ขวาทาง (ไหล่ทาง)</option>
           </select>
         </div>
-      </div>
-      <div class="grid" style="margin-top:12px">
         <div class="field">
           <label>บริเวณโดยสังเขป</label>
           <input type="text" id="f_location" placeholder="เช่น สี่แยก, จุดกลับรถ, สะพาน">
@@ -1012,7 +1025,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 
     <div class="grid grid-2" id="dashSecondRow" style="margin-top:14px">
       <div class="card" id="followCard">
-        <div class="section-title" style="justify-content:space-between"><span>เคสที่ต้องติดตาม</span><span class="follow-head-sub">ค้างในรอบ 12 เดือนล่าสุด · เรียงตามค้างนานสุด</span></div>
+        <div class="section-title" style="justify-content:space-between"><span>เคสที่ต้องติดตาม</span><span class="follow-head-sub" id="followSub"></span></div>
         <div id="followList"></div>
       </div>
       <div class="card" id="blackspotCard">
@@ -1237,7 +1250,8 @@ let recorderName = '';
 
 
 let dashYear = 'ทั้งหมด';
-let blackspotHwSelected = null; 
+let blackspotHwSelected = null;
+let blackspotExpanded = false; // จุดเสี่ยง: ขยายดูทั้งหมด (ไม่จำกัด 8 อันดับ)
 let teamConfig = { ownerName: 'นางสาวนันท์นภัสธ์ รัตนเสถียร', members: [{name: 'นางสาวนันท์นภัสธ์ รัตนเสถียร', passwordHash: '091612ce9151d6185e09ffcac96e092f19176cfa298ce4d30c9d2cbcf5ba7347'}] };
 let materialPriceMap = {}; 
 let assetsCategoryFilter = 'all'; 
@@ -3136,39 +3150,46 @@ function renderDashboard(){
     spotMap[key].count++;
   });
   const spots = Object.values(spotMap).filter(s => s.count >= 2).sort((a,b) => (Number(a.highway)-Number(b.highway)) || (a.km-b.km));
-  const spotColorClass = (count) => count >= 5 ? 'spot-5' : 'spot-' + count;
-  const chipHtml = (s, showHw) => `<div class="blackspot-chip ${spotColorClass(s.count)}"><span class="km">${showHw ? 'ทล.' + escapeHtml(s.highway) + ' · ' : ''}กม.${formatKm(s.km)}</span><span class="blackspot-count">${s.count} ครั้ง</span></div>`;
   const hwFilterEl = document.getElementById('blackspotHwFilter');
   const blackspotListEl = document.getElementById('blackspotList');
-  if (dashYear === 'ทั้งหมด') {
-    // ประหยัดพื้นที่: โชว์ปุ่ม "ทล.?" ให้เลือกดูทีละสาย แทนการแสดงทุกจุดรวมกันยาวๆ
-    const hwList = Array.from(new Set(spots.map(s => s.highway))).sort((a,b) => Number(a)-Number(b));
-    if (hwList.length) {
-      if (!hwList.includes(blackspotHwSelected)) blackspotHwSelected = hwList[0];
-      hwFilterEl.style.display = 'flex';
-      hwFilterEl.innerHTML = hwList.map(hw => {
-        const n = spots.filter(s => s.highway === hw).length;
-        return `<button type="button" data-hw="${escapeHtml(hw)}" class="${hw===blackspotHwSelected?'active':''}">ทล.${escapeHtml(hw)} (${n})</button>`;
-      }).join('');
-      // เรนเดอร์ "ทุกสายทาง" ซ้อนกันไว้ในตำแหน่งเดียวกัน (แค่สลับ visibility) แทนการสลับ innerHTML ทั้งก้อน
-      
-      blackspotListEl.className = 'blackspot-stack';
-      blackspotListEl.innerHTML = hwList.map(hw => {
-        const shown = spots.filter(s => s.highway === hw);
-        return `<div class="blackspot-grid blackspot-hw-group${hw===blackspotHwSelected?' active':''}" data-hw-group="${escapeHtml(hw)}">${shown.map(s => chipHtml(s, false)).join('')}</div>`;
-      }).join('');
-    } else {
-      hwFilterEl.style.display = 'none';
-      hwFilterEl.innerHTML = '';
-      blackspotListEl.className = '';
-      blackspotListEl.innerHTML = '<p class="hint">ยังไม่พบจุดที่เกิดซ้ำ</p>';
-    }
+  // จุดเสี่ยง: แท็บ ทล. + ตารางจัดอันดับ (จำนวนครั้งมาก→น้อย) แสดง 8 อันดับแรก กด "แสดงทั้งหมด" เพื่อขยาย
+  // ใช้แบบเดียวกันทั้งตอนดู "ทุกปีงบประมาณ" และตอนเลือกปีเดียว (ตัวจุดเสี่ยงคำนวณจากเคสของปีที่เลือก)
+  const hwList = Array.from(new Set(spots.map(s => s.highway))).sort((a,b) => Number(a)-Number(b));
+  if (hwList.length) {
+    if (!hwList.includes(blackspotHwSelected)) blackspotHwSelected = hwList[0];
+    hwFilterEl.style.display = 'flex';
+    hwFilterEl.innerHTML = hwList.map(hw => {
+      const n = spots.filter(s => s.highway === hw).length;
+      return `<button type="button" data-hw="${escapeHtml(hw)}" class="${hw===blackspotHwSelected?'active':''}">ทล.${escapeHtml(hw)} (${n})</button>`;
+    }).join('');
+    const list = spots.filter(s => s.highway === blackspotHwSelected).sort((a,b) => (b.count - a.count) || (a.km - b.km));
+    const maxCount = list[0].count;
+    const shown = blackspotExpanded ? list : list.slice(0, 8);
+    const barColor = c => c >= 5 ? '#c1402f' : c >= 3 ? '#e0620f' : '#f0a866';
+    blackspotListEl.className = '';
+    blackspotListEl.innerHTML = `
+      <table class="spot-table">
+        <thead><tr><th style="width:36px">#</th><th>ตำแหน่ง</th><th style="width:38%"></th><th style="text-align:right">ครั้ง</th></tr></thead>
+        <tbody>${shown.map((s, i) => `
+          <tr><td><span class="rank${i < 3 ? ' top' : ''}">${i + 1}</span></td>
+          <td>กม.${escapeHtml(formatKm(s.km))}</td>
+          <td><div class="mini-track"><i style="width:${Math.round(s.count / maxCount * 100)}%;background:${barColor(s.count)}"></i></div></td>
+          <td class="mono" style="text-align:right"><b>${s.count}</b></td></tr>`).join('')}
+        </tbody>
+      </table>
+      ${list.length > 8 ? `<div style="text-align:center;margin-top:8px"><a class="link-btn" id="spotExpandLink">${blackspotExpanded ? '▲ ย่อรายการ' : '▼ แสดงทั้งหมด ' + list.length + ' จุด'}</a></div>` : ''}`;
+    const expandLink = document.getElementById('spotExpandLink');
+    if (expandLink) expandLink.onclick = () => {
+      const scrollY = window.scrollY;
+      blackspotExpanded = !blackspotExpanded;
+      renderDashboard();
+      window.scrollTo(window.scrollX, scrollY);
+    };
   } else {
-    // ดูเฉพาะปีเดียว: แสดงเป็น chip grid เหมือนหน้าทุกปีงบประมาณ แต่ไม่ใช้ปุ่ม ทล. (โชว์ทุกสายทางรวมกัน จึงใส่ ทล. กำกับไว้ในชิปด้วย)
     hwFilterEl.style.display = 'none';
     hwFilterEl.innerHTML = '';
-    blackspotListEl.className = 'blackspot-grid';
-    blackspotListEl.innerHTML = spots.length ? spots.map(s => chipHtml(s, true)).join('') : '<p class="hint">ยังไม่พบจุดที่เกิดซ้ำ</p>';
+    blackspotListEl.className = '';
+    blackspotListEl.innerHTML = '<p class="hint">ยังไม่พบจุดที่เกิดซ้ำ</p>';
   }
 
   // trend by fiscal year — แสดงเฉพาะตอนดู "ทุกปีงบประมาณ" เพราะกราฟแนวโน้มเทียบข้ามปีไม่มีความหมายเมื่อกรองดูปีเดียว
@@ -3200,34 +3221,61 @@ function renderDashboard(){
   try { renderFollowUp(); } catch (e) { console.error('follow-up render failed', e); }
 }
 
-// เคสที่ต้องติดตาม = ยังไม่ยุติเรื่อง (ไม่มีวันที่ยุติ) และเกิดเหตุภายใน 12 เดือนล่าสุด เรียงตามค้างนานสุด
-// เคสเก่ากว่า 1 ปีที่ยังไม่ปิด (ส่วนใหญ่เป็นเคสที่นำเข้ามาจากข้อมูลเดิม) ไม่นำมาแสดงในรายการ แต่แจ้งจำนวนไว้ท้ายกล่องและกดดูได้
+// กล่อง "เคสที่ต้องติดตาม" — ตัวเลขสรุป 4 ช่อง + เคสค้างใหม่ (เกิดเหตุใน 12 เดือนล่าสุด เรียงค้างนานสุด 5 เคส) + เคสค้างเก่ากว่า 1 ปีแยกตามปีงบ
+// นับเฉพาะเคสที่ยังไม่ยุติเรื่อง (ไม่มีวันที่ยุติ) บนสายทางที่หมวดฯ ดูแล — ไม่ขึ้นกับตัวกรองปีงบของหน้าภาพรวม
 function renderFollowUp(){
   const el = document.getElementById('followList');
   if (!el) return;
   const DAY = 86400000;
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const openCases = records
-    .filter(r => !r.closedDate && r.dateIncident && ROUTE_HIGHWAYS.has(String(r.highway)))
-    .map(r => ({ r, age: Math.floor((today - new Date(r.dateIncident + 'T00:00:00')) / DAY) }))
+  const openAll = records.filter(r => !r.closedDate && ROUTE_HIGHWAYS.has(String(r.highway)));
+  const aged = openAll
+    .map(r => ({ r, age: Math.floor((today - new Date((r.dateIncident || '') + 'T00:00:00')) / DAY) }))
     .filter(x => !isNaN(x.age) && x.age >= 0);
-  const recent = openCases.filter(x => x.age <= 365).sort((a, b) => b.age - a.age);
-  const olderCount = openCases.length - recent.length;
-  const top = recent.slice(0, 5);
-  const rowsHtml = top.map(({ r, age }) => `
+  const recent = aged.filter(x => x.age <= 365).sort((a, b) => b.age - a.age);
+  const older = aged.filter(x => x.age > 365);
+  const noComp = openAll.filter(r => r.compensationStatus !== 'ชดใช้แล้ว').length;
+  const noRepair = openAll.filter(r => r.repairStatus !== 'จัดซ่อมแล้ว').length;
+
+  const sub = document.getElementById('followSub');
+  if (sub) sub.textContent = 'ยังไม่ยุติเรื่อง ' + openAll.length + ' เคส';
+
+  const statsHtml = `
+    <div class="fstat-grid">
+      <div class="fstat ${recent.length ? 'acc' : 'ok'}"><b>${recent.length}</b><span>ค้างใน 12 เดือน</span></div>
+      <div class="fstat bad"><b>${older.length}</b><span>ค้างเกิน 1 ปี</span></div>
+      <div class="fstat"><b>${noComp}</b><span>รอชดใช้</span></div>
+      <div class="fstat"><b>${noRepair}</b><span>รอจัดซ่อม</span></div>
+    </div>`;
+
+  const rowsHtml = recent.slice(0, 5).map(({ r, age }) => `
     <div class="follow-row" data-id="${escapeHtml(r.id)}">
-      <div class="f-main"><b>ทล.${escapeHtml(String(r.highway))} กม.${escapeHtml(formatKm(r.km))}</b>${r.plate ? ' <span class="mute" style="color:var(--ink-mute)">· ' + escapeHtml(r.plate) + '</span>' : ''}
+      <div class="f-main"><b>ทล.${escapeHtml(String(r.highway))} กม.${escapeHtml(formatKm(r.km))}</b>${r.plate ? ' <span style="color:var(--ink-mute)">· ' + escapeHtml(r.plate) + '</span>' : ''}
         <div class="f-sub">${escapeHtml(r.compensationStatus || 'ยังไม่ระบุการชดใช้')} · ${escapeHtml(r.repairStatus || 'ยังไม่ระบุการจัดซ่อม')}</div></div>
       <div class="f-right"><b class="mono">${formatMoney(r.totalPrice || 0)}</b><span class="age-pill ${age > 60 ? 'bad' : age > 30 ? 'warn' : ''}">ค้าง ${age} วัน</span></div>
     </div>`).join('');
-  const emptyHtml = '<p class="hint" style="padding:8px 0">ไม่มีเคสค้างในรอบ 12 เดือนล่าสุด ✓</p>';
-  const footHtml = olderCount > 0
-    ? `<div class="follow-foot"><span>ยังมีเคสค้างที่เกิดเหตุเกิน 1 ปีอีก <b>${olderCount}</b> รายการ</span><a id="followOlderLink">ดูทั้งหมด →</a></div>`
-    : (recent.length > 5 ? `<div class="follow-foot"><span>แสดง 5 จาก ${recent.length} รายการ</span><a id="followOlderLink">ดูทั้งหมด →</a></div>` : '');
-  el.innerHTML = (rowsHtml || emptyHtml) + footHtml;
+  const recentHtml = recent.length
+    ? rowsHtml + (recent.length > 5 ? `<div class="follow-foot"><span>แสดง 5 จาก ${recent.length} เคส</span><a class="link-btn" id="followMoreLink">ดูทั้งหมด →</a></div>` : '')
+    : '<p class="hint" style="padding:2px 2px 8px;color:var(--green)">✓ ไม่มีเคสค้างในรอบ 12 เดือนล่าสุด</p>';
+
+  let backlogHtml = '';
+  if (older.length) {
+    const byFy = {};
+    older.forEach(({ r }) => { const y = r.fiscalYear || '-'; byFy[y] = (byFy[y] || 0) + 1; });
+    const years = Object.keys(byFy).sort();
+    const maxN = Math.max(...years.map(y => byFy[y]));
+    backlogHtml = `
+      <div class="backlog-head"><span>เคสค้างเก่า แยกตามปีงบประมาณ</span><a class="link-btn" id="followOlderLink">ดูทั้งหมด →</a></div>
+      ${years.map(y => `<div class="backlog-row" data-fy="${escapeHtml(String(y))}"><span>${escapeHtml(String(y))}</span><div class="mini-track"><i style="width:${Math.round(byFy[y] / maxN * 100)}%"></i></div><b class="mono" style="text-align:right">${byFy[y]}</b></div>`).join('')}`;
+  }
+
+  el.innerHTML = statsHtml + recentHtml + backlogHtml;
   el.querySelectorAll('.follow-row').forEach(row => { row.onclick = () => openCaseDetailModal(row.dataset.id); });
-  const link = document.getElementById('followOlderLink');
-  if (link) link.onclick = () => goToFilteredList('ทั้งหมด', 'open');
+  el.querySelectorAll('.backlog-row').forEach(row => { row.onclick = () => goToFilteredList(row.dataset.fy, 'open'); });
+  const more = document.getElementById('followMoreLink');
+  if (more) more.onclick = () => goToFilteredList('ทั้งหมด', 'open');
+  const olderLink = document.getElementById('followOlderLink');
+  if (olderLink) olderLink.onclick = () => goToFilteredList('ทั้งหมด', 'open');
 }
 
 
@@ -3948,6 +3996,7 @@ async function init(){
     if (hwBtn) {
       const scrollY = window.scrollY;
       blackspotHwSelected = hwBtn.dataset.hw;
+      blackspotExpanded = false;
       renderDashboard();
       window.scrollTo(window.scrollX, scrollY);
     }
