@@ -263,6 +263,9 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif;font-weight:700}
 .it-receipt .ln b{font-variant-numeric:tabular-nums}
 .it-receipt .ln .u{font-size:12px;color:var(--ink-mute)}
 .it-receipt .ln.grand{padding-top:8px}
+.it-receipt .ln label{margin:0;font:inherit;color:inherit}
+.it-receipt .ln .ln-in{width:120px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;text-align:right;font:inherit;font-size:14px;font-variant-numeric:tabular-nums}
+.it-receipt .ln .ln-in:focus{outline:2px solid #f6c89b;border-color:var(--amber)}
 .it-receipt .ln.grand input{width:140px;border:0;background:transparent;text-align:right;font-family:'Kanit',sans-serif;font-weight:600;font-size:24px;color:var(--amber);padding:0}
 
  
@@ -696,6 +699,9 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .settings-row .card{margin-bottom:0;display:flex;flex-direction:column;align-items:flex-start}
 .settings-row .card .hint{margin:0 0 12px;flex:1}
 .routes-total td{font-weight:700;background:var(--paper-2);border-top:2px solid var(--line)}
+.routes-dbl-hint{font-size:12.5px;color:var(--ink-mute);align-self:center;margin-right:auto}
+tr.route-editable{cursor:pointer;user-select:none}
+tr.route-editable:hover td{background:var(--amber-glow)}
 .row-edit-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-soft)}
 .row-edit-btn:hover{background:var(--navy-900);color:#fff;border-color:var(--navy-900)}
 /* ===== หน้าต่างรายละเอียดเคส (แบบ ข: หัวสีกรมท่า + แผ่นสถานะ + ใบสรุปเงิน) ===== */
@@ -925,19 +931,6 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
     <div class="card" id="fsec3">
       <div class="section-title" style="justify-content:space-between">
         <span style="display:flex;align-items:center;gap:8px"><span class="num">3</span> รายการทรัพย์สินเสียหาย</span>
-        <div class="row-menu-wrap">
-          <button class="row-menu-btn" id="btnItemsInfoToggle" type="button" title="คำอธิบาย">⋮</button>
-          <div class="row-menu legend-info-panel" id="itemsInfoPanel">
-            <div class="legend-info-item">
-              <span class="legend-info-icon">💡</span>
-              <p><b>ค้นหาแล้วเพิ่ม</b> — พิมพ์ชื่อวัสดุแล้วกด Enter/คลิก ระบบใส่ราคามาตรฐานให้ (ชื่อซ้ำ = เพิ่มจำนวน) หรือเลือก <b>ดึงชุดวัสดุ</b> ทั้งชุดในครั้งเดียว</p>
-            </div>
-            <div class="legend-info-item">
-              <span class="legend-info-icon">🗑️</span>
-              <p>รายการที่ดึงมาอัตโนมัติ ถ้าไม่พบความเสียหายจริงตามรายงาน กดปุ่ม <b>✕</b> เพื่อลบออกได้</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="it-toolbar">
@@ -967,13 +960,13 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
             <option value="percent30">ค่าดำเนินการ 30% ของค่าวัสดุ (ปกติ)</option>
             <option value="laborMachine">แยกค่าแรง + ค่าเครื่องจักร (เคสเก่า)</option>
           </select>
-          <div class="grid grid-2" id="laborMachineRow" style="display:none;margin-top:10px">
-            <div class="field"><label>ค่าแรง (บาท)</label><input type="text" id="f_laborCost" placeholder="0"></div>
-            <div class="field"><label>ค่าเครื่องจักร (บาท)</label><input type="text" id="f_machineCost" placeholder="0"></div>
-          </div>
         </div>
         <div class="it-receipt">
           <div class="ln"><span>รวมค่าวัสดุ</span><i></i><b id="itemsSumDisplay">0</b><span class="u">บาท</span></div>
+          <div id="laborMachineRow" style="display:none">
+            <div class="ln"><label for="f_laborCost">ค่าแรง</label><i></i><input type="text" class="ln-in" id="f_laborCost" inputmode="decimal" placeholder="0"><span class="u">บาท</span></div>
+            <div class="ln"><label for="f_machineCost">ค่าเครื่องจักร</label><i></i><input type="text" class="ln-in" id="f_machineCost" inputmode="decimal" placeholder="0"><span class="u">บาท</span></div>
+          </div>
           <div class="ln" id="opCost30Row"><span>ค่าดำเนินการ (30% ของค่าวัสดุ)</span><i></i><b id="opCostDisplay">0</b><span class="u">บาท</span></div>
           <div class="ln grand"><b>รวมทั้งสิ้น</b><i></i><input type="text" id="f_totalPrice" readonly placeholder="0"><span class="u">บาท</span></div>
         </div>
@@ -1115,6 +1108,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
     <div class="card">
       <div class="assets-toolbar" style="justify-content:flex-end">
         <button class="btn btn-outline btn-sm" id="btnAddRoute" type="button">+ เพิ่มสายทาง</button>
+        <span class="routes-dbl-hint" id="routesDblHint" style="display:none">ดับเบิลคลิกที่แถวเพื่อแก้ไข</span>
         <div class="assets-updated-badge" id="routesUpdatedHint"></div>
       </div>
       <div class="table-wrap">
@@ -1124,7 +1118,6 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
               <th style="text-align:center">ทล.</th><th style="text-align:center">ควบคุม</th><th style="text-align:center">ตอน</th><th style="text-align:center">กม. - กม.</th>
               <th style="text-align:center">ระยะทางจริง (กม.)</th><th style="text-align:center">ต่อ 2 ช่อง (กม.)</th>
               <th style="text-align:center">แอสฟัลท์ (กม.)</th><th style="text-align:center">คอนกรีต (กม.)</th><th style="text-align:center">ปริมาณงาน (หน่วย)</th>
-              <th id="routesEditTh" style="width:80px;display:none"></th>
             </tr>
           </thead>
           <tbody id="routesTableBody"></tbody>
@@ -1143,13 +1136,14 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
           <button type="button" class="assets-search-clear" id="assetsSearchClear" title="ล้างคำค้นหา">✕</button>
         </div>
         <button class="btn btn-outline btn-sm" id="btnAddAsset" type="button">+ เพิ่มรายการทรัพย์สิน</button>
+        <span class="routes-dbl-hint" id="assetsDblHint" style="display:none">ดับเบิลคลิกที่แถวเพื่อแก้ไข</span>
         <div class="assets-updated-badge" id="assetsUpdatedHint"></div>
       </div>
       <div class="asset-category-chips" id="assetCategoryChips"></div>
       <div class="table-wrap assets-table-wrap">
         <table class="data" id="assetsTable">
           <thead>
-            <tr><th>รายการ</th><th style="text-align:center">หน่วย</th><th style="text-align:center">ราคาต่อหน่วย (บาท)</th><th id="assetsEditTh" style="width:80px;display:none"></th></tr>
+            <tr><th>รายการ</th><th style="text-align:center">หน่วย</th><th style="text-align:center">ราคาต่อหน่วย (บาท)</th></tr>
           </thead>
           <tbody id="assetsTableBody"></tbody>
         </table>
@@ -1160,7 +1154,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
   
   <div class="view" id="view-settings">
     <div class="card" id="cardTeamPanel">
-      <div class="section-title">Access Control System</div>
+      <div class="section-title">ระบบควบคุมการเข้าใช้งาน</div>
       <div id="teamPanel"></div>
     </div>
     <!-- แถวเดียว 3 ส่วน: ส่งออก / ถังขยะ / นำเข้าข้อมูล (นำเข้าเห็นเฉพาะเจ้าของระบบ) -->
@@ -1619,7 +1613,7 @@ function kmRangesText(route){
 
 function kmRangesHtml(route){
   if (!route || !route.kmRanges || !route.kmRanges.length) return '-';
-  return route.kmRanges.map(([f,t]) => escapeHtml(formatKm(f) + ' - ' + formatKm(t))).join(',<br>');
+  return route.kmRanges.map(([f,t]) => '<span style="white-space:nowrap">' + escapeHtml(formatKm(f) + ' - ' + formatKm(t)) + '</span>').join(',<br>');
 }
 function updateKmHint(){
   const hw = document.getElementById('f_highway').value;
@@ -3705,11 +3699,11 @@ function renderRoutesTable(){
   const active = ROUTES.filter(isRouteActive).sort(byNo);
   const transferred = ROUTES.filter(r => !isRouteActive(r)).sort(byNo);
   const rows = active.concat(transferred); // ลำดับเดียวกับที่แสดง (ใช้อ้างอิงตอนกดแก้ไข)
-  const colCount = owner ? 10 : 9;
+  const colCount = 9;
   const rowHtml = (r, i) => {
     const off = !isRouteActive(r);
     return `
-    <tr data-idx="${i}" class="${off ? 'route-transferred' : ''}"${owner ? ' style="cursor:pointer"' : ''}>
+    <tr data-idx="${i}" class="${off ? 'route-transferred' : ''}${owner ? ' route-editable' : ''}"${owner ? ' title="ดับเบิลคลิกเพื่อแก้ไข"' : ''}>
       <td class="mono" style="text-align:center">${escapeHtml(r.highway)}${off ? '<span class="route-badge">โอนแล้ว</span>' : ''}</td>
       <td class="mono" style="text-align:center">${escapeHtml(r.controlNo || '-')}</td>
       <td style="text-align:center">${escapeHtml(r.section || '-')}${off ? `<div class="route-note">${escapeHtml(routeTransferNote(r))}</div>` : ''}</td>
@@ -3719,7 +3713,6 @@ function renderRoutesTable(){
       <td class="mono" style="text-align:center">${fmtNum(r.asphalt)}</td>
       <td class="mono" style="text-align:center">${fmtNum(r.concrete)}</td>
       <td class="mono" style="text-align:center">${fmtNum(r.workQty)}</td>
-      ${owner ? '<td style="text-align:center"><button type="button" class="row-edit-btn">แก้ไข</button></td>' : ''}
     </tr>`;
   };
   const sum = k => Math.round(active.reduce((s, r) => s + (Number(r[k]) || 0), 0) * 1000) / 1000;
@@ -3737,7 +3730,6 @@ function renderRoutesTable(){
         <td class="mono" style="text-align:center">${fmtNum(sum('asphalt'))}</td>
         <td class="mono" style="text-align:center">${fmtNum(sum('concrete'))}</td>
         <td class="mono" style="text-align:center">${fmtNum(sum('workQty'))}</td>
-        ${owner ? '<td></td>' : ''}
       </tr>`;
     if (transferred.length) {
       html += `<tr class="routes-sep"><td colspan="${colCount}">โอนให้หมวดอื่นแล้ว ${transferred.length} สายทาง — เก็บไว้เพื่อคงรายการอุบัติเหตุที่เคยเกิด (ไม่นับรวมในยอดด้านบน)</td></tr>`;
@@ -3745,12 +3737,12 @@ function renderRoutesTable(){
     }
   }
   tbody.innerHTML = html;
-  const routesEditTh = document.getElementById('routesEditTh');
-  if (routesEditTh) routesEditTh.style.display = owner ? '' : 'none';
+  const dblHint = document.getElementById('routesDblHint');
+  if (dblHint) dblHint.style.display = owner ? '' : 'none';
 
   if (owner) {
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
-      tr.addEventListener('click', () => {
+      tr.addEventListener('dblclick', () => {
         const idx = Number(tr.dataset.idx);
         openRouteEditModal(rows[idx]);
       });
@@ -4065,19 +4057,18 @@ function renderAssetsPanel(){
   const items = [{ header: null, group: filtered.slice().sort((a,b) => naturalCompareTh(a.name, b.name)) }];
 
   const owner = isOwner();
-  const editTh = document.getElementById('assetsEditTh');
-  if (editTh) editTh.style.display = owner ? '' : 'none';
-  const colSpan = owner ? 4 : 3;
+  const colSpan = 3;
+  const assetsHint = document.getElementById('assetsDblHint');
+  if (assetsHint) assetsHint.style.display = owner ? '' : 'none';
   let idx = 0;
   const rowsHtml = [];
   items.forEach(({ group }) => {
     group.forEach(it => {
       rowsHtml.push(`
-        <tr data-idx="${idx}" class="${it.frequent ? 'asset-frequent' : ''}"${owner ? ' style="cursor:pointer"' : ''}>
+        <tr data-idx="${idx}" class="${it.frequent ? 'asset-frequent' : ''}${owner ? ' route-editable' : ''}"${owner ? ' title="ดับเบิลคลิกเพื่อแก้ไข"' : ''}>
           <td>${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★ ใช้บ่อย</span>' : ''}</td>
           <td class="mono" style="text-align:center">${escapeHtml(it.unit)}</td>
           <td class="mono" style="text-align:center">${formatMoney(it.price)}</td>
-          ${owner ? '<td style="text-align:center"><button type="button" class="row-edit-btn">แก้ไข</button></td>' : ''}
         </tr>
       `);
       idx++;
@@ -4089,7 +4080,7 @@ function renderAssetsPanel(){
 
   if (owner) {
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
-      tr.addEventListener('click', () => {
+      tr.addEventListener('dblclick', () => {
         const i = Number(tr.dataset.idx);
         openAssetEditModal(flatItems[i]);
       });
@@ -4404,13 +4395,6 @@ async function init(){
   document.getElementById('btnOpenTrash').addEventListener('click', openTrashModal);
   populateMaterialCategorySelect();
   initItemEntryUi();
-  document.getElementById('btnItemsInfoToggle').addEventListener('click', (e) => {
-    e.stopPropagation();
-    const panel = document.getElementById('itemsInfoPanel');
-    const wasOpen = panel.classList.contains('open');
-    closeAllRowMenus();
-    if (!wasOpen) panel.classList.add('open');
-  });
 
   renderTable();
   renderRoutesTable();
