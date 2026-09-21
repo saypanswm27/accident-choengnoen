@@ -336,14 +336,26 @@ table.data tr:hover td{background:#f2f5f8}
   animation:modalFade .15s ease;
 }
 @keyframes modalFade{from{opacity:0}to{opacity:1}}
+/* โครงหน้าต่างโมดัล: ส่วนหัว (ชื่อ + ปุ่ม ×) ตรึงอยู่กับที่ เฉพาะ "เนื้อหา" (.modal-body) เลื่อนได้
+   แถบเลื่อนจึงไม่พาดทับส่วนหัวและมุมโค้งของกล่อง — .modal-body สร้างอัตโนมัติจาก initModalScroll() ให้ทุกโมดัล */
 .modal{
   position:relative;background:var(--card);border-radius:20px;max-width:420px;width:100%;
-  max-height:88vh;overflow-y:auto;border-top:4px solid var(--amber-500);
-  padding:24px 24px 22px;box-shadow:0 26px 64px -18px rgba(7,27,48,.5);
+  max-height:88vh;display:flex;flex-direction:column;overflow:hidden;border-top:4px solid var(--amber-500);
+  padding:22px 0 16px;box-shadow:0 26px 64px -18px rgba(7,27,48,.5);
   animation:modalPop .18s cubic-bezier(.22,.9,.32,1.2);
 }
 @keyframes modalPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:2px}
+.modal-body{
+  flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  padding:6px 14px 6px 24px;margin-right:6px;
+  scrollbar-width:thin;scrollbar-color:#c3cad3 transparent;
+}
+.modal-body::-webkit-scrollbar{width:8px}
+.modal-body::-webkit-scrollbar-track{background:transparent;margin:4px 0}
+.modal-body::-webkit-scrollbar-thumb{background:#c3cad3;border-radius:8px}
+.modal-body::-webkit-scrollbar-thumb:hover{background:#9aa6b2}
+.trash-count{font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;background:var(--paper-2);color:var(--ink-soft);border-radius:99px;padding:2px 11px;margin-left:8px;vertical-align:middle;white-space:nowrap}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:2px;padding:0 24px;flex:none}
 .modal-head h3{margin:0}
 .modal-close{
   flex-shrink:0;width:30px;height:30px;border-radius:50%;border:none;background:var(--paper-2);
@@ -605,6 +617,36 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
   border-radius:50%;animation:btnSpin .7s linear infinite;
 }
 
+/* ===== ภาพรวม: กล่อง "เคสที่ต้องติดตาม" ===== */
+.follow-head-sub{font-family:'Sarabun',sans-serif;font-weight:400;font-size:12.5px;color:var(--ink-mute)}
+.follow-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:8px}
+.follow-row:last-of-type{border-bottom:0}
+.follow-row:hover{background:var(--paper)}
+.follow-row .f-main{min-width:0}
+.follow-row .f-sub{font-size:12.5px;color:var(--ink-mute)}
+.follow-row .f-right{text-align:right;white-space:nowrap}
+.age-pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600;background:var(--paper-2);color:var(--ink-soft);margin-left:6px}
+.age-pill.warn{background:var(--spot2-bg);color:var(--spot2-fg)}
+.age-pill.bad{background:var(--rust-bg);color:var(--rust)}
+.follow-foot{margin-top:10px;font-size:13px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.follow-foot a{color:var(--amber);font-weight:600;cursor:pointer}
+#dashSecondRow.single{grid-template-columns:1fr}
+/* ===== ฟอร์มบันทึก: สารบัญด้านซ้าย + แถบบันทึกลอยด้านล่าง ===== */
+.form-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:16px;align-items:start}
+.form-index{position:sticky;top:12px;padding:12px 10px}
+.form-index .fi-title{font-size:12px;color:var(--ink-mute);margin:0 8px 6px}
+.form-index a{display:block;padding:8px 10px;border-radius:9px;color:var(--ink-soft);font-size:14px;cursor:pointer;text-decoration:none}
+.form-index a:hover{background:var(--paper)}
+.form-index a.active{background:var(--amber-glow);color:var(--amber);font-weight:600}
+.form-main{min-width:0}
+.form-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;justify-content:flex-end;align-items:center;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:12px 16px;margin-top:14px}
+.form-main .card{scroll-margin-top:14px}
+@media(max-width:900px){.form-layout{grid-template-columns:1fr}.form-index{display:none}}
+/* ===== ตารางสายทาง: แถวรวม + ปุ่มแก้ไข ===== */
+.routes-total td{font-weight:700;background:var(--paper-2);border-top:2px solid var(--line)}
+.row-edit-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink-soft)}
+.row-edit-btn:hover{background:var(--navy-900);color:#fff;border-color:var(--navy-900)}
 /* ===== หน้าล็อกอิน (ต้องล็อกอินก่อนเห็นข้อมูล) ===== */
 .auth-gate{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px;overflow:auto;
   background:radial-gradient(1100px 520px at 15% -10%, var(--navy-800) 0%, var(--ink-2) 60%)}
@@ -656,6 +698,15 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 
   
   <div class="view" id="view-form">
+   <div class="form-layout">
+    <nav class="card form-index" id="formIndex">
+      <div class="fi-title">ข้ามไปที่</div>
+      <a data-sec="fsec1">1 · ข้อมูลอุบัติเหตุ</a>
+      <a data-sec="fsec2">2 · รถ / คู่กรณี</a>
+      <a data-sec="fsec3">3 · ทรัพย์สินเสียหาย</a>
+      <a data-sec="fsec4">4 · ผลการติดตาม</a>
+    </nav>
+    <div class="form-main">
     <div class="edit-mode-banner" id="editModeBanner">
       <div class="em-icon">✏️</div>
       <div class="em-text">
@@ -663,7 +714,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
         <div class="em-sub" id="editModeSub"></div>
       </div>
     </div>
-    <div class="card">
+    <div class="card" id="fsec1">
       <div class="section-title"><span class="num">1</span> ข้อมูลอุบัติเหตุ</div>
       <div class="grid grid-4">
         <div class="field">
@@ -720,7 +771,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="fsec2">
       <div class="section-title"><span class="num">2</span> รายละเอียดรถ / คู่กรณี</div>
 
       <div class="party-block" data-role="main">
@@ -787,7 +838,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
       <input type="hidden" id="f_driverAge">
     </div>
 
-    <div class="card">
+    <div class="card" id="fsec3">
       <div class="section-title" style="justify-content:space-between">
         <span style="display:flex;align-items:center;gap:8px"><span class="num">3</span> รายการทรัพย์สินเสียหาย</span>
         <div class="row-menu-wrap">
@@ -846,7 +897,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="fsec4">
       <div class="section-title"><span class="num">4</span> ผลการติดตาม (กรอกภายหลังได้)</div>
       <div class="grid grid-3">
         <div class="field">
@@ -882,11 +933,13 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center">
-      <span class="hint" id="editingHint"></span>
+    <div class="form-savebar">
+      <span class="hint" id="editingHint" style="margin-right:auto"></span>
       <button class="btn btn-outline" id="btnClearForm" type="button">ล้างฟอร์ม</button>
       <button class="btn btn-primary" id="btnSave" type="button">บันทึกข้อมูล</button>
     </div>
+    </div>
+   </div>
   </div>
 
   
@@ -957,10 +1010,16 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
       </div>
     </div>
 
-    <div class="card" id="blackspotCard">
-      <div class="section-title">จุดเสี่ยง</div>
-      <div class="hw-tab-filter" id="blackspotHwFilter" style="display:none"></div>
-      <div id="blackspotList"></div>
+    <div class="grid grid-2" id="dashSecondRow" style="margin-top:14px">
+      <div class="card" id="followCard">
+        <div class="section-title" style="justify-content:space-between"><span>เคสที่ต้องติดตาม</span><span class="follow-head-sub">ค้างในรอบ 12 เดือนล่าสุด · เรียงตามค้างนานสุด</span></div>
+        <div id="followList"></div>
+      </div>
+      <div class="card" id="blackspotCard">
+        <div class="section-title">จุดเสี่ยง</div>
+        <div class="hw-tab-filter" id="blackspotHwFilter" style="display:none"></div>
+        <div id="blackspotList"></div>
+      </div>
     </div>
   </div>
 
@@ -978,6 +1037,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
               <th style="text-align:center">ทล.</th><th style="text-align:center">ควบคุม</th><th style="text-align:center">ตอน</th><th style="text-align:center">กม. - กม.</th>
               <th style="text-align:center">ระยะทางจริง (กม.)</th><th style="text-align:center">ต่อ 2 ช่อง (กม.)</th>
               <th style="text-align:center">แอสฟัลท์ (กม.)</th><th style="text-align:center">คอนกรีต (กม.)</th><th style="text-align:center">ปริมาณงาน (หน่วย)</th>
+              <th id="routesEditTh" style="width:80px;display:none"></th>
             </tr>
           </thead>
           <tbody id="routesTableBody"></tbody>
@@ -1002,7 +1062,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
       <div class="table-wrap assets-table-wrap">
         <table class="data" id="assetsTable">
           <thead>
-            <tr><th>รายการ</th><th style="text-align:center">หน่วย</th><th style="text-align:center">ราคาต่อหน่วย (บาท)</th></tr>
+            <tr><th>รายการ</th><th style="text-align:center">หน่วย</th><th style="text-align:center">ราคาต่อหน่วย (บาท)</th><th id="assetsEditTh" style="width:80px;display:none"></th></tr>
           </thead>
           <tbody id="assetsTableBody"></tbody>
         </table>
@@ -1024,7 +1084,6 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
     </div>
     <div class="card" id="cardTrash">
       <div class="section-title">🗑 ถังขยะ</div>
-      <p class="hint">เคสที่ถูกลบจะมาอยู่ที่นี่ก่อน ยังไม่หายจริงจนกว่าจะล้างถังขยะเอง — กู้คืนได้ทุกเมื่อ</p>
       <button class="btn btn-outline" id="btnOpenTrash">เปิดถังขยะ</button>
     </div>
     <div class="card" id="cardImport" style="display:none">
@@ -1244,8 +1303,8 @@ function renderHighwayBarChart(hwRoutesSorted, byHw){
   }
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, canvas.parentElement.clientWidth || 400, 0);
-  gradient.addColorStop(0, '#3d7ba8');
-  gradient.addColorStop(1, '#1c4b73');
+  gradient.addColorStop(0, '#f6a35c');
+  gradient.addColorStop(1, '#e0620f');
   const labels = hwRoutesSorted.map(r => `ทล.${r.highway} (${r.section})`);
   const data = hwRoutesSorted.map(r => byHw[r.highway] || 0);
   barChartInstance = new Chart(ctx, {
@@ -1306,8 +1365,8 @@ function renderTrendChart(years, totalByYear){
   }
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, canvas.parentElement.clientWidth || 400, 0);
-  gradient.addColorStop(0, '#3d7ba8');
-  gradient.addColorStop(1, '#1c4b73');
+  gradient.addColorStop(0, '#f6a35c');
+  gradient.addColorStop(1, '#e0620f');
   const labels = years.map(y => 'ปีงบ ' + y);
   const data = years.map(y => totalByYear[y] || 0);
   trendChartInstance = new Chart(ctx, {
@@ -2621,7 +2680,8 @@ function renderAuthGate(errorMsg){
     return;
   }
 
-  const options = teamConfig.members.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}${m.isOwner ? ' (เจ้าของระบบ)' : ''}</option>`).join('');
+  // ไม่แสดงบทบาทในหน้าล็อกอิน (หน้านี้ใครเปิดลิงก์ก็เห็น) — บทบาทจะเห็นได้หลังล็อกอินเท่านั้น
+  const options = teamConfig.members.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join('');
   g.innerHTML = `
     <div class="auth-card">
       ${head}
@@ -2845,7 +2905,7 @@ async function openTrashModal(){
   root.innerHTML = `
     <div class="modal-backdrop">
       <div class="modal" style="max-width:640px">
-        <div class="modal-head"><h3>🗑 ถังขยะ — เคสที่ถูกลบ</h3><button class="modal-close" id="trashClose" type="button">×</button></div>
+        <div class="modal-head"><h3>🗑 ถังขยะ — เคสที่ถูกลบ<span class="trash-count" id="trashCount"></span></h3><button class="modal-close" id="trashClose" type="button">×</button></div>
         <div id="trashList"><p class="hint">กำลังโหลด...</p></div>
       </div>
     </div>`;
@@ -2854,6 +2914,8 @@ async function openTrashModal(){
   const items = await loadTrashRecords();
   const listEl = document.getElementById('trashList');
   if (!root.contains(listEl)) return; // ผู้ใช้ปิดโมดัลไปแล้วระหว่างรอโหลด
+  const countEl = document.getElementById('trashCount');
+  if (countEl) countEl.textContent = items.length + ' รายการ';
   if (!items.length) {
     listEl.innerHTML = '<p class="hint">ถังขยะว่างเปล่า ไม่มีเคสที่ถูกลบ</p>';
     return;
@@ -3113,11 +3175,12 @@ function renderDashboard(){
   
   const trendCard = document.getElementById('trendCard');
   const dashFirstRow = document.getElementById('dashFirstRow');
+  const dashSecondRow = document.getElementById('dashSecondRow');
   const blackspotCard = document.getElementById('blackspotCard');
   if (dashYear === 'ทั้งหมด') {
     trendCard.style.display = '';
     if (blackspotCard.parentElement === dashFirstRow) {
-      dashFirstRow.insertAdjacentElement('afterend', blackspotCard);
+      dashSecondRow.appendChild(blackspotCard);
     }
     const totalByYear = {};
     rows.forEach(r => {
@@ -3132,6 +3195,39 @@ function renderDashboard(){
       dashFirstRow.appendChild(blackspotCard);
     }
   }
+  // กล่อง "เคสที่ต้องติดตาม" ไม่ขึ้นกับตัวกรองปีงบ (เป็นงานที่ต้องตามตอนนี้) — ถ้าจุดเสี่ยงย้ายไปแถวแรก กล่องนี้ใช้เต็มความกว้าง
+  dashSecondRow.classList.toggle('single', blackspotCard.parentElement !== dashSecondRow);
+  try { renderFollowUp(); } catch (e) { console.error('follow-up render failed', e); }
+}
+
+// เคสที่ต้องติดตาม = ยังไม่ยุติเรื่อง (ไม่มีวันที่ยุติ) และเกิดเหตุภายใน 12 เดือนล่าสุด เรียงตามค้างนานสุด
+// เคสเก่ากว่า 1 ปีที่ยังไม่ปิด (ส่วนใหญ่เป็นเคสที่นำเข้ามาจากข้อมูลเดิม) ไม่นำมาแสดงในรายการ แต่แจ้งจำนวนไว้ท้ายกล่องและกดดูได้
+function renderFollowUp(){
+  const el = document.getElementById('followList');
+  if (!el) return;
+  const DAY = 86400000;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const openCases = records
+    .filter(r => !r.closedDate && r.dateIncident && ROUTE_HIGHWAYS.has(String(r.highway)))
+    .map(r => ({ r, age: Math.floor((today - new Date(r.dateIncident + 'T00:00:00')) / DAY) }))
+    .filter(x => !isNaN(x.age) && x.age >= 0);
+  const recent = openCases.filter(x => x.age <= 365).sort((a, b) => b.age - a.age);
+  const olderCount = openCases.length - recent.length;
+  const top = recent.slice(0, 5);
+  const rowsHtml = top.map(({ r, age }) => `
+    <div class="follow-row" data-id="${escapeHtml(r.id)}">
+      <div class="f-main"><b>ทล.${escapeHtml(String(r.highway))} กม.${escapeHtml(formatKm(r.km))}</b>${r.plate ? ' <span class="mute" style="color:var(--ink-mute)">· ' + escapeHtml(r.plate) + '</span>' : ''}
+        <div class="f-sub">${escapeHtml(r.compensationStatus || 'ยังไม่ระบุการชดใช้')} · ${escapeHtml(r.repairStatus || 'ยังไม่ระบุการจัดซ่อม')}</div></div>
+      <div class="f-right"><b class="mono">${formatMoney(r.totalPrice || 0)}</b><span class="age-pill ${age > 60 ? 'bad' : age > 30 ? 'warn' : ''}">ค้าง ${age} วัน</span></div>
+    </div>`).join('');
+  const emptyHtml = '<p class="hint" style="padding:8px 0">ไม่มีเคสค้างในรอบ 12 เดือนล่าสุด ✓</p>';
+  const footHtml = olderCount > 0
+    ? `<div class="follow-foot"><span>ยังมีเคสค้างที่เกิดเหตุเกิน 1 ปีอีก <b>${olderCount}</b> รายการ</span><a id="followOlderLink">ดูทั้งหมด →</a></div>`
+    : (recent.length > 5 ? `<div class="follow-foot"><span>แสดง 5 จาก ${recent.length} รายการ</span><a id="followOlderLink">ดูทั้งหมด →</a></div>` : '');
+  el.innerHTML = (rowsHtml || emptyHtml) + footHtml;
+  el.querySelectorAll('.follow-row').forEach(row => { row.onclick = () => openCaseDetailModal(row.dataset.id); });
+  const link = document.getElementById('followOlderLink');
+  if (link) link.onclick = () => goToFilteredList('ทั้งหมด', 'open');
 }
 
 
@@ -3278,8 +3374,25 @@ function renderRoutesTable(){
       <td class="mono" style="text-align:center">${fmtNum(r.asphalt)}</td>
       <td class="mono" style="text-align:center">${fmtNum(r.concrete)}</td>
       <td class="mono" style="text-align:center">${fmtNum(r.workQty)}</td>
+      ${owner ? '<td style="text-align:center"><button type="button" class="row-edit-btn">แก้ไข</button></td>' : ''}
     </tr>
-  `).join('') : `<tr><td colspan="9" class="hint" style="text-align:center;padding:20px">ยังไม่มีสายทางในรายชื่อ</td></tr>`;
+  `).join('') : `<tr><td colspan="${owner ? 10 : 9}" class="hint" style="text-align:center;padding:20px">ยังไม่มีสายทางในรายชื่อ</td></tr>`;
+  // แถวรวมท้ายตาราง (รวมเฉพาะคอลัมน์ตัวเลข)
+  const routesEditTh = document.getElementById('routesEditTh');
+  if (routesEditTh) routesEditTh.style.display = owner ? '' : 'none';
+  if (rows.length) {
+    const sum = k => rows.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr class="routes-total">
+        <td colspan="4" style="text-align:center">รวม ${rows.length} สายทาง</td>
+        <td class="mono" style="text-align:center">${fmtNum(Math.round(sum('distanceActual') * 1000) / 1000)}</td>
+        <td class="mono" style="text-align:center">${fmtNum(Math.round(sum('distance2Lane') * 1000) / 1000)}</td>
+        <td class="mono" style="text-align:center">${fmtNum(Math.round(sum('asphalt') * 1000) / 1000)}</td>
+        <td class="mono" style="text-align:center">${fmtNum(Math.round(sum('concrete') * 1000) / 1000)}</td>
+        <td class="mono" style="text-align:center">${fmtNum(Math.round(sum('workQty') * 1000) / 1000)}</td>
+        ${owner ? '<td></td>' : ''}
+      </tr>`);
+  }
 
   if (owner) {
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
@@ -3542,24 +3655,24 @@ function renderAssetsPanel(){
   const filtered = assetsCategoryFilter === 'all' ? allVisible : allVisible.filter(it => it.category === assetsCategoryFilter);
 
   
-  const catOrder = assetsCategoryFilter === 'all' ? ASSET_CATEGORIES : [assetsCategoryFilter];
-  const items = [];
-  catOrder.forEach(cat => {
-    const group = filtered.filter(it => it.category === cat).sort((a,b) => naturalCompareTh(a.name, b.name));
-    if (group.length) items.push({ header: assetsCategoryFilter === 'all' ? cat : null, group });
-  });
+  // หมวดวัสดุทำงานอยู่เบื้องหลังเป็นตัวกรอง (ชิปด้านบน) เท่านั้น — ไม่แสดงหัวข้อหมวดในตาราง
+  // ดูแบบ "ทั้งหมด" = รายการเรียงตามชื่อรวมเป็นชุดเดียว
+  const items = [{ header: null, group: filtered.slice().sort((a,b) => naturalCompareTh(a.name, b.name)) }];
 
   const owner = isOwner();
+  const editTh = document.getElementById('assetsEditTh');
+  if (editTh) editTh.style.display = owner ? '' : 'none';
+  const colSpan = owner ? 4 : 3;
   let idx = 0;
   const rowsHtml = [];
-  items.forEach(({ header, group }) => {
-    if (header) rowsHtml.push(`<tr class="asset-cat-header"><td colspan="3">${escapeHtml(ASSET_CATEGORY_LABELS[header])} (${group.length})</td></tr>`);
+  items.forEach(({ group }) => {
     group.forEach(it => {
       rowsHtml.push(`
         <tr data-idx="${idx}" class="${it.frequent ? 'asset-frequent' : ''}"${owner ? ' style="cursor:pointer"' : ''}>
           <td>${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★ ใช้บ่อย</span>' : ''}</td>
           <td class="mono" style="text-align:center">${escapeHtml(it.unit)}</td>
           <td class="mono" style="text-align:center">${formatMoney(it.price)}</td>
+          ${owner ? '<td style="text-align:center"><button type="button" class="row-edit-btn">แก้ไข</button></td>' : ''}
         </tr>
       `);
       idx++;
@@ -3567,7 +3680,7 @@ function renderAssetsPanel(){
   });
   const flatItems = items.flatMap(g => g.group);
 
-  tbody.innerHTML = rowsHtml.length ? rowsHtml.join('') : `<tr><td colspan="3" class="hint" style="text-align:center;padding:20px">ไม่พบรายการที่ค้นหา</td></tr>`;
+  tbody.innerHTML = rowsHtml.length ? rowsHtml.join('') : `<tr><td colspan="${colSpan}" class="hint" style="text-align:center;padding:20px">ไม่พบรายการที่ค้นหา</td></tr>`;
 
   if (owner) {
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
@@ -3756,7 +3869,72 @@ async function apiDeleteRoute(highway){
   catch (e) { console.error('delete route failed', e); showToast('ลบสายทางไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
 }
 
+// จัดโครงหน้าต่างโมดัลทุกตัวอัตโนมัติ: ห่อทุกอย่างที่อยู่ต่อจากส่วนหัว (.modal-head) ไว้ใน .modal-body ที่เลื่อนได้
+// (โมดัลถูกสร้างจากโค้ดหลายจุดด้วย innerHTML — ใช้ observer จุดเดียวแทนการแก้ทีละตัว ย้ายโหนดเดิมโดยไม่สร้างใหม่ ตัวจับเหตุการณ์จึงไม่หาย)
+function initModalScroll(){
+  const root = document.getElementById('modalRoot');
+  if (!root) return;
+  const wrap = () => {
+    root.querySelectorAll('.modal').forEach(m => {
+      if (m.querySelector(':scope > .modal-body')) return;
+      const head = m.querySelector(':scope > .modal-head');
+      if (!head) return;
+      const body = document.createElement('div');
+      body.className = 'modal-body';
+      while (head.nextSibling) body.appendChild(head.nextSibling);
+      m.appendChild(body);
+    });
+  };
+  new MutationObserver(wrap).observe(root, { childList: true, subtree: true });
+  wrap();
+}
+
+// ปีงบประมาณ (พ.ศ.) จากวันที่ yyyy-mm-dd — ปีงบเริ่ม 1 ต.ค. เช่น 10 ก.ย. 2569 → 2569, 5 ต.ค. 2569 → 2570
+function fiscalYearOfDate(dateStr){
+  const m = String(dateStr || '').match(/^(\d{4})-(\d{2})/);
+  if (!m) return null;
+  return Number(m[1]) + 543 + (Number(m[2]) >= 10 ? 1 : 0);
+}
+// เลือกวันที่เกิดเหตุแล้วตั้งปีงบให้อัตโนมัติ (ยังแก้เองได้) — ไม่ทำตอนโหลดเคสเดิมเข้าฟอร์ม เพราะเป็นการตั้งค่าด้วยโค้ด ไม่ใช่การเปลี่ยนวันที่
+function syncFiscalYearFromDate(){
+  const fy = fiscalYearOfDate(document.getElementById('f_dateIncident').value);
+  const sel = document.getElementById('f_fiscalYear');
+  if (!fy || !sel) return;
+  if (![...sel.options].some(o => Number(o.value) === fy)) {
+    const opt = document.createElement('option');
+    opt.value = fy; opt.textContent = fy;
+    sel.appendChild(opt);
+    [...sel.options].sort((a, b) => Number(a.value) - Number(b.value)).forEach(o => sel.appendChild(o));
+  }
+  sel.value = String(fy);
+}
+
+// สารบัญด้านซ้ายของฟอร์ม: กดแล้วเลื่อนไปหมวดนั้น และไฮไลต์หมวดที่กำลังดูอยู่ตามการเลื่อนหน้า
+function initFormIndex(){
+  const nav = document.getElementById('formIndex');
+  if (!nav) return;
+  const links = [...nav.querySelectorAll('a[data-sec]')];
+  links.forEach(a => a.addEventListener('click', () => {
+    const target = document.getElementById(a.dataset.sec);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  const spy = () => {
+    if (!document.getElementById('view-form').classList.contains('active')) return;
+    let current = links[0];
+    links.forEach(a => {
+      const t = document.getElementById(a.dataset.sec);
+      if (t && t.getBoundingClientRect().top <= 140) current = a;
+    });
+    links.forEach(a => a.classList.toggle('active', a === current));
+  };
+  window.addEventListener('scroll', spy, { passive: true });
+  spy();
+}
+
 async function init(){
+  initModalScroll();
+  initFormIndex();
+  document.getElementById('f_dateIncident').addEventListener('change', syncFiscalYearFromDate);
   initTabs();
   initPasswordToggles();
   document.addEventListener('click', (e) => {
