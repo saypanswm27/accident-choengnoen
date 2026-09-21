@@ -1,0 +1,3841 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>งานอุบัติเหตุ หมวดทางหลวงเชิงเนิน</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js" integrity="sha384-G436+Z2nlA8+PNoeRvWdxKbvOf8E/y+lYxqht2iBwNHTQDV5CJr3+AGVj8fGZi5t" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- Firebase (Authentication + Firestore) — ชั้นเชื่อมต่ออยู่ใน firebase-layer.js -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-layer.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@600;700&family=Sarabun:wght@400;500;600;700&display=swap');
+
+:root{
+  --ink:#182430;
+  --ink-2:#071b30;
+  --ink-soft:#4d5a66;
+  --ink-mute:#8792a0;
+  --paper:#f5f6f4;
+  --paper-2:#eceee9;
+  --card:#FFFFFF;
+  --line:#dfe2dd;
+  --navy-900:#0a2540;
+  --navy-800:#123a5e;
+  --navy-700:#1c4b73;
+  --amber:#e0620f;
+  --amber-500:#f07a1f;
+  --amber-deep:#a3660a;
+  --amber-glow:#fdf1de;
+  --green:#1c8a53;
+  --green-bg:#e5f4ec;
+  --rust:#c1402f;
+  --rust-bg:#fbeae7;
+  --shadow:0 1px 2px rgba(10,37,64,.05),0 10px 22px -16px rgba(10,37,64,.16);
+  --shadow-lg:0 16px 40px -14px rgba(7,27,48,.35);
+  --radius:12px;
+  --spot2-bg:#fdf3df; --spot2-fg:#a3660a;
+  --spot3-bg:#fbe6d3; --spot3-fg:#c1660f;
+  --spot4-bg:#fbe0da; --spot4-fg:#c1402f;
+  --spot5-bg:#f7d6d6; --spot5-fg:#8f2020;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Sarabun',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Kanit',sans-serif;font-weight:700}
+.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
+
+ 
+.shell{max-width:1180px;margin:0 auto;padding:0 18px 60px}
+
+.route-header{
+  background:radial-gradient(1100px 420px at 12% -20%, var(--navy-800) 0%, var(--ink-2) 55%);
+  color:var(--paper);
+  padding:20px 22px 0;
+  margin:0 0 0;
+  position:relative;
+  border-bottom:1px solid rgba(0,0,0,.35);
+}
+.route-header .top-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;max-width:1180px;margin:0 auto}
+.route-header h1{font-size:21px;margin:0 0 3px;color:#fff;letter-spacing:-.01em}
+.dept-logo{width:64px;height:64px;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.route-header .sub{font-size:13px;color:#9DA0A8;margin:0 0 14px}
+.route-header .who{font-size:12px;color:#787B84}
+
+.tabs{
+  display:flex;gap:0;max-width:1180px;margin:14px auto 0;overflow-x:auto;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.tab-btn{
+  font-family:'Kanit',sans-serif;font-weight:600;font-size:12.5px;
+  background:transparent;border:none;color:#84878F;
+  padding:9px 13px;cursor:pointer;white-space:nowrap;
+  border-bottom:2px solid transparent;letter-spacing:.01em;
+  transition:color .15s;
+}
+.tab-btn:hover{color:#DEDFE2}
+.tab-btn.active{color:#fff;border-bottom-color:var(--amber-500)}
+
+.view{display:none;padding-top:22px}
+.view.active{display:block}
+
+ 
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  margin-bottom:16px;
+  box-shadow:var(--shadow);
+}
+.section-title{
+  font-family:'Kanit',sans-serif;font-weight:700;font-size:16px;
+  display:flex;align-items:center;gap:8px;margin:0 0 14px;
+  color:var(--navy-900);
+}
+.section-title .sub{font-weight:400;font-size:13px;color:var(--ink-soft)}
+.section-title .num{
+  background:linear-gradient(135deg,var(--amber-500),var(--amber));color:#fff;
+  font-size:12px;border-radius:6px;padding:2px 8px;font-family:'Kanit',sans-serif;
+}
+.hw-tab-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.hw-tab-filter button{
+  border:1px solid var(--line);background:#fff;border-radius:99px;
+  padding:5px 13px;font-size:12.5px;cursor:pointer;color:var(--ink-soft);
+  transition:border-color .15s ease,color .15s ease,background .15s ease;
+}
+.hw-tab-filter button:hover{border-color:var(--amber-500);color:var(--amber)}
+.hw-tab-filter button.active{background:linear-gradient(135deg,var(--amber-500),var(--amber));color:#fff;border-color:transparent}
+
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.grid-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.grid-vehicle{grid-template-columns:1fr 1fr 0.65fr}
+@media(max-width:720px){.grid-2,.grid-3,.grid-4,.grid-vehicle{grid-template-columns:1fr}}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12.5px;color:var(--ink-soft);font-weight:600}
+.field label .req{color:var(--rust)}
+.field input,.field select,.field textarea{
+  font-family:'Sarabun',sans-serif;font-size:14.5px;
+  border:1px solid var(--line);border-radius:8px;
+  padding:8px 10px;background:#fff;color:var(--ink);
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--amber-500);
+  box-shadow:0 0 0 3px rgba(224,98,15,.14);
+}
+.field textarea{resize:vertical;min-height:56px}
+.hint{font-size:12px;color:#8B8E93}
+
+ 
+.edit-mode-banner{
+  display:none;align-items:center;gap:12px;
+  background:linear-gradient(135deg,#fff4e8,#ffe9d4);border:1.5px solid var(--amber-500);
+  border-radius:14px;padding:13px 16px;margin-bottom:14px;
+  animation:editBannerPop .25s cubic-bezier(.22,.9,.32,1.2);
+}
+@keyframes editBannerPop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.edit-mode-banner .em-icon{
+  width:34px;height:34px;border-radius:50%;background:var(--amber-500);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.edit-mode-banner .em-text{flex:1;min-width:0}
+.edit-mode-banner .em-title{font-family:'Kanit',sans-serif;font-weight:700;font-size:14px;color:var(--navy-900)}
+.edit-mode-banner .em-sub{font-size:12.5px;color:var(--ink-soft);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:560px){.edit-mode-banner{flex-wrap:wrap}}
+
+ 
+.km-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--amber-glow);color:var(--amber-deep);font-family:'Kanit',sans-serif;
+  font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:6px;
+}
+.pw-wrap{position:relative;display:flex}
+.pw-wrap input{flex:1;padding-right:38px}
+.pw-toggle{
+  position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  background:transparent;border:none;cursor:pointer;font-size:15px;
+  color:var(--ink-soft);padding:4px 8px;line-height:1;
+}
+.pw-toggle:hover{color:var(--ink)}
+.km-hint{font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+.km-hint.warn{color:var(--rust);font-weight:600}
+
+ 
+.btn{
+  font-family:'Kanit',sans-serif;font-weight:600;font-size:14px;
+  border-radius:10px;border:1px solid transparent;
+  padding:9px 17px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  transition:filter .15s ease,transform .1s ease,box-shadow .15s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:linear-gradient(135deg,var(--amber-500),var(--amber));color:#fff;box-shadow:0 4px 12px -2px rgba(224,98,15,.4)}
+.btn.btn-loading{cursor:default;opacity:.85}
+.btn-spinner{
+  display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.45);
+  border-top-color:#fff;border-radius:50%;margin-right:7px;vertical-align:-2px;
+  animation:btnSpin .6s linear infinite;
+}
+@keyframes btnSpin{to{transform:rotate(360deg)}}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-outline{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn-outline:hover{background:var(--paper-2)}
+.btn-ghost{background:transparent;border:none;color:var(--ink-soft)}
+.btn-ghost:hover{color:var(--ink)}
+.btn-danger{background:var(--rust-bg);border-color:transparent;color:var(--rust)}
+.btn-danger:hover{filter:brightness(0.97)}
+.btn-success{background:var(--green-bg) !important;border-color:transparent !important;color:var(--green) !important}
+.btn-sm{padding:5px 11px;font-size:12.5px;border-radius:7px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.btn-loading:disabled,.btn.btn-success:disabled{opacity:1}
+
+ 
+.item-row{
+  display:grid;grid-template-columns:1fr 70px 90px 100px 110px 34px;gap:8px;
+  align-items:start;margin-bottom:8px;
+}
+@media(max-width:720px){.item-row{grid-template-columns:1fr}}
+.item-row .it-name{
+  resize:none;overflow:hidden;min-height:30px;line-height:1.35;padding:5px 10px;
+  font-family:'Sarabun',sans-serif;white-space:pre-wrap;word-break:break-word;
+}
+.item-row .del-item{
+  background:transparent;border:1px solid var(--line);border-radius:8px;
+  color:var(--rust);cursor:pointer;height:36px;transition:background .15s ease;
+}
+.item-row .del-item:hover{background:var(--rust-bg)}
+.item-divider{
+  font-family:'Kanit',sans-serif;font-weight:600;font-size:12.5px;
+  color:var(--navy-800);margin:10px 0 6px;padding-top:10px;
+  border-top:1px dashed var(--line);
+}
+ 
+.item-row:not(:first-child) .item-col-label{display:none}
+.item-row .it-qty,.item-row .it-unitprice,.item-row .it-price{text-align:center}
+.items-total{
+  display:flex;justify-content:flex-end;gap:10px;align-items:center;
+  padding-top:8px;border-top:1px dashed var(--line);margin-top:4px;font-size:14px;
+}
+.items-total b{font-family:'Kanit',sans-serif;font-size:16px}
+.material-category-picker{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;max-width:600px;margin-bottom:12px}
+.material-category-picker .field{flex:1;min-width:220px;margin-bottom:0}
+.material-category-picker .btn{height:37px}
+.items-total-sub{border-top:none;padding-top:2px;color:var(--ink-soft);font-size:13px}
+.items-total-grand{border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.items-total-grand .lbl-grand{font-weight:700;font-family:'Kanit',sans-serif}
+.items-total-grand input{
+  width:150px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;
+  background:var(--paper-2);font-family:'Kanit',sans-serif;font-weight:700;font-size:16px;text-align:right;
+}
+
+ 
+.table-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+#assetsTable{table-layout:fixed;width:100%}
+#assetsTable th:nth-child(1),#assetsTable td:nth-child(1){width:auto}
+#assetsTable th:nth-child(2),#assetsTable td:nth-child(2){width:110px}
+#assetsTable th:nth-child(3),#assetsTable td:nth-child(3){width:170px}
+#assetsTable td{overflow-wrap:break-word}
+table.data{width:100%;border-collapse:collapse;font-size:13.5px}
+table.data{width:100%;border-collapse:collapse;font-size:13.5px;table-layout:auto}
+table.data th{
+  font-family:'Kanit',sans-serif;font-weight:600;text-align:center;
+  background:var(--paper-2);color:var(--ink);padding:9px 12px;
+  border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;
+  vertical-align:middle;letter-spacing:.01em;
+}
+table.data td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:normal}
+table.data td.nowrap-cell{white-space:nowrap}
+table.data td.center-cell{text-align:center}
+table.data td.wrap-cell{white-space:normal;min-width:140px}
+table.data td.hw-cell{white-space:normal;min-width:80px}
+table.data td.plate-cell{white-space:normal;max-width:110px}
+table.data td.plate-cell .plate-entry{margin-bottom:4px}
+table.data td.plate-cell .plate-entry:last-child{margin-bottom:0}
+table.data td.plate-cell .plate-num{font-weight:600}
+table.data td.plate-cell .plate-province{font-family:'Kanit',sans-serif;font-weight:400;font-size:11.5px;color:var(--ink-soft)}
+table.data td.violator-cell{white-space:normal;max-width:140px}
+table.data tr:nth-child(even) td{background:#fafbfa}
+table.data tr:hover td{background:#f2f5f8}
+.status-pill{
+  display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600;
+}
+.status-pill.done{background:var(--green-bg);color:var(--green)}
+.status-pill.pending{background:var(--rust-bg);color:var(--rust)}
+.status-pill.unknown{background:var(--paper-2);color:var(--ink-soft)}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--ink-soft)}
+.empty-state h3{margin:0 0 6px}
+
+ 
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:820px){.stat-cards{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:linear-gradient(180deg,#ffffff,var(--paper) 130%);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);transition:box-shadow .15s ease,transform .15s ease}
+.stat-card:hover{box-shadow:0 4px 10px rgba(10,37,64,.06),0 16px 30px -16px rgba(10,37,64,.2);transform:translateY(-2px)}
+.stat-card .big{font-family:'Kanit',sans-serif;font-weight:700;font-size:30px;line-height:1;color:var(--navy-900)}
+.stat-card .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+.stat-card.amber .big{color:var(--amber)}
+.stat-card.rust .big{color:var(--rust)}
+.stat-card.green .big{color:var(--green)}
+.stat-card.clickable{cursor:pointer}
+.stat-card.green.clickable{border-color:var(--green);border-width:1.5px}
+.stat-card.rust.clickable{border-color:var(--rust);border-width:1.5px}
+
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+.bar-row-active .lbl{color:var(--ink);font-weight:700}
+.bar-row-active .track{background:var(--green-bg,#d9f3e6)}
+.bar-row-active .val{color:var(--green);font-weight:800}
+.bar-row .lbl{width:340px;flex:none;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-row .track{flex:1;background:var(--paper-2);border-radius:5px;height:16px;overflow:hidden}
+.bar-row .fill{height:100%;background:linear-gradient(90deg,var(--navy-700),var(--navy-900));border-radius:5px}
+.bar-row .val{width:46px;flex:none;text-align:right;font-family:'Kanit',sans-serif;font-weight:600}
+
+.blackspot-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.blackspot-stack{display:grid;align-items:start}
+.blackspot-hw-group{grid-area:1/1;visibility:hidden;opacity:0;pointer-events:none}
+.blackspot-hw-group.active{visibility:visible;opacity:1;pointer-events:auto}
+.blackspot-chip{
+  border-radius:10px;
+  padding:9px 11px;display:flex;flex-direction:column;gap:4px;
+}
+.blackspot-chip .km{font-size:13px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blackspot-chip .blackspot-count{align-self:flex-start;font-weight:700}
+.blackspot-chip.spot-2{background:var(--spot2-bg)}
+.blackspot-chip.spot-2 .blackspot-count{color:var(--spot2-fg)}
+.blackspot-chip.spot-3{background:var(--spot3-bg)}
+.blackspot-chip.spot-3 .blackspot-count{color:var(--spot3-fg)}
+.blackspot-chip.spot-4{background:var(--spot4-bg)}
+.blackspot-chip.spot-4 .blackspot-count{color:var(--spot4-fg)}
+.blackspot-chip.spot-5{background:var(--spot5-bg)}
+.blackspot-chip.spot-5 .blackspot-count{color:var(--spot5-fg)}
+
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--navy-900);color:#fff;padding:11px 20px;border-radius:10px;
+  font-size:14px;box-shadow:var(--shadow-lg);z-index:50;
+  opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(7,27,48,.58);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;
+  animation:modalFade .15s ease;
+}
+@keyframes modalFade{from{opacity:0}to{opacity:1}}
+.modal{
+  position:relative;background:var(--card);border-radius:20px;max-width:420px;width:100%;
+  max-height:88vh;overflow-y:auto;border-top:4px solid var(--amber-500);
+  padding:24px 24px 22px;box-shadow:0 26px 64px -18px rgba(7,27,48,.5);
+  animation:modalPop .18s cubic-bezier(.22,.9,.32,1.2);
+}
+@keyframes modalPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:2px}
+.modal-head h3{margin:0}
+.modal-close{
+  flex-shrink:0;width:30px;height:30px;border-radius:50%;border:none;background:var(--paper-2);
+  color:var(--ink-soft);font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s, color .15s;
+}
+.modal-close:hover{background:var(--navy-900);color:#fff}
+.autocomplete-list{
+  position:absolute;left:0;right:0;top:100%;margin-top:4px;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 12px 28px -8px rgba(7,27,48,.25);
+  max-height:180px;overflow-y:auto;z-index:80;display:none;
+}
+.autocomplete-list .ac-item{padding:9px 14px;font-size:14px;cursor:pointer;color:var(--navy-900)}
+.autocomplete-list .ac-item:hover{background:var(--paper-2)}
+
+ 
+.assets-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;margin-bottom:18px;
+}
+.assets-toolbar .btn{height:37px}
+.assets-search-wrap{position:relative;flex:1;min-width:220px}
+.assets-search-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.4;pointer-events:none}
+.assets-search-wrap input{
+  width:100%;height:37px;padding:0 40px 0 42px;border-radius:12px;border:1.5px solid var(--line);
+  font-size:14px;background:var(--card);transition:border-color .15s,box-shadow .15s;
+}
+.assets-search-wrap input:focus{border-color:var(--amber-500);box-shadow:0 0 0 3px rgba(224,98,15,.12);outline:none}
+.assets-search-clear{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  width:22px;height:22px;border-radius:50%;border:none;background:var(--paper-2);
+  color:var(--ink-soft);font-size:13px;line-height:1;cursor:pointer;display:none;
+  align-items:center;justify-content:center;
+}
+.assets-search-clear:hover{background:var(--line);color:var(--navy-900)}
+.assets-search-wrap.has-text .assets-search-clear{display:flex}
+.assets-updated-badge{
+  display:inline-flex;align-items:center;gap:7px;flex-shrink:0;height:37px;
+  background:var(--paper-2);border:1px solid var(--line);border-radius:99px;
+  padding:0 15px;font-size:12.5px;color:var(--ink-soft);white-space:nowrap;
+}
+.assets-updated-badge::before{content:'🕘';font-size:12px}
+@media(max-width:560px){
+  .assets-toolbar{flex-direction:column;align-items:stretch}
+  .assets-updated-badge{justify-content:center}
+}
+.asset-category-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.asset-cat-chip{
+  height:32px;padding:0 14px;border-radius:99px;border:1.5px solid var(--line);
+  background:var(--card);color:var(--ink-soft);font-size:13px;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.asset-cat-chip:hover{border-color:var(--amber-500);color:var(--navy-900)}
+.asset-cat-chip.active{background:var(--navy-900);border-color:var(--navy-900);color:#fff}
+.asset-cat-header td{
+  background:var(--paper-2);font-weight:600;color:var(--navy-800);font-size:13px;
+  padding:9px 14px !important;border-top:1.5px solid var(--line);
+}
+tr.asset-frequent td{background:var(--amber-glow) !important}
+tr.asset-frequent:hover td{background:#fbe9c9 !important}
+.asset-frequent-badge{
+  display:inline-flex;align-items:center;gap:4px;margin-left:8px;
+  background:var(--amber-500);color:#fff;font-size:11px;font-weight:700;
+  padding:1px 8px;border-radius:99px;vertical-align:middle;
+  box-shadow:0 1px 3px rgba(224,98,15,.35);
+}
+.asset-kebab-btn{
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);
+  color:var(--ink-soft);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s;margin:0 auto;
+}
+.asset-kebab-btn:hover{background:var(--paper-2);border-color:var(--amber-500);color:var(--amber-500)}
+.modal h3{margin:0 0 8px;color:var(--navy-900)}
+.modal p{font-size:14px;color:var(--ink-soft);margin:0 0 18px;line-height:1.6}
+.modal .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.modal-lg{max-width:680px}
+
+ 
+.success-modal-backdrop{
+  position:fixed;inset:0;background:rgba(7,27,48,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:70;padding:20px;
+  animation:modalFade .18s ease;cursor:pointer;
+}
+.success-modal{
+  background:var(--card);border-radius:20px;max-width:340px;width:100%;
+  padding:30px 26px 22px;box-shadow:0 24px 60px -16px rgba(7,27,48,.45);
+  text-align:center;position:relative;overflow:hidden;cursor:default;
+  animation:successModalPop .35s cubic-bezier(.22,.9,.32,1.25);
+}
+@keyframes successModalPop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+.success-icon-ring{
+  width:68px;height:68px;border-radius:50%;margin:0 auto 18px;
+  background:var(--green-bg);display:flex;align-items:center;justify-content:center;
+  animation:successRingPop .45s .05s cubic-bezier(.22,.9,.32,1.3) backwards;
+}
+@keyframes successRingPop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+.success-icon-ring svg{width:34px;height:34px}
+.success-icon-ring svg path{
+  stroke:var(--green);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;fill:none;
+  stroke-dasharray:28;stroke-dashoffset:28;
+  animation:successCheckDraw .35s .3s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes successCheckDraw{to{stroke-dashoffset:0}}
+.success-modal h3{
+  margin:0 0 6px;font-family:'Kanit',sans-serif;font-weight:700;font-size:18px;color:var(--navy-900);
+}
+.success-modal .success-sub{font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;line-height:1.5}
+.success-modal .success-case{
+  margin-top:14px;padding:11px 14px;background:var(--paper-2);border-radius:12px;
+  font-size:13px;color:var(--navy-900);font-weight:600;line-height:1.5;text-align:left;
+  display:flex;align-items:center;gap:10px;
+}
+.success-modal .success-case .dot{width:6px;height:6px;border-radius:50%;background:var(--amber-500);flex-shrink:0}
+.success-modal .success-close{
+  margin-top:18px;background:none;border:none;color:var(--ink-soft);font-size:12.5px;
+  cursor:pointer;padding:4px;
+}
+.success-modal .success-close:hover{color:var(--navy-900)}
+.success-progress-track{position:absolute;left:0;bottom:0;width:100%;height:3px;background:var(--paper-2)}
+.success-progress-bar{
+  height:100%;background:linear-gradient(90deg,var(--amber-500),var(--green));
+  width:100%;transform-origin:left;animation:successProgress 2.6s linear forwards;
+}
+@keyframes successProgress{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.detail-section-title{
+  font-family:'Kanit',sans-serif;font-weight:700;font-size:14px;color:var(--navy-900);
+  margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--amber-500);
+}
+.detail-section-title:first-of-type{margin-top:0}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13.5px}
+@media(max-width:520px){.detail-grid{grid-template-columns:1fr}}
+.detail-grid .full{grid-column:1/-1}
+.party-block{
+  border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;background:var(--paper-2);
+}
+.party-block-title{
+  font-family:'Kanit',sans-serif;font-weight:700;font-size:13px;color:var(--navy-900);
+  margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;
+}
+.party-block-title .tag{
+  font-size:11px;font-weight:600;color:var(--ink-soft);background:var(--paper);
+  border:1px solid var(--line);border-radius:20px;padding:2px 8px;
+}
+.party-remove-btn{
+  background:none;border:none;color:var(--rust);font-size:12px;font-weight:600;
+  cursor:pointer;padding:2px 6px;
+}
+.party-remove-btn:hover{text-decoration:underline}
+.trailer-field{display:none}
+.trailer-field.show{display:grid}
+#btnAddOtherParty{margin-top:12px}
+.detail-party-block{margin-bottom:14px}
+.detail-party-block:last-child{margin-bottom:0}
+.detail-party-heading{
+  font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;
+}
+.detail-grid>div{display:flex;align-items:baseline;gap:6px}
+.detail-grid .k{color:var(--navy-800);font-size:12.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.detail-grid .k::after{content:':';margin-left:1px}
+.detail-grid .v{color:var(--ink)}
+.detail-items-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.detail-items-table th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:12px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.detail-items-table td{padding:4px 6px;border-bottom:1px solid var(--paper-2)}
+.detail-items-table th.num{text-align:center}
+.detail-items-table td.num{text-align:center;white-space:nowrap}
+.detail-items-table tfoot td{border-bottom:none;padding:3px 6px}
+.detail-items-table tfoot tr.totals-row-first td{padding-top:22px}
+.detail-items-table tfoot td.dt-label{text-align:right;color:var(--navy-800);font-weight:700;white-space:nowrap;padding-right:2px}
+.detail-items-table tfoot td.dt-colon{text-align:center;color:var(--navy-800);font-weight:700}
+.detail-items-table tfoot td.dt-value{font-family:'Kanit',sans-serif;white-space:nowrap;display:flex;align-items:baseline}
+.detail-items-table tfoot td.dt-value .dt-num{flex:1;text-align:right}
+.detail-items-table tfoot td.dt-value .dt-unit{margin-left:4px}
+.detail-items-table tfoot tr.totals-row-grand td{font-size:15px;padding-top:10px}
+.detail-items-table tfoot tr.totals-row-grand td:not(:first-child){border-top:1px solid var(--line)}
+
+.pill-filter{display:flex;gap:6px;flex-wrap:wrap}
+.pill-filter button{
+  border:1px solid var(--line);background:#fff;border-radius:99px;
+  padding:5px 13px;font-size:12.5px;cursor:pointer;color:var(--ink-soft);
+  transition:border-color .15s ease,color .15s ease,background .15s ease;
+}
+.pill-filter button:hover{border-color:var(--amber-500);color:var(--amber)}
+.pill-filter button.active{background:linear-gradient(135deg,var(--amber-500),var(--amber));color:#fff;border-color:transparent}
+
+.year-dropdown-wrap{position:relative;display:inline-block}
+#dashYearFilter>button[data-y="ทั้งหมด"]{
+  min-width:104px;text-align:center;
+}
+.year-dropdown-btn{
+  min-width:104px;justify-content:center;
+}
+.year-dropdown-btn{
+  border:1px solid var(--line);background:#fff;border-radius:99px;
+  padding:5px 13px;font-size:12.5px;cursor:pointer;color:var(--ink-soft);
+  display:inline-flex;align-items:center;gap:4px;
+  transition:border-color .15s ease,color .15s ease,background .15s ease;
+}
+.year-dropdown-btn:hover{border-color:var(--amber-500);color:var(--amber)}
+.year-dropdown-btn.active{background:linear-gradient(135deg,var(--amber-500),var(--amber));color:#fff;border-color:transparent}
+.year-dropdown-btn .caret{font-size:10px;line-height:1}
+.year-dropdown-menu{
+  display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:20;
+  background:#fff;border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);padding:4px;min-width:110px;
+  max-height:240px;overflow-y:auto;
+}
+.year-dropdown-menu.open{display:block}
+.year-dropdown-item{
+  padding:6px 10px;font-size:12.5px;color:var(--ink-soft);border-radius:6px;
+  cursor:pointer;white-space:nowrap;
+}
+.year-dropdown-item:hover{background:var(--paper-2);color:var(--ink)}
+.year-dropdown-item.active{background:linear-gradient(135deg,var(--amber-500),var(--amber));color:#fff}
+
+.row-menu-wrap{position:relative;display:inline-block}
+.row-menu-btn{
+  font-size:16px;line-height:1;width:28px;height:28px;border:1px solid var(--line);background:#fff;
+  cursor:pointer;color:var(--ink-soft);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+}
+.row-menu-btn:hover{background:var(--paper-2);color:var(--ink);border-color:var(--ink-mute)}
+.row-menu{
+  position:absolute;right:0;top:100%;margin-top:6px;
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow-lg);min-width:110px;z-index:30;
+  display:none;overflow:hidden;
+}
+.row-menu.open{display:block}
+.row-menu button{
+  display:block;width:100%;text-align:left;padding:9px 14px;
+  background:transparent;border:none;cursor:pointer;font-size:13.5px;color:var(--ink);
+  font-family:'Sarabun',sans-serif;
+}
+.legend-info-panel{width:300px;padding:14px 16px;font-size:12.5px;color:var(--ink-soft);line-height:1.55}
+.legend-info-item{display:flex;gap:10px;align-items:flex-start}
+.legend-info-item:not(:last-child){margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.legend-info-item .legend-info-icon{flex:none;font-size:15px;line-height:1.45}
+.legend-info-item p{margin:0}
+.legend-info-item b{color:var(--ink);font-weight:600}
+.row-menu button:hover{background:var(--paper-2)}
+.row-menu button.danger{color:var(--rust)}
+
+.footer-note{text-align:center;color:#9C9E9F;font-size:12px;margin-top:26px}
+
+ 
+.page-loading-overlay{
+  position:fixed;inset:0;background:var(--paper);z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .25s ease;
+}
+.page-loading-overlay.hide{opacity:0;pointer-events:none}
+.page-loading-box{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  color:var(--ink-soft);font-family:'Kanit',sans-serif;font-size:14px;
+}
+.page-loading-spin{
+  width:26px;height:26px;border:3px solid var(--paper-2);border-top-color:var(--amber-500);
+  border-radius:50%;animation:btnSpin .7s linear infinite;
+}
+
+/* ===== หน้าล็อกอิน (ต้องล็อกอินก่อนเห็นข้อมูล) ===== */
+.auth-gate{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px;overflow:auto;
+  background:radial-gradient(1100px 520px at 15% -10%, var(--navy-800) 0%, var(--ink-2) 60%)}
+.auth-gate.show{display:flex}
+.auth-card{background:#fff;border-radius:18px;padding:30px 28px 26px;width:100%;max-width:410px;box-shadow:var(--shadow-lg);text-align:center}
+.auth-logo{width:72px;height:72px;margin:0 auto 6px;display:block}
+.auth-card h2{margin:4px 0 2px;font-size:22px;color:var(--navy-900)}
+.auth-sub{margin:0 0 18px;font-size:13px;color:var(--ink-mute)}
+.auth-h3{margin:0 0 12px;font-size:16px;color:var(--ink);text-align:left}
+.auth-card .field{text-align:left}
+.auth-card .hint{text-align:left}
+.auth-error{color:var(--rust);background:var(--rust-bg);padding:8px 10px;border-radius:8px;margin:0 0 12px}
+.auth-btn{width:100%;justify-content:center}
+#importLog{display:none;white-space:pre-wrap;background:var(--paper-2);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="page-loading-overlay" id="pageLoadingOverlay">
+  <div class="page-loading-box">
+    <span class="page-loading-spin"></span>
+    <div>กำลังโหลดข้อมูล...</div>
+  </div>
+</div>
+<div class="route-header">
+  <div class="top-row">
+    <div style="display:flex;align-items:center;gap:14px">
+      <img src="logo.png" alt="ตรากรมทางหลวง" class="dept-logo">
+      <div>
+        <h1>งานอุบัติเหตุ หมวดทางหลวงเชิงเนิน</h1>
+        <p class="sub">สำนักงานทางหลวงที่ 14 (ชลบุรี) · แขวงทางหลวงระยอง</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <p class="who" id="whoDisplay" style="margin:0">ยังไม่ระบุผู้ใช้งาน</p>
+      <button class="btn btn-ghost btn-sm" style="color:#9DA0A8" id="btnChangeWho">เข้าสู่ระบบ</button>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="dash">ภาพรวม</button>
+    <button class="tab-btn" data-view="list">รายการอุบัติเหตุ</button>
+    <button class="tab-btn" data-view="form">＋ บันทึกรายการใหม่</button>
+    <button class="tab-btn" data-view="routes">ข้อมูลสายทาง</button>
+    <button class="tab-btn" data-view="assets">ข้อมูลทรัพย์สิน</button>
+    <button class="tab-btn" data-view="settings">ตั้งค่า</button>
+  </nav>
+</div>
+
+<div class="shell">
+
+  
+  <div class="view" id="view-form">
+    <div class="edit-mode-banner" id="editModeBanner">
+      <div class="em-icon">✏️</div>
+      <div class="em-text">
+        <div class="em-title">กำลังแก้ไขรายการเดิม</div>
+        <div class="em-sub" id="editModeSub"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span class="num">1</span> ข้อมูลอุบัติเหตุ</div>
+      <div class="grid grid-4">
+        <div class="field">
+          <label>ปีงบประมาณ <span class="req">*</span></label>
+          <select id="f_fiscalYear"></select>
+        </div>
+        <div class="field">
+          <label>วันที่เกิดเหตุ <span class="req">*</span></label>
+          <input type="date" id="f_dateIncident">
+        </div>
+        <div class="field">
+          <label>วันที่ตรวจพบ</label>
+          <input type="date" id="f_dateFound">
+        </div>
+        <div class="field">
+          <label>เวลา (เช่น 9.30)</label>
+          <input type="text" id="f_time" placeholder="09.30 น">
+        </div>
+      </div>
+      <div class="grid grid-4" style="margin-top:12px">
+        <div class="field">
+          <label>ทล. (สายทาง) <span class="req">*</span></label>
+          <select id="f_highway"></select>
+        </div>
+        <div class="field">
+          <label>ตอน</label>
+          <input type="text" id="f_section" readonly>
+        </div>
+        <div class="field">
+          <label>กม. ที่เกิดเหตุ <span class="req">*</span></label>
+          <input type="text" id="f_km" placeholder="225&#43;500">
+          <span class="hint km-hint" id="kmHint"></span>
+        </div>
+        <div class="field">
+          <label>ด้าน / ตำแหน่ง</label>
+          <select id="f_side">
+            <option value="">— เลือก —</option>
+            <option value="ซ้ายทาง">ซ้ายทาง</option>
+            <option value="ขวาทาง">ขวาทาง</option>
+            <option value="ร่องกลาง">ร่องกลาง</option>
+            <option value="เกาะกลาง">เกาะกลาง</option>
+            <option value="ซ้ายทาง ร่องกลาง">ซ้ายทาง (ร่องกลาง)</option>
+            <option value="ขวาทาง ร่องกลาง">ขวาทาง (ร่องกลาง)</option>
+            <option value="ซ้ายทาง ไหล่ทาง">ซ้ายทาง (ไหล่ทาง)</option>
+            <option value="ขวาทาง ไหล่ทาง">ขวาทาง (ไหล่ทาง)</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:12px">
+        <div class="field">
+          <label>บริเวณโดยสังเขป</label>
+          <input type="text" id="f_location" placeholder="เช่น สี่แยก, จุดกลับรถ, สะพาน">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><span class="num">2</span> รายละเอียดรถ / คู่กรณี</div>
+
+      <div class="party-block" data-role="main">
+        <div class="party-block-title"><span>ผู้ละเมิดหลัก</span></div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>ชื่อผู้ขับขี่ / ผู้ละเมิด</label>
+            <input type="text" id="f_driverName">
+          </div>
+          <div class="field">
+            <label>เบอร์โทร</label>
+            <input type="text" id="f_driverPhone">
+          </div>
+        </div>
+        <div class="grid grid-3" id="f_vehicleRow" style="margin-top:12px">
+          <div class="field">
+            <label>ประเภทรถ</label>
+            <select id="f_vehicleType">
+              <option value="">— เลือก —</option>
+              <option>รถยนต์นั่งส่วนบุคคล</option>
+              <option>รถกระบะ</option>
+              <option>รถบรรทุก</option>
+              <option>รถพ่วง</option>
+              <option>รถโดยสาร</option>
+              <option>รถตู้</option>
+              <option>รถจักรยานยนต์</option>
+              <option>เครื่องจักรกล</option>
+              <option>อื่นๆ</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>ยี่ห้อ / สี</label>
+            <input type="text" id="f_vehicleBrand" placeholder="เช่น โตโยต้า สีขาว">
+          </div>
+          <div class="field">
+            <label>ทะเบียนรถ</label>
+            <input type="text" id="f_plate" placeholder="กข-1234 ระยอง">
+          </div>
+          <div class="field" id="f_trailerWrap" style="display:none">
+            <label>ทะเบียนหาง</label>
+            <input type="text" id="f_trailerPlate" placeholder="เช่น 71-9716 สมุทรปราการ">
+          </div>
+        </div>
+        <div class="grid grid-2" style="margin-top:12px">
+          <div class="field">
+            <label>มีประกันภัยหรือไม่</label>
+            <select id="f_hasInsurance">
+              <option value="">— ยังไม่ระบุ —</option>
+              <option value="มี">มี</option>
+              <option value="ไม่มี">ไม่มี</option>
+            </select>
+          </div>
+          <div class="field" id="f_insuranceCompanyWrap" style="display:none">
+            <label>บริษัทประกันภัย</label>
+            <input type="text" id="f_insuranceCompany" placeholder="เช่น วิริยะประกันภัย">
+          </div>
+        </div>
+      </div>
+
+      <div id="otherPartiesContainer"></div>
+
+      <button class="btn btn-outline" id="btnAddOtherParty" type="button">+ คู่กรณีร่วม</button>
+
+      <input type="hidden" id="f_driverAge">
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:8px"><span class="num">3</span> รายการทรัพย์สินเสียหาย</span>
+        <div class="row-menu-wrap">
+          <button class="row-menu-btn" id="btnItemsInfoToggle" type="button" title="คำอธิบาย">⋮</button>
+          <div class="row-menu legend-info-panel" id="itemsInfoPanel">
+            <div class="legend-info-item">
+              <span class="legend-info-icon">💡</span>
+              <p><b>ประเภทวัสดุ</b> — เลือกเพื่อดึงรายการและราคามาตรฐานอัตโนมัติ</p>
+            </div>
+            <div class="legend-info-item">
+              <span class="legend-info-icon">🗑️</span>
+              <p>รายการที่ดึงมาอัตโนมัติ ถ้าไม่พบความเสียหายจริงตามรายงาน กดปุ่ม <b>✕</b> เพื่อลบออกได้</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="material-category-picker">
+        <div class="field">
+          <label>ประเภทวัสดุ</label>
+          <select id="f_materialCategory">
+            <option value="">-- เลือกประเภทวัสดุ --</option>
+          </select>
+        </div>
+        <button class="btn btn-outline btn-sm" id="btnApplyMaterialCategory" type="button">+ ดึงรายการวัสดุ</button>
+        <button class="btn btn-outline btn-sm" id="btnAddItem" type="button">+ เพิ่มรายการ</button>
+      </div>
+
+      <div id="itemsContainer"></div>
+
+      <div class="items-total">
+        <span>รวมค่าวัสดุ:</span> <b id="itemsSumDisplay">0</b> <span>บาท</span>
+      </div>
+
+      <div class="field" style="max-width:360px;margin:10px 0 6px">
+        <label>วิธีคิดค่าดำเนินการ</label>
+        <select id="f_costMethod">
+          <option value="percent30">ค่าดำเนินการ 30% ของค่าวัสดุ (ปกติ)</option>
+          <option value="laborMachine">แยกค่าแรง + ค่าเครื่องจักร (เคสเก่า)</option>
+        </select>
+      </div>
+
+      <div class="items-total items-total-sub" id="opCost30Row">
+        <span>ค่าดำเนินการ (30% ของค่าวัสดุ):</span> <b id="opCostDisplay">0</b> <span>บาท</span>
+      </div>
+
+      <div class="grid grid-2" id="laborMachineRow" style="display:none;margin-bottom:10px">
+        <div class="field"><label>ค่าแรง (บาท)</label><input type="text" id="f_laborCost" placeholder="0"></div>
+        <div class="field"><label>ค่าเครื่องจักร (บาท)</label><input type="text" id="f_machineCost" placeholder="0"></div>
+      </div>
+
+      <div class="items-total items-total-grand">
+        <span class="lbl-grand">รวมทั้งสิ้น</span>
+        <input type="text" id="f_totalPrice" readonly placeholder="0">
+        <span>บาท</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><span class="num">4</span> ผลการติดตาม (กรอกภายหลังได้)</div>
+      <div class="grid grid-3">
+        <div class="field">
+          <label>การชดใช้</label>
+          <select id="f_compensationStatus">
+            <option value="">— ยังไม่ระบุ —</option>
+            <option>ชดใช้แล้ว</option>
+            <option>ยังไม่ชดใช้</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>การจัดซ่อม</label>
+          <select id="f_repairStatus">
+            <option value="">— ยังไม่ระบุ —</option>
+            <option>จัดซ่อมแล้ว</option>
+            <option>ยังไม่จัดซ่อม</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ยุติเรื่อง (วันที่)</label>
+          <input type="date" id="f_closedDate">
+        </div>
+      </div>
+      <div class="grid grid-2" style="margin-top:12px">
+        <div class="field">
+          <label>เลขที่หนังสืออ้างอิง</label>
+          <input type="text" id="f_referenceNo" placeholder="ที่ สทล.14ขท.ระยอง.1/xx-xx/ส.3/xxxx">
+        </div>
+        <div class="field">
+          <label>หมายเหตุ</label>
+          <input type="text" id="f_note">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center">
+      <span class="hint" id="editingHint"></span>
+      <button class="btn btn-outline" id="btnClearForm" type="button">ล้างฟอร์ม</button>
+      <button class="btn btn-primary" id="btnSave" type="button">บันทึกข้อมูล</button>
+    </div>
+  </div>
+
+  
+  <div class="view" id="view-list">
+    <div class="card">
+      <div class="table-toolbar">
+        <div class="assets-search-wrap" id="searchWrap" style="min-width:220px;flex:1">
+          <span class="assets-search-icon">🔍</span>
+          <input type="text" id="searchBox" placeholder="ค้นหา ที่, วันที่, กม., ชื่อ, ทะเบียนรถ">
+          <button type="button" class="assets-search-clear" id="searchClear" title="ล้างคำค้นหา">✕</button>
+        </div>
+        <div class="field">
+          <label style="text-align:center">ปีงบประมาณ</label>
+          <select id="filterYear"><option value="">ทั้งหมด</option></select>
+        </div>
+        <div class="field">
+          <label style="text-align:center">ทล.</label>
+          <select id="filterHighway"><option value="">ทั้งหมด</option></select>
+        </div>
+        <div class="field">
+          <label style="text-align:center">สถานะ</label>
+          <select id="filterStatus">
+            <option value="">ทั้งหมด</option>
+            <option value="open">ยังไม่ยุติเรื่อง</option>
+            <option value="closed">ยุติเรื่องแล้ว</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data" id="dataTable">
+          <thead>
+            <tr>
+              <th>ที่</th><th>วันที่</th><th>ทล./ตอน</th><th>กม.</th><th>ผู้ละเมิด</th>
+              <th>ทะเบียนรถ</th><th>ราคาประเมิน</th><th>ชดใช้</th><th>จัดซ่อม</th><th>ยุติเรื่อง</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <h3>ยังไม่มีข้อมูลตรงเงื่อนไข</h3>
+        <p>ลองปรับตัวกรอง หรือเริ่มบันทึกรายการใหม่</p>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="view active" id="view-dash">
+    <div class="pill-filter" id="dashYearFilter" style="margin-bottom:16px"></div>
+
+    <div class="stat-cards">
+      <div class="stat-card"><div class="big mono" id="statTotal">0</div><div class="lbl">อุบัติเหตุทั้งหมด (ครั้ง)</div></div>
+      <div class="stat-card amber"><div class="big mono" id="statValue">0</div><div class="lbl">มูลค่าความเสียหาย (บาท)</div></div>
+      <div class="stat-card green clickable" id="cardClosed"><div class="big mono" id="statClosed">0</div><div class="lbl">ยุติเรื่องแล้ว (ครั้ง)</div></div>
+      <div class="stat-card rust clickable" id="cardOpen"><div class="big mono" id="statOpen">0</div><div class="lbl">ยังไม่ยุติเรื่อง (ครั้ง)</div></div>
+    </div>
+
+    <div class="grid grid-2" id="dashFirstRow">
+      <div class="card">
+        <div class="section-title">อุบัติเหตุแยกตามสายทาง</div>
+        <div style="position:relative;height:280px" id="barChartHighwayWrap"><canvas id="barChartHighway"></canvas></div>
+        <p class="hint" id="barChartEmpty" style="display:none">ไม่มีข้อมูล</p>
+      </div>
+      <div class="card" id="trendCard">
+        <div class="section-title">แนวโน้มรายปีงบประมาณ</div>
+        <div style="position:relative;height:260px" id="trendChartWrap"><canvas id="trendChart"></canvas></div>
+        <p class="hint" id="trendChartEmpty" style="display:none">ไม่มีข้อมูล</p>
+      </div>
+    </div>
+
+    <div class="card" id="blackspotCard">
+      <div class="section-title">จุดเสี่ยง</div>
+      <div class="hw-tab-filter" id="blackspotHwFilter" style="display:none"></div>
+      <div id="blackspotList"></div>
+    </div>
+  </div>
+
+  
+  <div class="view" id="view-routes">
+    <div class="card">
+      <div class="assets-toolbar" style="justify-content:flex-end">
+        <button class="btn btn-outline btn-sm" id="btnAddRoute" type="button">+ เพิ่มสายทาง</button>
+        <div class="assets-updated-badge" id="routesUpdatedHint"></div>
+      </div>
+      <div class="table-wrap">
+        <table class="data" id="routesTable">
+          <thead>
+            <tr>
+              <th style="text-align:center">ทล.</th><th style="text-align:center">ควบคุม</th><th style="text-align:center">ตอน</th><th style="text-align:center">กม. - กม.</th>
+              <th style="text-align:center">ระยะทางจริง (กม.)</th><th style="text-align:center">ต่อ 2 ช่อง (กม.)</th>
+              <th style="text-align:center">แอสฟัลท์ (กม.)</th><th style="text-align:center">คอนกรีต (กม.)</th><th style="text-align:center">ปริมาณงาน (หน่วย)</th>
+            </tr>
+          </thead>
+          <tbody id="routesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="view" id="view-assets">
+    <div class="card">
+      <div class="assets-toolbar">
+        <div class="assets-search-wrap" id="assetsSearchWrap">
+          <span class="assets-search-icon">🔍</span>
+          <input type="text" id="assetsSearchBox" placeholder="พิมพ์ค้นหารายการทรัพย์สิน...">
+          <button type="button" class="assets-search-clear" id="assetsSearchClear" title="ล้างคำค้นหา">✕</button>
+        </div>
+        <button class="btn btn-outline btn-sm" id="btnAddAsset" type="button">+ เพิ่มรายการทรัพย์สิน</button>
+        <div class="assets-updated-badge" id="assetsUpdatedHint"></div>
+      </div>
+      <div class="asset-category-chips" id="assetCategoryChips"></div>
+      <div class="table-wrap assets-table-wrap">
+        <table class="data" id="assetsTable">
+          <thead>
+            <tr><th>รายการ</th><th style="text-align:center">หน่วย</th><th style="text-align:center">ราคาต่อหน่วย (บาท)</th></tr>
+          </thead>
+          <tbody id="assetsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="view" id="view-settings">
+    <div class="card" id="cardTeamPanel">
+      <div class="section-title">Access Control System</div>
+      <div id="teamPanel"></div>
+    </div>
+    <div class="card" id="cardExport">
+      <div class="section-title">ส่งออกข้อมูล</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btnExport">⬇ ส่งออกเป็น Excel</button>
+      </div>
+    </div>
+    <div class="card" id="cardTrash">
+      <div class="section-title">🗑 ถังขยะ</div>
+      <p class="hint">เคสที่ถูกลบจะมาอยู่ที่นี่ก่อน ยังไม่หายจริงจนกว่าจะล้างถังขยะเอง — กู้คืนได้ทุกเมื่อ</p>
+      <button class="btn btn-outline" id="btnOpenTrash">เปิดถังขยะ</button>
+    </div>
+    <div class="card" id="cardImport" style="display:none">
+      <div class="section-title">นำเข้าข้อมูลจากระบบเดิม (ครั้งเดียว)</div>
+      <p class="hint">เลือกไฟล์ Excel ที่ export จาก Google Sheet ของระบบ Apps Script เดิม (ต้องมีแท็บ accidents, materials, routes, activity_log) ระบบจะนำเข้าเคสอุบัติเหตุ ทรัพย์สิน สายทาง และประวัติการทำรายการ — รันซ้ำได้ปลอดภัย ไม่เกิดข้อมูลซ้ำ</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <input type="file" id="importFile" accept=".xlsx">
+        <button class="btn btn-primary" id="btnImport" type="button">เริ่มนำเข้า</button>
+      </div>
+      <div id="importLog"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">เกี่ยวกับข้อมูล</div>
+      <p class="hint">
+        ระบบติดตามงานอุบัติเหตุทางหลวง โดย นางสาวนันท์นภัสธ์ รัตนเสถียร จัดทำขึ้นเพื่อบันทึกข้อมูลงานอุบัติเหตุของหมวดทางหลวงเชิงเนิน
+        เพื่อใช้ร่วมกันภายในหน่วยงาน (shared)
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<div class="auth-gate" id="authGate"></div>
+<div class="toast" id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+ 
+let ROUTES = [{"highway":"3","controlNo":"0503","section":"ระยอง-กะเฉด","kmRanges":[[223650.0,247902.0]],"distanceActual":24.252,"distance2Lane":52.201,"asphalt":52.201,"concrete":null,"workQty":166.352,"updatedAt":"2024-10-29"},{"highway":"36","controlNo":"0203","section":"ทับมา-ปลวกเกตุ","kmRanges":[[49369.0,57021.0]],"distanceActual":7.652,"distance2Lane":33.76,"asphalt":null,"concrete":33.76,"workQty":112.758,"updatedAt":"2024-10-29"},{"highway":"3139","controlNo":"0100","section":"บ้านแลง-หาดใหญ่","kmRanges":[[0.0,21234.0]],"distanceActual":21.234,"distance2Lane":21.234,"asphalt":21.234,"concrete":null,"workQty":69.542,"updatedAt":"2024-10-29"},{"highway":"3140","controlNo":"0100","section":"ทางเข้าบ้านเพ","kmRanges":[[0.0,100.0]],"distanceActual":0.1,"distance2Lane":0.2,"asphalt":null,"concrete":0.2,"workQty":0.687,"updatedAt":"2024-10-29"},{"highway":"3143","controlNo":"0100","section":"บ้านค่าย-หนองละลอก","kmRanges":[[0.0,14041.0]],"distanceActual":14.041,"distance2Lane":17.501,"asphalt":17.501,"concrete":null,"workQty":64.229,"updatedAt":"2024-10-29"},{"highway":"3574","controlNo":"0202","section":"บ้านค่าย-ระยอง","kmRanges":[[43000.0,57161.0]],"distanceActual":14.161,"distance2Lane":32.187,"asphalt":27.415,"concrete":4.772,"workQty":115.71,"updatedAt":"2024-10-29"},{"highway":"3575","controlNo":"0100","section":"ทางเข้าบ้านค่าย","kmRanges":[[0.0,1308.0],[2346.0,3292.0]],"distanceActual":2.254,"distance2Lane":2.254,"asphalt":2.254,"concrete":null,"workQty":7.88,"updatedAt":"2024-10-29"}];
+const STORAGE_KEY = 'accident-records-v1';
+const RECORDER_KEY = 'recorder-name';
+
+
+
+const OWNER_VERIFIER_KEY = 'owner-verifier';
+
+
+
+
+
+let ROUTE_HIGHWAYS = new Set(ROUTES.map(r => String(r.highway)));
+function recomputeRouteHighways(){ ROUTE_HIGHWAYS = new Set(ROUTES.map(r => String(r.highway))); }
+
+const MATERIAL_LIBRARY = {
+  guardrail_normal: {
+    label: 'งานการ์ดเรล (ปกติ)',
+    items: [
+      {name:'แผ่นการ์ดเรล หนา 3.2 มม. ยาว 4.00 ม.', unit:'แผ่น', price:4700},
+      {name:'แผ่นปลายการ์ดเรล หนา 3.2 มม.', unit:'แผ่น', price:2000},
+      {name:'เสาการ์ดเรล ขนาด Dia.10 ยาว 2.00 ม.', unit:'ต้น', price:2000},
+      {name:'น็อตสั้นยึดแผ่น 16x30 มม.', unit:'ตัว', price:55},
+      {name:'น็อตยาวยึดเสา 16x165 มม.', unit:'ตัว', price:85},
+      {name:'เป้าสะท้อนแสง คางหมู สีเหลือง หน้าเดี่ยว ขนาด 15x10 ซม.', unit:'อัน', price:90},
+      {name:'แผ่นสะท้อนแสง สีเหลือง ขนาด 15x8 ซม.', unit:'แผ่น', price:18},
+    ]
+  },
+  guardrail_blockout: {
+    label: 'งานการ์ดเรล (Block out)',
+    items: [
+      {name:'แผ่นการ์ดเรล หนา 3.2 มม. ยาว 4.00 ม.', unit:'แผ่น', price:4700},
+      {name:'แผ่นปลายการ์ดเรล หนา 3.2 มม.', unit:'แผ่น', price:2000},
+      {name:'เสาการ์ดเรล ขนาด Dia.10 ยาว 2.00 ม.', unit:'ต้น', price:2000},
+      {name:'Block out lip C-150x75x20x4.5 มม. ยาว 0.33 ม.', unit:'อัน', price:650},
+      {name:'Steel plate 200x100x4 มม.', unit:'อัน', price:350},
+      {name:'น็อตสั้นยึดแผ่น 16x30 มม.', unit:'ตัว', price:55},
+      {name:'น็อตยึด Block out 16x65 มม.', unit:'ตัว', price:80},
+      {name:'น็อตยาวยึดเสา 16x165 มม.', unit:'ตัว', price:85},
+      {name:'เป้าสะท้อนแสง คางหมู สีเหลือง หน้าเดี่ยว ขนาด 15x10 ซม.', unit:'อัน', price:90},
+      {name:'แผ่นสะท้อนแสง สีเหลือง ขนาด 15x8 ซม.', unit:'แผ่น', price:18},
+    ]
+  },
+  streetlight_single: {
+    label: 'งานเสาไฟฟ้า (กิ่งเดี่ยว)',
+    items: [
+      {name:'เสาไฟฟ้าขนาด 9.00 ม. พร้อมกิ่งเดี่ยว', unit:'ต้น', price:16700},
+      {name:'โคมไฟโซเดียม 250 วัตต์ พร้อมอุปกรณ์', unit:'โคม', price:9800},
+      {name:'ฐานเสาปูน คสล.', unit:'ฐาน', price:5800},
+      {name:'แผงฟิวส์เดี่ยว', unit:'อัน', price:155},
+      {name:'แท่งกราวด์ ขนาด 2.40 ม.', unit:'แท่ง', price:850},
+      {name:'สายไฟ THW 2x2.5 SQ.MM.', unit:'เมตร', price:90},
+      {name:'สายไฟ THW 1x2.5 SQ.MM. (สายกราวด์)', unit:'เมตร', price:25},
+      {name:'แผ่นสะท้อนแสงสีส้ม ขนาด 15x15 ซม.', unit:'แผ่น', price:80},
+    ],
+    linkedExtra: {
+      dividerLabel: 'วัสดุสายไฟฟ้าระหว่างเสา',
+      item: {name:'สายไฟ NYY 3x10 SQ.MM.', unit:'เมตร', price:350, qty:35}
+    }
+  },
+  streetlight_double: {
+    label: 'งานเสาไฟฟ้า (กิ่งคู่)',
+    items: [
+      {name:'เสาไฟฟ้าขนาด 9.00 ม. พร้อมกิ่งคู่', unit:'ต้น', price:18000},
+      {name:'โคมไฟโซเดียม 250 วัตต์ พร้อมอุปกรณ์', unit:'โคม', price:9800},
+      {name:'ฐานเสาปูน คสล.', unit:'ฐาน', price:5800},
+      {name:'แผงฟิวส์คู่', unit:'อัน', price:215},
+      {name:'แท่งกราวด์ ขนาด 2.40 ม.', unit:'แท่ง', price:850},
+      {name:'สายไฟ THW 2x2.5 SQ.MM.', unit:'เมตร', price:90},
+      {name:'สายไฟ THW 1x2.5 SQ.MM. (สายกราวด์)', unit:'เมตร', price:25},
+      {name:'แผ่นสะท้อนแสงสีส้ม ขนาด 15x15 ซม.', unit:'แผ่น', price:80},
+    ],
+    linkedExtra: {
+      dividerLabel: 'วัสดุสายไฟฟ้าระหว่างเสา',
+      item: {name:'สายไฟ NYY 3x10 SQ.MM.', unit:'เมตร', price:350, qty:35}
+    }
+  },
+  traffic_sign: {
+    label: 'งานป้ายจราจร',
+    items: [
+      {name:'แผ่นป้ายแนะนำ ทางแยก ขนาด 1.20x2.40 ม.', unit:'แผ่น', price:4510},
+      {name:'เสาเหล็กกล่อง ขนาด 3"x3"x3.50 ม.', unit:'ต้น', price:1050},
+      {name:'น็อตเหล็กอาบสังกะสี ขนาด Ø3/8"x5"', unit:'ตัว', price:18},
+      {name:'สีน้ำพลาสติก สีขาว', unit:'กระปุก', price:510},
+      {name:'สีน้ำพลาสติก สีดำ', unit:'กระปุก', price:580},
+    ]
+  },
+  traffic_sign_island: {
+    label: 'งานป้ายจราจร (หัวเกาะ)',
+    items: [
+      {name:'ป้ายบังคับหัวเกาะ ขนาด Ø 0.75 ม.', unit:'แผ่น', price:4140},
+      {name:'ป้ายเตือนสิ่งกีดขวาง ขนาด 0.45x0.75 ม.', unit:'แผ่น', price:1880},
+      {name:'น็อตเหล็กอาบสังกะสี ขนาด Ø3/8"x5"', unit:'ตัว', price:18},
+      {name:'เสาเหล็กกล่อง ขนาด 3"x3"x3.50 ม.', unit:'ต้น', price:1150},
+      {name:'สีน้ำพลาสติก สีดำ', unit:'กระปุก', price:600},
+      {name:'สีน้ำพลาสติก สีขาว', unit:'กระปุก', price:600},
+    ]
+  },
+  overhead_sign: {
+    label: 'งานป้าย Overhead',
+    items: [
+      {name:'ป้ายแนะนำโอเวอร์เฮด ขนาด 18 ตร.ม. (3.00x6.00 ม.)', unit:'แผ่น', price:170000},
+      {name:'ป้ายแนะนำโอเวอร์เฮด ขนาด 18 ตร.ม. (3.00x6.00 ม.)', unit:'แผ่น', price:170000},
+      {name:'ฐานเสาคอนกรีต', unit:'ฐาน', price:35450},
+      {name:'ฐานเสาคอนกรีต', unit:'ฐาน', price:35450},
+      {name:'โครงสร้างเสาป้าย', unit:'ชุด', price:102100},
+    ]
+  }
+};
+const SIDE_OPTIONS = ["ซ้ายทาง","ขวาทาง","ร่องกลาง","เกาะกลาง","ซ้ายทาง ร่องกลาง","ขวาทาง ร่องกลาง","ซ้ายทาง ไหล่ทาง","ขวาทาง ไหล่ทาง"];
+
+ 
+let records = [];
+let editingId = null;
+let itemRowCount = 0;
+let dividerRowCount = 0;
+let currentFallbackTotal = null; 
+let otherPartyIdx = 0; 
+let recorderName = '';
+
+
+
+
+
+let dashYear = 'ทั้งหมด';
+let blackspotHwSelected = null; 
+let teamConfig = { ownerName: 'นางสาวนันท์นภัสธ์ รัตนเสถียร', members: [{name: 'นางสาวนันท์นภัสธ์ รัตนเสถียร', passwordHash: '091612ce9151d6185e09ffcac96e092f19176cfa298ce4d30c9d2cbcf5ba7347'}] };
+let materialPriceMap = {}; 
+let assetsCategoryFilter = 'all'; 
+let barChartInstance = null;
+let trendChartInstance = null;
+
+ 
+
+
+const valueLabelPlugin = {
+  id: 'valueLabelPlugin',
+  afterDatasetsDraw(chart){
+    if (!chart.options.plugins || !chart.options.plugins.valueLabel || !chart.options.plugins.valueLabel.enabled) return;
+    const {ctx} = chart;
+    const suffix = chart.options.plugins.valueLabel.suffix || '';
+    chart.data.datasets.forEach((dataset, dsIndex) => {
+      const meta = chart.getDatasetMeta(dsIndex);
+      if (meta.hidden || dataset.hideValueLabel) return;
+      meta.data.forEach((el, index) => {
+        const value = dataset.data[index];
+        if (value === null || value === undefined) return;
+        const label = value + (suffix ? (' ' + suffix) : '');
+        ctx.save();
+        ctx.font = "600 11px 'Sarabun', sans-serif";
+        ctx.fillStyle = dataset.borderColor || '#0a2540';
+        if (chart.options.indexAxis === 'y') {
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, el.x + 6, el.y);
+        } else {
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(label, el.x, el.y - 6);
+        }
+        ctx.restore();
+      });
+    });
+  }
+};
+if (window.Chart) Chart.register(valueLabelPlugin);
+
+
+function renderHighwayBarChart(hwRoutesSorted, byHw){
+  const canvas = document.getElementById('barChartHighway');
+  const wrap = document.getElementById('barChartHighwayWrap');
+  const emptyHint = document.getElementById('barChartEmpty');
+  if (!canvas || !window.Chart) return;
+  if (barChartInstance) { barChartInstance.destroy(); barChartInstance = null; }
+  if (!hwRoutesSorted.length) {
+    canvas.style.display = 'none';
+    if (emptyHint) emptyHint.style.display = '';
+    return;
+  }
+  canvas.style.display = '';
+  if (emptyHint) emptyHint.style.display = 'none';
+  
+  if (wrap) {
+    const rowHeight = 32; 
+    const minHeight = 90;
+    const maxHeight = 420;
+    const calcHeight = Math.min(maxHeight, Math.max(minHeight, hwRoutesSorted.length * rowHeight));
+    wrap.style.height = calcHeight + 'px';
+  }
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, canvas.parentElement.clientWidth || 400, 0);
+  gradient.addColorStop(0, '#3d7ba8');
+  gradient.addColorStop(1, '#1c4b73');
+  const labels = hwRoutesSorted.map(r => `ทล.${r.highway} (${r.section})`);
+  const data = hwRoutesSorted.map(r => byHw[r.highway] || 0);
+  barChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{
+      label: 'จำนวนอุบัติเหตุ',
+      data,
+      backgroundColor: gradient,
+      borderRadius: 999,
+      borderSkipped: false,
+      maxBarThickness: 8,
+      barPercentage: 0.5,
+      categoryPercentage: 0.98,
+      hideValueLabel: false
+    }]},
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { right: 40 } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          display: false
+        },
+        y: { ticks: { font: { family: "'Sarabun', sans-serif", size: 12 }, crossAlign: 'far' }, grid: { display: false }, border: { display: false } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        valueLabel: { enabled: true, suffix: 'ครั้ง' }
+      }
+    }
+  });
+}
+
+
+function renderTrendChart(years, totalByYear){
+  const canvas = document.getElementById('trendChart');
+  const wrap = document.getElementById('trendChartWrap');
+  const emptyHint = document.getElementById('trendChartEmpty');
+  if (!canvas || !window.Chart) return;
+  if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+  if (!years.length) {
+    canvas.style.display = 'none';
+    if (emptyHint) emptyHint.style.display = '';
+    return;
+  }
+  canvas.style.display = '';
+  if (emptyHint) emptyHint.style.display = 'none';
+  
+  if (wrap) {
+    const rowHeight = 32;
+    const minHeight = 90;
+    const maxHeight = 420;
+    const calcHeight = Math.min(maxHeight, Math.max(minHeight, years.length * rowHeight));
+    wrap.style.height = calcHeight + 'px';
+  }
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, canvas.parentElement.clientWidth || 400, 0);
+  gradient.addColorStop(0, '#3d7ba8');
+  gradient.addColorStop(1, '#1c4b73');
+  const labels = years.map(y => 'ปีงบ ' + y);
+  const data = years.map(y => totalByYear[y] || 0);
+  trendChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{
+      label: 'จำนวนอุบัติเหตุ',
+      data,
+      backgroundColor: gradient,
+      borderRadius: 999,
+      borderSkipped: false,
+      maxBarThickness: 8,
+      barPercentage: 0.5,
+      categoryPercentage: 0.98,
+      hideValueLabel: false
+    }]},
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { right: 40 } },
+      scales: {
+        x: { beginAtZero: true, display: false },
+        y: { ticks: { font: { family: "'Sarabun', sans-serif", size: 12 }, crossAlign: 'far' }, grid: { display: false }, border: { display: false } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        valueLabel: { enabled: true, suffix: 'ครั้ง' }
+      }
+    }
+  });
+}
+
+ 
+function uid(){ return 'r-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); }
+
+function pwField(id, placeholder){
+  return `<div class="pw-wrap">
+    <input type="password" id="${id}" ${placeholder ? `placeholder="${escapeHtml(placeholder)}"` : ''}>
+    <button type="button" class="pw-toggle" data-target="${id}" title="แสดง/ซ่อนรหัสผ่าน">👁</button>
+  </div>`;
+}
+function initPasswordToggles(){
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pw-toggle');
+    if (!btn) return;
+    const input = document.getElementById(btn.dataset.target);
+    if (!input) return;
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁'; }
+  });
+}
+
+function thaiFiscalYearNow(){
+  const d = new Date();
+  let y = d.getFullYear() + 543;
+  if (d.getMonth() + 1 >= 10) y += 1;
+  return y;
+}
+
+function parseKm(text){
+  if (!text) return null;
+  text = String(text).trim().replace(/\s+/g,'');
+  if (text.includes('+')) {
+    const parts = text.split('+');
+    const km = parseInt(parts[0], 10);
+    const m = parseFloat(parts[1]);
+    if (isNaN(km) || isNaN(m)) return null;
+    return km * 1000 + m;
+  }
+  const n = parseFloat(text);
+  return isNaN(n) ? null : n;
+}
+function formatKm(num){
+  if (num === null || num === undefined || num === '' || isNaN(num)) return '';
+  const km = Math.floor(num / 1000);
+  const m = Math.round(num - km * 1000);
+  return km + '+' + String(m).padStart(3,'0');
+}
+function formatMoney(n){
+  if (n === null || n === undefined || n === '' || isNaN(n)) return '-';
+  return Number(n).toLocaleString('th-TH', {maximumFractionDigits: 2});
+}
+
+
+
+
+
+function formatPosition(r){
+  const side = r.side || '';
+  const loc = r.location || '';
+  if (side && loc) return side + ' ' + loc;
+  return side || loc;
+}
+const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function formatThaiDate(dateStr){
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return escapeHtml(dateStr);
+  const day = d.getDate();
+  const month = THAI_MONTHS_SHORT[d.getMonth()];
+  const yearBE = String(d.getFullYear() + 543).slice(-2);
+  return `${day} ${month} ${yearBE}`;
+}
+function escapeHtml(s){
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function showSaveSuccessModal(isEdit, rec){
+  const root = document.getElementById('modalRoot');
+  const caseLine = [rec.highway ? ('ทล.' + rec.highway) : '', rec.km !== null && rec.km !== undefined ? ('กม.' + formatKm(rec.km)) : '', rec.dateIncident ? formatThaiDate(rec.dateIncident) : '']
+    .filter(Boolean).join(' · ');
+  root.innerHTML = `
+    <div class="success-modal-backdrop" id="successModalBackdrop">
+      <div class="success-modal">
+        <div class="success-icon-ring">
+          <svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>
+        </div>
+        <h3>${isEdit ? 'บันทึกการแก้ไขสำเร็จ' : 'บันทึกรายการใหม่สำเร็จ'}</h3>
+        <p class="success-sub">ข้อมูลถูกบันทึกเข้าระบบกลางเรียบร้อยแล้ว</p>
+        ${caseLine ? `<div class="success-case"><span class="dot"></span><span>${escapeHtml(caseLine)}</span></div>` : ''}
+        <button class="success-close" id="successModalClose">ปิด</button>
+        <div class="success-progress-track"><div class="success-progress-bar"></div></div>
+      </div>
+    </div>`;
+  // ปิดเฉพาะเมื่อหน้าต่าง "สำเร็จ" ยังเป็นหน้าต่างที่แสดงอยู่ — กันตัวจับเวลาเก่าไปล้างหน้าต่างอื่นที่ผู้ใช้เพิ่งเปิด (เช่น ถังขยะ)
+  const close = () => {
+    clearTimeout(showSaveSuccessModal._t);
+    if (document.getElementById('successModalBackdrop')) root.innerHTML = '';
+  };
+  document.getElementById('successModalBackdrop').onclick = close;
+  document.getElementById('successModalClose').onclick = (e) => { e.stopPropagation(); close(); };
+  clearTimeout(showSaveSuccessModal._t);
+  showSaveSuccessModal._t = setTimeout(close, 2600);
+}
+function highwaySection(hw){
+  const r = ROUTES.find(r => String(r.highway) === String(hw));
+  return r ? r.section : '';
+}
+function findRoute(hw){
+  return ROUTES.find(r => String(r.highway) === String(hw));
+}
+function kmInRange(route, km){
+  if (!route || !route.kmRanges || !route.kmRanges.length) return true;
+  return route.kmRanges.some(([from,to]) => km >= from && km <= to);
+}
+function kmRangesText(route){
+  if (!route || !route.kmRanges || !route.kmRanges.length) return '';
+  return route.kmRanges.map(([f,t]) => formatKm(f) + ' - ' + formatKm(t)).join(', ');
+}
+
+function kmRangesHtml(route){
+  if (!route || !route.kmRanges || !route.kmRanges.length) return '-';
+  return route.kmRanges.map(([f,t]) => escapeHtml(formatKm(f) + ' - ' + formatKm(t))).join(',<br>');
+}
+function updateKmHint(){
+  const hw = document.getElementById('f_highway').value;
+  const kmVal = parseKm(document.getElementById('f_km').value);
+  const hint = document.getElementById('kmHint');
+  const route = findRoute(hw);
+  if (!hw) { hint.textContent = ''; hint.classList.remove('warn'); return; }
+  const rangeText = kmRangesText(route);
+  if (kmVal !== null && route && !kmInRange(route, kmVal)) {
+    hint.textContent = 'กม.นี้อยู่นอกช่วงที่หมวดฯ ดูแล (' + rangeText + ') — ตรวจสอบอีกครั้ง';
+    hint.classList.add('warn');
+  } else {
+    hint.textContent = rangeText ? ('ช่วงที่หมวดฯ ดูแล: กม.' + rangeText) : '';
+    hint.classList.remove('warn');
+  }
+}
+
+ 
+
+
+function normalizeDateStr(v){
+  if (!v) return '';
+  const m = String(v).match(/^\d{4}-\d{2}-\d{2}/);
+  return m ? m[0] : '';
+}
+/* ============ ชั้นข้อมูล: อ่าน/เขียนผ่าน Firebase (แทน Apps Script เดิม) ============ */
+// ข้อมูลเคสถูกอ่านแบบ realtime: เมื่อมีคนอื่นบันทึก/แก้ไข/ลบ หน้าจอที่เปิดอยู่จะอัปเดตเองโดยไม่ต้องรีเฟรช
+function parseJsonField(v){
+  if (Array.isArray(v)) return v;
+  try { return v ? JSON.parse(v) : []; } catch(e){ return []; }
+}
+function numOrNull(v){ return (v === '' || v === null || v === undefined) ? null : Number(v); }
+
+function mapAccidentDoc(r){
+  const rest = Object.assign({}, r);
+  delete rest.__id;
+  return Object.assign(rest, {
+    id: r.id || r.__id,
+    items: parseJsonField(r.items),
+    otherPartiesList: parseJsonField(r.otherPartiesList),
+    dateIncident: normalizeDateStr(r.dateIncident),
+    dateFound: normalizeDateStr(r.dateFound),
+    closedDate: normalizeDateStr(r.closedDate),
+    imported: r.imported === true || r.imported === 'TRUE' || r.imported === 'true'
+  });
+}
+function applyAccidentDocs(docs){
+  records = docs.filter(d => !d.deletedAt).map(mapAccidentDoc);
+}
+function applyMaterialDocs(docs){
+  const map = {};
+  docs.forEach(m => {
+    const entry = {
+      key: m.key || m.__id, unit: m.unit, price: Number(m.price) || 0, updatedAt: normalizeDateStr(m.updatedAt),
+      hidden: m.hidden === true || m.hidden === 'TRUE',
+      category: m.category || '',
+      frequent: (m.frequent === true || m.frequent === 'TRUE') ? true : (m.frequent === false || m.frequent === 'FALSE') ? false : null
+    };
+    const prev = map[m.name];
+    // ถ้ามีชื่อซ้ำกัน (เช่น รายการที่ลบไปแล้วถูกเพิ่มกลับมาใหม่) ให้รายการที่ยังแสดงอยู่ / อัปเดตล่าสุดชนะ
+    if (!prev || (prev.hidden && !entry.hidden) || (prev.hidden === entry.hidden && (entry.updatedAt || '') >= (prev.updatedAt || ''))) {
+      map[m.name] = entry;
+    }
+  });
+  materialPriceMap = map;
+}
+function applyRouteDocs(docs){
+  if (!docs || docs.length === 0) return;
+  const byHighway = {};
+  docs.forEach(r => { byHighway[String(r.highway || r.__id)] = r; });
+  ROUTES = Object.values(byHighway).map(r => ({
+    highway: String(r.highway || r.__id),
+    controlNo: r.controlNo || '',
+    section: r.section || '',
+    kmRanges: parseJsonField(r.kmRanges),
+    distanceActual: numOrNull(r.distanceActual),
+    distance2Lane: numOrNull(r.distance2Lane),
+    asphalt: numOrNull(r.asphalt),
+    concrete: numOrNull(r.concrete),
+    workQty: numOrNull(r.workQty),
+    updatedAt: r.updatedAt || ''
+  })).sort((a, b) => (parseFloat(a.highway) - parseFloat(b.highway)) || String(a.highway).localeCompare(String(b.highway)));
+  recomputeRouteHighways();
+}
+
+// มีข้อมูลเปลี่ยนจากที่อื่น (หรือจากเครื่องเราเอง) → อัปเดตตัวแปรในหน้า แล้ววาดหน้าที่เปิดอยู่ใหม่
+function onRemoteChange(col){
+  if (col === 'accidents') applyAccidentDocs(FBL.docs('accidents'));
+  else if (col === 'materials') applyMaterialDocs(FBL.docs('materials'));
+  else if (col === 'routes') { applyRouteDocs(FBL.docs('routes')); try { refreshHighwayOptions(); } catch(e){} }
+  refreshVisibleViews();
+}
+function refreshVisibleViews(){
+  const active = document.querySelector('.view.active');
+  const v = active ? active.id.replace('view-', '') : '';
+  const scrollY = window.scrollY;
+  try {
+    populateYearFilter();
+    if (v === 'list') renderTable();
+    if (v === 'dash') renderDashboard();
+    if (v === 'assets') renderAssetsPanel();
+    if (v === 'routes') renderRoutesTable();
+  } catch (e) { console.error('refresh failed', e); }
+  window.scrollTo(window.scrollX, scrollY);
+}
+
+async function loadRecords(){
+  try {
+    const docs = await FBL.watch('accidents', onRemoteChange);
+    applyAccidentDocs(docs);
+  } catch (e) {
+    console.error('load failed', e);
+    showToast('โหลดข้อมูลไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต');
+    records = [];
+  }
+}
+
+async function apiAddRecord(rec){
+  try { await FBL.saveAccident(rec, true); return true; }
+  catch (e) { console.error('add failed', e); applyAccidentDocs(FBL.docs('accidents')); showToast('บันทึกไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+async function apiUpdateRecord(rec){
+  try { await FBL.saveAccident(rec, false); return true; }
+  catch (e) { console.error('update failed', e); applyAccidentDocs(FBL.docs('accidents')); showToast('บันทึกไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+async function apiDeleteRecord(id){
+  try { await FBL.softDeleteAccident(id); return true; }
+  catch (e) { console.error('delete failed', e); applyAccidentDocs(FBL.docs('accidents')); showToast('ลบไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+async function apiRestoreRecord(id){
+  try { await FBL.restoreAccident(id); return true; }
+  catch (e) { console.error('restore failed', e); showToast('กู้คืนไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+async function apiPermanentDeleteRecord(id){
+  try { await FBL.permanentDeleteAccident(id); return true; }
+  catch (e) { console.error('permanent delete failed', e); showToast('ลบถาวรไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+async function loadTrashRecords(){
+  try {
+    await FBL.watch('accidents', onRemoteChange);
+    return FBL.docs('accidents').filter(d => d.deletedAt).map(mapAccidentDoc)
+      .sort((a, b) => String(b.deletedAt).localeCompare(String(a.deletedAt)));
+  } catch (e) {
+    console.error('load trash failed', e);
+    showToast('โหลดถังขยะไม่สำเร็จ');
+    return [];
+  }
+}
+
+/* ----- ทีม (รายชื่อผู้ใช้) ----- */
+function buildTeamConfig(list){
+  const owner = list.find(m => m.isOwner);
+  return { ownerName: owner ? owner.name : '', members: list.map(m => ({ name: m.name, isOwner: !!m.isOwner })) };
+}
+let teamLoadError = '';
+async function loadTeamConfig(){
+  try {
+    teamConfig = buildTeamConfig(await FBL.loadTeam());
+    teamLoadError = '';
+  } catch (e) {
+    console.error('load team failed', e);
+    teamConfig = { ownerName: '', members: [] };
+    teamLoadError = FBL.errorText(e);
+  }
+}
+
+/* ----- ทรัพย์สิน/วัสดุ ----- */
+async function loadMaterialPrices(){
+  try {
+    const docs = await FBL.watch('materials', onRemoteChange);
+    applyMaterialDocs(docs);
+  } catch (e) {
+    console.error('load material prices failed', e);
+  }
+}
+async function apiSaveMaterial(m){
+  try { await FBL.saveMaterial(m); return true; }
+  catch (e) { console.error('save material failed', e); showToast('บันทึกไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+async function apiUpdateMaterialPrice(key, name, unit, price){
+  const updatedAt = new Date().toISOString().slice(0,10);
+  if (await apiSaveMaterial({ key, name, unit, price, updatedAt })) {
+    materialPriceMap[name] = Object.assign({}, materialPriceMap[name] || {}, { key, unit, price, updatedAt });
+  }
+}
+
+/* ----- เซสชันผู้ใช้ (ชื่อผู้บันทึกมาจากบัญชีที่ล็อกอินจริง ไม่ใช่ชื่อที่พิมพ์เอง) ----- */
+async function loadRecorderName(){ updateWhoDisplay(); }
+async function saveRecorderName(name){
+  recorderName = name;
+  updateWhoDisplay();
+}
+async function logoutRecorder(){
+  try { await FBL.logout(); } catch (e) { console.error(e); }
+  location.reload();
+}
+function updateWhoDisplay(){
+  const ownerTag = isOwner() ? ' (เจ้าของระบบ)' : '';
+  const el = document.getElementById('whoDisplay');
+  const btn = document.getElementById('btnChangeWho');
+  if (recorderName) {
+    el.textContent = 'ผู้บันทึก: ' + recorderName + ownerTag;
+    el.style.display = '';
+    if (btn) btn.textContent = 'ออกจากระบบ';
+  } else {
+    el.textContent = '';
+    el.style.display = 'none';
+    if (btn) btn.textContent = 'เข้าสู่ระบบ';
+  }
+  
+  const settingsTab = document.querySelector('.tab-btn[data-view="settings"]');
+  if (settingsTab) {
+    settingsTab.style.display = isOwner() ? '' : 'none';
+    
+    if (!isOwner() && settingsTab.classList.contains('active')) {
+      document.querySelector('.tab-btn[data-view="dash"]').click();
+    }
+  }
+  
+  const teamCard = document.getElementById('cardTeamPanel');
+  const exportCard = document.getElementById('cardExport');
+  const trashCard = document.getElementById('cardTrash');
+  if (teamCard) teamCard.style.display = recorderName ? '' : 'none';
+  if (exportCard) exportCard.style.display = recorderName ? '' : 'none';
+  if (trashCard) trashCard.style.display = recorderName ? '' : 'none';
+  const importCard = document.getElementById('cardImport');
+  if (importCard) importCard.style.display = isOwner() ? '' : 'none';
+  renderTeamPanel(); 
+  
+  
+  
+  
+  
+  renderAssetsPanel();
+  renderRoutesTable();
+}
+
+function isOwner(){
+  return !!(window.FBL && FBL.user && FBL.user.isOwner);
+}
+
+// สิทธิ์เจ้าของระบบถูกตรวจซ้ำที่ Firestore Rules เสมอ — ฟังก์ชันนี้แค่กันการกดพลาดในหน้าเว็บ
+function ensureOwnerVerified(onReady){
+  if (isOwner()) { onReady(); }
+  else { showToast('เฉพาะเจ้าของระบบเท่านั้น'); }
+}
+function findMember(name){
+  return teamConfig.members.find(m => m.name === name);
+}
+async function refreshTeamConfig(){
+  teamConfig = buildTeamConfig(await FBL.loadTeam());
+}
+async function bootstrapOwner(name, password){
+  const user = await FBL.bootstrapOwner(name, password);
+  await refreshTeamConfig();
+  recorderName = user.name;
+  updateWhoDisplay();
+  showToast('ตั้งค่าให้คุณเป็นเจ้าของระบบแล้ว');
+  return user;
+}
+async function addTeamMember(name, password){
+  name = (name || '').trim();
+  if (!name || !password) { showToast('กรอกชื่อและรหัสผ่านให้ครบ'); return false; }
+  if (password.length < 6) { showToast('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'); return false; }
+  if (findMember(name)) { showToast('มีชื่อนี้เป็นเจ้าหน้าที่อยู่แล้ว'); return false; }
+  try {
+    await FBL.addMember(name, password);
+    await refreshTeamConfig();
+    renderTeamPanel();
+    showToast('เพิ่ม ' + name + ' เป็นเจ้าหน้าที่แล้ว');
+    return true;
+  } catch (e) {
+    showToast('เพิ่มเจ้าหน้าที่ไม่สำเร็จ: ' + e.message);
+    return false;
+  }
+}
+async function removeTeamMember(name){
+  try {
+    await FBL.removeMember(name);
+    await refreshTeamConfig();
+    renderTeamPanel();
+    showToast('นำ ' + name + ' ออกจากรายชื่อเจ้าหน้าที่แล้ว');
+  } catch (e) {
+    showToast('ลบเจ้าหน้าที่ไม่สำเร็จ: ' + e.message);
+  }
+}
+
+function confirmRemoveTeamMember(name){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-head"><h3>ลบเจ้าหน้าที่<br>"${escapeHtml(name)}"?</h3><button class="modal-close" id="delMemberClose" type="button">×</button></div>
+        <p>ลบสิทธิ์การเข้าถึงข้อมูลของเจ้าหน้าที่ถาวร</p>
+        <div class="actions">
+          <button class="btn btn-outline" id="delMemberCancel">ปิด</button>
+          <button class="btn btn-danger" id="delMemberOk">ลบสิทธิ์</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('delMemberClose').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('delMemberCancel').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('delMemberOk').onclick = () => ensureOwnerVerified(async () => {
+    const okBtn = document.getElementById('delMemberOk');
+    const btnUsable = okBtn && okBtn.isConnected;
+    if (btnUsable) busyButton(okBtn, 'กำลังลบ...');
+    await removeTeamMember(name);
+    if (btnUsable) await doneButton(okBtn, '✓ ลบแล้ว');
+    root.innerHTML = '';
+  });
+}
+// ตั้งรหัสผ่านใหม่ให้สมาชิกทีม (ทำเบื้องหลังโดยสร้างบัญชีล็อกอินใหม่ให้คนนั้น — ดูคำอธิบายใน firebase-layer.js)
+async function resetMemberPassword(name, newPassword){
+  if (!findMember(name) || !newPassword) return;
+  if (newPassword.length < 6) { showToast('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'); return; }
+  try {
+    await FBL.resetMemberPassword(name, newPassword);
+    await refreshTeamConfig();
+    renderTeamPanel();
+    showToast('ตั้งรหัสผ่านใหม่ให้ ' + name + ' แล้ว');
+  } catch (e) {
+    showToast('ตั้งรหัสผ่านไม่สำเร็จ: ' + e.message);
+  }
+}
+function renderTeamPanel(){
+  const el = document.getElementById('teamPanel');
+  if (!el) return;
+  if (!teamConfig.ownerName) {
+    el.innerHTML = `
+      <p class="hint" style="margin-bottom:12px">ยังไม่มีใครตั้งค่าเป็นเจ้าของระบบ — ตั้งค่าตัวเองเป็นเจ้าของก่อน แล้วค่อยเพิ่มเจ้าหน้าที่ในทีมทีหลังได้</p>
+      <div class="grid grid-2" style="max-width:420px">
+        <div class="field"><label>ชื่อ-นามสกุลของคุณ</label><input type="text" id="ownerNameInput"></div>
+        <div class="field"><label>ตั้งรหัสผ่าน</label>${pwField('ownerPassInput')}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btnClaimOwner" style="margin-top:10px">ตั้งค่าให้ฉันเป็นเจ้าของระบบ</button>
+    `;
+    document.getElementById('btnClaimOwner').onclick = () => {
+      const n = document.getElementById('ownerNameInput').value.trim();
+      const p = document.getElementById('ownerPassInput').value;
+      if (!n || !p) { showToast('กรอกชื่อและรหัสผ่านให้ครบ'); return; }
+      bootstrapOwner(n, p);
+    };
+    return;
+  }
+  const memberRows = teamConfig.members.map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">
+      <span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : ''}</span>
+      ${isOwner() ? `
+        <span style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" data-resetpw="${escapeHtml(m.name)}">ตั้งรหัสผ่านใหม่</button>
+          ${m.name !== teamConfig.ownerName ? `<button class="btn btn-danger btn-sm" data-remove="${escapeHtml(m.name)}">ลบ</button>` : ''}
+        </span>
+      ` : ''}
+    </div>
+  `).join('');
+  el.innerHTML = `
+    <p class="hint">เจ้าของระบบ: <b style="color:var(--ink)">${escapeHtml(teamConfig.ownerName)}</b></p>
+    <div style="margin:10px 0 6px">${memberRows || '<span class="hint">ยังไม่มีเจ้าหน้าที่</span>'}</div>
+    ${isOwner() ? `
+      <button class="btn btn-outline btn-sm" id="btnAddMember" style="margin-top:14px">+ เพิ่มเจ้าหน้าที่</button>
+    ` : `<p class="hint">ติดต่อเจ้าของระบบเพื่อขอเพิ่มชื่อหรือรีเซ็ตรหัสผ่าน</p>`}
+  `;
+  if (isOwner()) {
+    document.getElementById('btnAddMember').onclick = () => {
+      const root = document.getElementById('modalRoot');
+      root.innerHTML = `
+        <div class="modal-backdrop"><div class="modal">
+          <div class="modal-head"><h3>เพิ่มเจ้าหน้าที่ใหม่</h3><button class="modal-close" id="addMemberClose" type="button">×</button></div>
+          <div class="field" style="margin-bottom:14px"><label>ชื่อ-นามสกุล</label><input type="text" id="newMemberInput"></div>
+          <div class="field" style="margin-bottom:16px"><label>ตั้งรหัสผ่าน</label>${pwField('newMemberPass')}</div>
+          <div class="actions">
+            <button class="btn btn-outline" id="addMemberCancel">ปิด</button>
+            <button class="btn btn-primary" id="addMemberOk">บันทึก</button>
+          </div>
+        </div></div>`;
+      const close = () => { root.innerHTML = ''; };
+      document.getElementById('addMemberClose').onclick = close;
+      document.getElementById('addMemberCancel').onclick = close;
+      document.getElementById('addMemberOk').onclick = () => {
+        const n = document.getElementById('newMemberInput').value;
+        const p = document.getElementById('newMemberPass').value;
+        if (!(n||'').trim() || !p) { showToast('กรอกชื่อและรหัสผ่านให้ครบ'); return; }
+        ensureOwnerVerified(async () => {
+          const btn = document.getElementById('addMemberOk');
+          const btnUsable = btn && btn.isConnected;
+          if (btnUsable) busyButton(btn, 'กำลังเพิ่ม...');
+          const ok = await addTeamMember(n, p);
+          if (ok) {
+            if (btnUsable) await doneButton(btn, '✓ เพิ่มแล้ว');
+            close();
+          } else if (btnUsable) {
+            btn.disabled = false; btn.classList.remove('btn-loading'); btn.innerHTML = btn.dataset.originalHTML;
+          }
+        });
+      };
+    };
+    el.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', () => confirmRemoveTeamMember(btn.dataset.remove));
+    });
+    el.querySelectorAll('[data-resetpw]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const root = document.getElementById('modalRoot');
+        root.innerHTML = `
+          <div class="modal-backdrop"><div class="modal">
+            <div class="modal-head"><h3>ตั้งรหัสผ่านใหม่</h3><button class="modal-close" id="resetPwClose" type="button">×</button></div>
+            <p>สำหรับ ${escapeHtml(btn.dataset.resetpw)}</p>
+            <div class="field" style="margin-bottom:16px">${pwField('resetPwInput', 'รหัสผ่านใหม่')}</div>
+            <div class="actions">
+              <button class="btn btn-outline" id="resetPwCancel">ปิด</button>
+              <button class="btn btn-primary" id="resetPwOk">บันทึก</button>
+            </div>
+          </div></div>`;
+        document.getElementById('resetPwClose').onclick = () => root.innerHTML = '';
+        document.getElementById('resetPwCancel').onclick = () => root.innerHTML = '';
+        document.getElementById('resetPwOk').onclick = () => {
+          const val = document.getElementById('resetPwInput').value;
+          if (!val) return;
+          ensureOwnerVerified(async () => {
+            const okBtn = document.getElementById('resetPwOk');
+            const btnUsable = okBtn && okBtn.isConnected;
+            if (btnUsable) busyButton(okBtn, 'กำลังบันทึก...');
+            await resetMemberPassword(btn.dataset.resetpw, val);
+            if (btnUsable) await doneButton(okBtn, '✓ บันทึกแล้ว');
+            root.innerHTML = '';
+          });
+        };
+      });
+    });
+  }
+}
+
+/* ============ tabs ============ */
+function initTabs(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // อนุญาตให้ดู "ภาพรวม" ได้โดยไม่ต้องล็อกอิน ส่วนแท็บอื่นต้องล็อกอินก่อนเสมอ
+      if (!recorderName && btn.dataset.view !== 'dash') {
+        showLoginRequiredModal(btn.dataset.view);
+        return;
+      }
+      if (btn.dataset.view === 'settings' && !isOwner()) {
+        showToast('หน้านี้สำหรับเจ้าของระบบเท่านั้น');
+        return;
+      }
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+      if (btn.dataset.view === 'list') renderTable();
+      if (btn.dataset.view === 'dash') renderDashboard();
+      if (btn.dataset.view === 'settings') renderTeamPanel();
+      if (btn.dataset.view === 'assets') renderAssetsPanel();
+      if (btn.dataset.view === 'routes') renderRoutesTable();
+    });
+  });
+}
+
+function showLoginRequiredModal(targetView){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop"><div class="modal">
+      <div class="modal-head"><h3>กรุณาเข้าสู่ระบบ</h3><button class="modal-close" id="loginReqClose" type="button">×</button></div>
+      <p>เพื่อแสดงสิทธิ์การเข้าถึงข้อมูล</p>
+      <div class="actions">
+        <button class="btn btn-outline" id="loginReqCancel">ยกเลิก</button>
+        <button class="btn btn-primary" id="loginReqGo">เข้าสู่ระบบ</button>
+      </div>
+    </div></div>`;
+  const close = () => { root.innerHTML = ''; };
+  document.getElementById('loginReqClose').onclick = close;
+  document.getElementById('loginReqCancel').onclick = close;
+  document.getElementById('loginReqGo').onclick = () => {
+    root.innerHTML = '';
+    openRecorderModal(() => {
+      document.querySelector('.tab-btn[data-view="' + targetView + '"]').click();
+    });
+  };
+}
+
+/* ============ form: selects ============ */
+function populateFiscalYearSelect(){
+  const sel = document.getElementById('f_fiscalYear');
+  const now = thaiFiscalYearNow();
+  sel.innerHTML = '';
+  for (let y = 2559; y <= now + 2; y++) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    if (y === now) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+// สร้าง option ใหม่ให้ select ทั้งสองจุด — เรียกซ้ำได้ปลอดภัย (ใช้ตอนโหลดครั้งแรก และตอนเพิ่ม/ลบสายทางในหน้า "ข้อมูลสายทาง")
+function refreshHighwayOptions(){
+  const sel = document.getElementById('f_highway');
+  const prevVal = sel.value;
+  sel.innerHTML = '<option value="">— เลือก —</option>';
+  ROUTES.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.highway;
+    opt.textContent = r.highway + ' (' + r.section + ')';
+    sel.appendChild(opt);
+  });
+  sel.value = prevVal;
+
+  const fh = document.getElementById('filterHighway');
+  const prevFh = fh.value;
+  fh.innerHTML = '<option value="">ทั้งหมด</option>';
+  ROUTES.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.highway;
+    opt.textContent = 'ทล.' + r.highway;
+    fh.appendChild(opt);
+  });
+  fh.value = prevFh;
+}
+function populateHighwaySelect(){
+  refreshHighwayOptions();
+  const sel = document.getElementById('f_highway');
+  sel.addEventListener('change', () => {
+    document.getElementById('f_section').value = highwaySection(sel.value);
+    updateKmHint();
+  });
+  document.getElementById('f_km').addEventListener('input', updateKmHint);
+}
+function populateYearFilter(){
+  const years = Array.from(new Set(records.map(r => r.fiscalYear).filter(Boolean))).sort((a,b)=>b-a);
+  const fy = document.getElementById('filterYear');
+  const prevValue = fy.value; 
+  fy.innerHTML = '<option value="">ทั้งหมด</option>';
+  years.forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = 'ปีงบ ' + y;
+    fy.appendChild(opt);
+  });
+  if (years.some(y => String(y) === prevValue)) fy.value = prevValue;
+}
+
+ 
+
+
+
+
+function formatThousands(raw){
+  const str = String(raw ?? '').trim();
+  if (str === '') return '';
+  const cleaned = str.replace(/[^\d.]/g, '');
+  if (cleaned === '') return '';
+  const parts = cleaned.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+}
+
+function attachThousandsFormatting(input, onAfter){
+  input.addEventListener('input', () => {
+    const cursorFromEnd = input.value.length - input.selectionStart;
+    input.value = formatThousands(input.value);
+    const newPos = input.value.length - cursorFromEnd;
+    input.setSelectionRange(newPos, newPos);
+    if (onAfter) onAfter();
+  });
+}
+
+
+function attachThousandsFormatting(input, onAfter){
+  input.addEventListener('input', () => {
+    const cursorFromEnd = input.value.length - input.selectionStart;
+    input.value = formatThousands(input.value);
+    const newPos = input.value.length - cursorFromEnd;
+    input.setSelectionRange(newPos, newPos);
+    if (onAfter) onAfter();
+  });
+}
+function attachThousandsFormatting(input, onAfter){
+  input.addEventListener('input', () => {
+    const cursorFromEnd = input.value.length - input.selectionStart;
+    input.value = formatThousands(input.value);
+    const newPos = input.value.length - cursorFromEnd;
+    input.setSelectionRange(newPos, newPos);
+    if (onAfter) onAfter();
+  });
+}
+
+
+function addItemDivider(text){
+  dividerRowCount++;
+  const id = 'item-divider-' + dividerRowCount;
+  const wrap = document.getElementById('itemsContainer');
+  const div = document.createElement('div');
+  div.className = 'item-divider';
+  div.id = id;
+  div.textContent = text;
+  wrap.appendChild(div);
+  return id;
+}
+function addItemRow(data){
+  data = data || {name:'', qty:'', unit:'ชุด', unitPrice:'', price:''};
+  itemRowCount++;
+  const id = 'item-' + itemRowCount;
+  const wrap = document.getElementById('itemsContainer');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.dataset.id = id;
+  if (data.dividerId) row.dataset.dividerId = data.dividerId;
+  row.innerHTML = `
+    <div class="field"><label class="item-col-label">รายการทรัพย์สิน</label>
+      <textarea class="it-name" rows="1" placeholder="เช่น เสาไฟฟ้าขนาด 9 ม.">${escapeHtml(data.name)}</textarea></div>
+    <div class="field"><label class="item-col-label">จำนวน</label>
+      <input type="text" class="it-qty" value="${escapeHtml(data.qty)}"></div>
+    <div class="field"><label class="item-col-label">หน่วย</label>
+      <select class="it-unit">
+        ${["ชุด","ต้น","อัน","แผ่น","ตัว","เมตร","ม.","จุด","แห่ง","ผืน","ท่อน","ฐาน","รายการ"].map(u =>
+          `<option ${u===data.unit?'selected':''}>${u}</option>`).join('')}
+      </select></div>
+    <div class="field"><label class="item-col-label">ราคา/หน่วย</label>
+      <input type="text" class="it-unitprice" value="${escapeHtml(formatThousands(data.unitPrice ?? ''))}"></div>
+    <div class="field"><label class="item-col-label">เป็นเงิน (บาท)</label>
+      <input type="text" class="it-price" value="${escapeHtml(formatThousands(data.price ?? ''))}"></div>
+    <div class="field"><label class="item-col-label">&nbsp;</label>
+      <button type="button" class="del-item" title="ลบรายการนี้">✕</button></div>
+  `;
+  wrap.appendChild(row);
+  // ปรับความสูง textarea ชื่อรายการให้พอดีเนื้อหาเสมอ (โตขึ้นเมื่อพิมพ์ยาว ไม่ตัดคำทิ้ง)
+  const nameInput = row.querySelector('.it-name');
+  function autoResizeName(){
+    nameInput.style.height = 'auto';
+    nameInput.style.height = nameInput.scrollHeight + 'px';
+  }
+  nameInput.addEventListener('input', autoResizeName);
+  autoResizeName();
+  row.querySelector('.del-item').addEventListener('click', () => {
+    const dividerId = row.dataset.dividerId;
+    row.remove();
+    if (dividerId) { const div = document.getElementById(dividerId); if (div) div.remove(); }
+    updateItemsSum();
+  });
+
+  const qtyInput = row.querySelector('.it-qty');
+  const unitPriceInput = row.querySelector('.it-unitprice');
+  const priceInput = row.querySelector('.it-price');
+
+  
+  function recalcPriceFromUnit(){
+    const qty = parseFloat(String(qtyInput.value).replace(/,/g,''));
+    const unitPrice = parseFloat(String(unitPriceInput.value).replace(/,/g,''));
+    if (!isNaN(qty) && !isNaN(unitPrice)) {
+      priceInput.value = formatThousands(String(Math.round((qty * unitPrice) * 100) / 100));
+    }
+    updateItemsSum();
+  }
+  
+  function attachThousandsInput(input, onAfter){
+    input.addEventListener('input', () => {
+      const cursorFromEnd = input.value.length - input.selectionStart;
+      input.value = formatThousands(input.value);
+      const newPos = input.value.length - cursorFromEnd;
+      input.setSelectionRange(newPos, newPos);
+      if (onAfter) onAfter();
+    });
+  }
+  attachThousandsInput(qtyInput, recalcPriceFromUnit);
+  attachThousandsInput(unitPriceInput, recalcPriceFromUnit);
+  attachThousandsInput(priceInput, updateItemsSum);
+}
+function collectItems(){
+  const rows = document.querySelectorAll('#itemsContainer .item-row');
+  const items = [];
+  rows.forEach(row => {
+    const name = row.querySelector('.it-name').value.trim();
+    const qty = row.querySelector('.it-qty').value.trim();
+    const unit = row.querySelector('.it-unit').value;
+    const unitPriceRaw = row.querySelector('.it-unitprice').value.trim();
+    const unitPrice = unitPriceRaw === '' ? null : parseFloat(unitPriceRaw.replace(/,/g,''));
+    const priceRaw = row.querySelector('.it-price').value.trim();
+    const price = priceRaw === '' ? null : parseFloat(priceRaw.replace(/,/g,''));
+    if (name) items.push({name, qty, unit, unitPrice: isNaN(unitPrice) ? null : unitPrice, price: isNaN(price) ? null : price});
+  });
+  return items;
+}
+function updateItemsSum(){
+  const items = collectItems();
+  const materialsSum = items.reduce((s,i) => s + (i.price || 0), 0);
+  document.getElementById('itemsSumDisplay').textContent = formatMoney(materialsSum);
+  const method = document.getElementById('f_costMethod').value;
+
+  if (method === 'laborMachine') {
+    
+    const labor = parseFloat(String(document.getElementById('f_laborCost').value).replace(/,/g,'')) || 0;
+    const machine = parseFloat(String(document.getElementById('f_machineCost').value).replace(/,/g,'')) || 0;
+    const total = materialsSum + labor + machine;
+    document.getElementById('f_totalPrice').value = total ? formatMoney(total) : '';
+  } else {
+    const opCost = Math.round(materialsSum * 0.3);
+    
+    
+    const total = (materialsSum === 0 && currentFallbackTotal) ? currentFallbackTotal : (materialsSum + opCost);
+    document.getElementById('opCostDisplay').textContent = formatMoney(materialsSum === 0 && currentFallbackTotal ? 0 : opCost);
+    document.getElementById('f_totalPrice').value = total ? formatMoney(total) : '';
+  }
+}
+
+
+function updateCostMethodVisibility(){
+  const method = document.getElementById('f_costMethod').value;
+  document.getElementById('opCost30Row').style.display = method === 'laborMachine' ? 'none' : '';
+  document.getElementById('laborMachineRow').style.display = method === 'laborMachine' ? '' : 'none';
+  updateItemsSum();
+}
+function populateMaterialCategorySelect(){
+  const sel = document.getElementById('f_materialCategory');
+  sel.innerHTML = '<option value="">-- เลือกประเภทวัสดุ --</option>';
+  Object.keys(MATERIAL_LIBRARY).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = MATERIAL_LIBRARY[key].label;
+    sel.appendChild(opt);
+  });
+}
+function applyMaterialCategory(){
+  const sel = document.getElementById('f_materialCategory');
+  const key = sel.value;
+  if (!key || !MATERIAL_LIBRARY[key]) { showToast('กรุณาเลือกประเภทวัสดุก่อน'); return; }
+  const cat = MATERIAL_LIBRARY[key];
+  
+  const priceOf = (it) => (materialPriceMap[it.name] ? materialPriceMap[it.name].price : it.price);
+  cat.items.forEach(it => addItemRow({name: it.name, qty: 1, unit: it.unit, unitPrice: priceOf(it), price: priceOf(it)}));
+  if (cat.linkedExtra) {
+    const dividerId = addItemDivider(cat.linkedExtra.dividerLabel);
+    const li = cat.linkedExtra.item;
+    const p = priceOf(li);
+    addItemRow({name: li.name, qty: li.qty, unit: li.unit, unitPrice: p, price: li.qty * p, dividerId});
+  }
+  updateItemsSum();
+  showToast('เพิ่มรายการวัสดุ "' + cat.label + '" แล้ว ตรวจสอบและลบรายการที่ไม่เกี่ยวข้องได้');
+  sel.value = '';
+}
+
+ 
+function updateTrailerFieldVisibility(){
+  const wrap = document.getElementById('f_trailerWrap');
+  const row = document.getElementById('f_vehicleRow');
+  const isTrailer = document.getElementById('f_vehicleType').value === 'รถพ่วง';
+  wrap.style.display = isTrailer ? '' : 'none';
+  row.classList.toggle('grid-3', !isTrailer);
+  row.classList.toggle('grid-4', isTrailer);
+  if (!isTrailer) document.getElementById('f_trailerPlate').value = '';
+}
+function updateInsuranceFieldVisibility(){
+  const wrap = document.getElementById('f_insuranceCompanyWrap');
+  const hasIns = document.getElementById('f_hasInsurance').value === 'มี';
+  wrap.style.display = hasIns ? '' : 'none';
+  if (!hasIns) document.getElementById('f_insuranceCompany').value = '';
+}
+const VEHICLE_TYPE_OPTIONS = ['รถยนต์นั่งส่วนบุคคล','รถกระบะ','รถบรรทุก','รถพ่วง','รถโดยสาร','รถตู้','รถจักรยานยนต์','เครื่องจักรกล','อื่นๆ'];
+function otherPartyVehicleOptionsHtml(selected){
+  return '<option value="">— เลือก —</option>' + VEHICLE_TYPE_OPTIONS.map(v =>
+    `<option value="${escapeHtml(v)}"${v === selected ? ' selected' : ''}>${escapeHtml(v)}</option>`).join('');
+}
+function addOtherPartyBlock(data){
+  data = data || {};
+  const idx = ++otherPartyIdx;
+  const wrap = document.createElement('div');
+  wrap.className = 'party-block';
+  wrap.dataset.idx = idx;
+  wrap.innerHTML = `
+    <div class="party-block-title">
+      <span><span class="tag">คู่กรณีร่วม</span></span>
+      <button type="button" class="party-remove-btn" data-remove-party="${idx}">ลบคู่กรณีนี้</button>
+    </div>
+    <div class="grid grid-2">
+      <div class="field">
+        <label>ชื่อผู้ขับขี่ / ผู้ละเมิด</label>
+        <input type="text" id="f_op_${idx}_driverName" value="${escapeHtml(data.driverName || '')}">
+      </div>
+      <div class="field">
+        <label>เบอร์โทร</label>
+        <input type="text" id="f_op_${idx}_driverPhone" value="${escapeHtml(data.driverPhone || '')}">
+      </div>
+    </div>
+    <div class="grid grid-3" style="margin-top:12px">
+      <div class="field">
+        <label>ประเภทรถ</label>
+        <select id="f_op_${idx}_vehicleType">${otherPartyVehicleOptionsHtml(data.vehicleType || '')}</select>
+      </div>
+      <div class="field">
+        <label>ยี่ห้อ / สี</label>
+        <input type="text" id="f_op_${idx}_vehicleBrand" placeholder="เช่น โตโยต้า สีขาว" value="${escapeHtml(data.vehicleBrand || '')}">
+      </div>
+      <div class="field">
+        <label>ทะเบียนรถ</label>
+        <input type="text" id="f_op_${idx}_plate" placeholder="กข-1234 ระยอง" value="${escapeHtml(data.plate || '')}">
+      </div>
+    </div>
+    <div class="grid grid-2 trailer-field" id="f_op_${idx}_trailerWrap">
+      <div class="field">
+        <label>ทะเบียนหาง</label>
+        <input type="text" id="f_op_${idx}_trailerPlate" placeholder="เช่น 71-9716 สมุทรปราการ" value="${escapeHtml(data.trailerPlate || '')}">
+      </div>
+    </div>
+  `;
+  document.getElementById('otherPartiesContainer').appendChild(wrap);
+  const typeSelect = wrap.querySelector(`#f_op_${idx}_vehicleType`);
+  const trailerWrap = wrap.querySelector(`#f_op_${idx}_trailerWrap`);
+  const syncTrailer = () => {
+    const isTrailer = typeSelect.value === 'รถพ่วง';
+    trailerWrap.classList.toggle('show', isTrailer);
+    if (!isTrailer) wrap.querySelector(`#f_op_${idx}_trailerPlate`).value = '';
+  };
+  typeSelect.addEventListener('change', syncTrailer);
+  syncTrailer();
+  wrap.querySelector(`[data-remove-party="${idx}"]`).addEventListener('click', () => wrap.remove());
+}
+function collectOtherPartiesFromForm(){
+  const blocks = document.querySelectorAll('#otherPartiesContainer .party-block');
+  const list = [];
+  blocks.forEach(wrap => {
+    const idx = wrap.dataset.idx;
+    const plate = document.getElementById(`f_op_${idx}_plate`).value.trim();
+    const vehicleType = document.getElementById(`f_op_${idx}_vehicleType`).value;
+    const vehicleBrand = document.getElementById(`f_op_${idx}_vehicleBrand`).value.trim();
+    const driverName = document.getElementById(`f_op_${idx}_driverName`).value.trim();
+    const driverPhone = document.getElementById(`f_op_${idx}_driverPhone`).value.trim();
+    const trailerPlate = document.getElementById(`f_op_${idx}_trailerPlate`).value.trim();
+    if (!plate && !vehicleType && !vehicleBrand && !driverName && !driverPhone) return; 
+    const party = { vehicleType, vehicleBrand, plate, driverName, driverPhone };
+    if (trailerPlate) party.trailerPlate = trailerPlate;
+    list.push(party);
+  });
+  return list;
+}
+
+ 
+function getPlateDisplayLines(r){
+  
+  return [r.plate || '-'];
+}
+function splitPlateParts(plateStr){
+  if (!plateStr) return {num: '-', province: ''};
+  const idx = plateStr.indexOf(' ');
+  if (idx === -1) return {num: plateStr, province: ''};
+  return {num: plateStr.slice(0, idx), province: plateStr.slice(idx + 1).trim()};
+}
+function formatPlateCellHtml(r){
+  return getPlateDisplayLines(r).map(p => {
+    const {num, province} = splitPlateParts(p);
+    return `<div class="plate-entry"><div class="plate-num">${escapeHtml(num)}</div>${province ? `<div class="plate-province">${escapeHtml(province)}</div>` : ''}</div>`;
+  }).join('');
+}
+function partyDetailBlockHtml(party, label){
+  const plateRow = (party.vehicleType === 'รถพ่วง' && party.trailerPlate)
+    ? `<div><div class="k">ทะเบียนหัว</div><div class="v">${escapeHtml(party.plate) || '-'}</div></div>
+       <div><div class="k">ทะเบียนหาง</div><div class="v">${escapeHtml(party.trailerPlate)}</div></div>`
+    : `<div class="full"><div class="k">ทะเบียนรถ</div><div class="v">${escapeHtml(party.plate) || '-'}</div></div>`;
+  return `
+    <div class="detail-party-block">
+      <div class="detail-party-heading">${escapeHtml(label)}</div>
+      <div class="detail-grid">
+        <div><div class="k">ชื่อผู้ขับขี่ / ผู้ละเมิด</div><div class="v">${escapeHtml(party.driverName) || '-'}</div></div>
+        <div><div class="k">เบอร์โทร</div><div class="v">${escapeHtml(party.driverPhone) || '-'}</div></div>
+        <div><div class="k">ประเภทรถ</div><div class="v">${escapeHtml(party.vehicleType) || '-'}</div></div>
+        <div><div class="k">ยี่ห้อ / สี</div><div class="v">${escapeHtml(party.vehicleBrand) || '-'}</div></div>
+        ${plateRow}
+      </div>
+    </div>`;
+}
+
+/* ============ form: save / edit / clear ============ */
+function clearForm(){
+  editingId = null;
+  document.getElementById('editingHint').textContent = '';
+  document.getElementById('editModeBanner').style.display = 'none';
+  document.querySelector('.tab-btn[data-view="form"]').textContent = '＋ บันทึกรายการใหม่';
+  document.getElementById('btnClearForm').textContent = 'ล้างฟอร์ม';
+  populateFiscalYearSelect();
+  document.getElementById('f_dateIncident').value = '';
+  document.getElementById('f_dateFound').value = '';
+  document.getElementById('f_time').value = '';
+  document.getElementById('f_highway').value = '';
+  document.getElementById('f_section').value = '';
+  document.getElementById('f_km').value = '';
+  document.getElementById('f_side').value = '';
+  document.getElementById('f_location').value = '';
+  document.getElementById('f_vehicleType').value = '';
+  document.getElementById('f_vehicleBrand').value = '';
+  document.getElementById('f_plate').value = '';
+  document.getElementById('f_trailerPlate').value = '';
+  document.getElementById('f_hasInsurance').value = '';
+  document.getElementById('f_insuranceCompany').value = '';
+  document.getElementById('f_driverName').value = '';
+  document.getElementById('f_driverAge').value = '';
+  document.getElementById('f_driverPhone').value = '';
+  document.getElementById('f_compensationStatus').value = '';
+  document.getElementById('f_repairStatus').value = '';
+  document.getElementById('f_closedDate').value = '';
+  document.getElementById('f_referenceNo').value = '';
+  document.getElementById('f_note').value = '';
+  currentFallbackTotal = null;
+  document.getElementById('f_costMethod').value = 'percent30';
+  document.getElementById('f_laborCost').value = '';
+  document.getElementById('f_machineCost').value = '';
+  document.getElementById('itemsContainer').innerHTML = '';
+  document.getElementById('otherPartiesContainer').innerHTML = '';
+  otherPartyIdx = 0;
+  updateTrailerFieldVisibility();
+  updateInsuranceFieldVisibility();
+  updateCostMethodVisibility();
+  updateKmHint();
+}
+
+function loadRecordIntoForm(rec){
+  editingId = rec.id;
+  // ใช้เลขที่รายการแบบ "ปีงบ-ลำดับ" (เช่น 2569-15) แทน id ภายในระบบ (r-xxxxx) ที่ผู้ใช้อ่านไม่รู้เรื่อง
+  const seqMap = computeSeqMap();
+  const caseNo = (rec.fiscalYear || '') + '-' + (seqMap[rec.id] || '');
+  document.getElementById('editingHint').textContent = 'กำลังแก้ไขรายการ: ' + (rec.plate || caseNo);
+  
+  document.getElementById('editModeSub').textContent =
+    'รายการ ' + (rec.plate || caseNo) + (rec.dateIncident ? (' · ' + formatThaiDate(rec.dateIncident)) : '') + ' — กดบันทึก เพื่ออัปเดตข้อมูลรายการนี้';
+  document.getElementById('editModeBanner').style.display = 'flex';
+  document.querySelector('.tab-btn[data-view="form"]').textContent = '✏️ กำลังแก้ไขเคส';
+  document.getElementById('btnClearForm').textContent = 'ยกเลิกการแก้ไข';
+  document.getElementById('f_fiscalYear').value = rec.fiscalYear || thaiFiscalYearNow();
+  document.getElementById('f_dateIncident').value = rec.dateIncident || '';
+  document.getElementById('f_dateFound').value = rec.dateFound || '';
+  document.getElementById('f_time').value = rec.time || '';
+  document.getElementById('f_highway').value = rec.highway || '';
+  document.getElementById('f_section').value = rec.section || highwaySection(rec.highway);
+  document.getElementById('f_km').value = formatKm(rec.km);
+  document.getElementById('f_side').value = rec.side || '';
+  document.getElementById('f_location').value = rec.location || '';
+  document.getElementById('f_vehicleType').value = rec.vehicleType || '';
+  document.getElementById('f_vehicleBrand').value = rec.vehicleBrand || '';
+  document.getElementById('f_plate').value = rec.plate || '';
+  document.getElementById('f_trailerPlate').value = rec.trailerPlate || '';
+  updateTrailerFieldVisibility();
+  document.getElementById('f_hasInsurance').value = rec.hasInsurance || '';
+  document.getElementById('f_insuranceCompany').value = rec.insuranceCompany || '';
+  updateInsuranceFieldVisibility();
+  document.getElementById('otherPartiesContainer').innerHTML = '';
+  otherPartyIdx = 0;
+  (rec.otherPartiesList || []).forEach(p => addOtherPartyBlock(p));
+  document.getElementById('f_driverName').value = rec.driverName || '';
+  document.getElementById('f_driverAge').value = rec.driverAge || '';
+  document.getElementById('f_driverPhone').value = rec.driverPhone || '';
+  document.getElementById('f_compensationStatus').value = rec.compensationStatus || '';
+  document.getElementById('f_repairStatus').value = rec.repairStatus || '';
+  document.getElementById('f_closedDate').value = rec.closedDate && /^\d{4}-\d{2}-\d{2}$/.test(rec.closedDate) ? rec.closedDate : '';
+  document.getElementById('f_referenceNo').value = rec.referenceNo || '';
+  document.getElementById('f_note').value = rec.note || '';
+  currentFallbackTotal = rec.totalPrice || null;
+  document.getElementById('f_costMethod').value = rec.costMethod === 'laborMachine' ? 'laborMachine' : 'percent30';
+  document.getElementById('f_laborCost').value = rec.laborCost != null ? formatThousands(String(rec.laborCost)) : '';
+  document.getElementById('f_machineCost').value = rec.machineCost != null ? formatThousands(String(rec.machineCost)) : '';
+  updateCostMethodVisibility();
+  document.getElementById('itemsContainer').innerHTML = '';
+  (rec.items && rec.items.length ? rec.items : [{name:'',qty:'',unit:'ชุด',unitPrice:'',price:''}]).forEach(it => {
+    
+    if ((it.unitPrice === undefined || it.unitPrice === null || it.unitPrice === '') && it.price != null && it.qty) {
+      const qtyNum = parseFloat(String(it.qty).replace(/,/g,''));
+      if (!isNaN(qtyNum) && qtyNum !== 0) it = {...it, unitPrice: Math.round((it.price / qtyNum) * 100) / 100};
+    }
+    addItemRow(it);
+  });
+  updateItemsSum();
+  updateKmHint();
+  document.querySelector('.tab-btn[data-view="form"]').click();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+
+function setSaveButtonLoading(loading){
+  const btn = document.getElementById('btnSave');
+  if (loading) {
+    btn.dataset.originalText = btn.textContent;
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    btn.innerHTML = '<span class="btn-spinner"></span>กำลังบันทึก...';
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    btn.textContent = btn.dataset.originalText || 'บันทึกข้อมูล';
+  }
+}
+
+
+
+function busyButton(btn, text){
+  btn.dataset.originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.classList.remove('btn-success');
+  btn.classList.add('btn-loading');
+  btn.innerHTML = '<span class="btn-spinner"></span>' + text;
+}
+function doneButton(btn, text){
+  return new Promise(resolve => {
+    btn.classList.remove('btn-loading');
+    btn.classList.add('btn-success');
+    btn.innerHTML = text;
+    setTimeout(resolve, 700);
+  });
+}
+async function saveForm(){
+  const fiscalYear = parseInt(document.getElementById('f_fiscalYear').value, 10);
+  const dateIncident = document.getElementById('f_dateIncident').value;
+  const highway = document.getElementById('f_highway').value;
+  const kmText = document.getElementById('f_km').value;
+  const km = parseKm(kmText);
+
+  if (!dateIncident) { showToast('กรุณากรอกวันที่เกิดเหตุ'); return; }
+  if (!highway) { showToast('กรุณาเลือกทางหลวง (ทล.)'); return; }
+  if (km === null) { showToast('กรุณากรอก กม. ให้ถูกรูปแบบ เช่น 225+500'); return; }
+  if (!recorderName) {
+    openRecorderModal(() => saveForm());
+    return;
+  }
+
+  const items = collectItems();
+  const materialsTotal = items.reduce((s,i)=>s+(i.price||0),0);
+  const costMethod = document.getElementById('f_costMethod').value === 'laborMachine' ? 'laborMachine' : 'percent30';
+  const laborCost = parseFloat(String(document.getElementById('f_laborCost').value).replace(/,/g,'')) || 0;
+  const machineCost = parseFloat(String(document.getElementById('f_machineCost').value).replace(/,/g,'')) || 0;
+  const operationCost = materialsTotal === 0 ? 0 : Math.round(materialsTotal * 0.3);
+  
+  const oldRec = editingId ? records.find(r => r.id === editingId) : null;
+  let totalPrice;
+  if (costMethod === 'laborMachine') {
+    totalPrice = materialsTotal + laborCost + machineCost;
+  } else {
+    totalPrice = (materialsTotal === 0 && oldRec && oldRec.totalPrice) ? oldRec.totalPrice : (materialsTotal + operationCost);
+  }
+
+  const now = new Date().toISOString();
+  const rec = {
+    id: editingId || uid(),
+    fiscalYear, dateIncident,
+    dateFound: document.getElementById('f_dateFound').value,
+    time: document.getElementById('f_time').value.trim(),
+    highway, section: document.getElementById('f_section').value,
+    km, side: document.getElementById('f_side').value,
+    location: document.getElementById('f_location').value.trim(),
+    items,
+    materialsTotal, operationCost,
+    costMethod, laborCost, machineCost,
+    totalPrice: isNaN(totalPrice) ? null : totalPrice,
+    vehicleType: document.getElementById('f_vehicleType').value,
+    vehicleBrand: document.getElementById('f_vehicleBrand').value.trim(),
+    plate: document.getElementById('f_plate').value.trim(),
+    trailerPlate: document.getElementById('f_trailerPlate').value.trim(),
+    hasInsurance: document.getElementById('f_hasInsurance').value,
+    insuranceCompany: document.getElementById('f_insuranceCompany').value.trim(),
+    otherPartiesList: collectOtherPartiesFromForm(),
+    driverName: document.getElementById('f_driverName').value.trim(),
+    driverAge: document.getElementById('f_driverAge').value.trim(),
+    driverPhone: document.getElementById('f_driverPhone').value.trim(),
+    compensationStatus: document.getElementById('f_compensationStatus').value,
+    repairStatus: document.getElementById('f_repairStatus').value,
+    closedDate: document.getElementById('f_closedDate').value,
+    referenceNo: document.getElementById('f_referenceNo').value.trim(),
+    note: document.getElementById('f_note').value.trim(),
+    recordedBy: recorderName,
+    createdAt: editingId ? (records.find(r=>r.id===editingId)||{}).createdAt || now : now,
+    updatedAt: now,
+    imported: editingId ? (records.find(r=>r.id===editingId)||{}).imported || false : false,
+  };
+
+  setSaveButtonLoading(true);
+  let saved;
+  if (editingId) {
+    const idx = records.findIndex(r => r.id === editingId);
+    if (idx >= 0) records[idx] = rec;
+    saved = await apiUpdateRecord(rec);
+  } else {
+    records.push(rec);
+    saved = await apiAddRecord(rec);
+  }
+  setSaveButtonLoading(false);
+  // บันทึกไม่สำเร็จ (เช่น สัญญาณหลุด/ไม่มีสิทธิ์): คงข้อมูลในฟอร์มไว้ให้กดบันทึกซ้ำได้ ไม่แสดง "บันทึกสำเร็จ" หลอก
+  if (!saved) { renderTable(); return; }
+  showSaveSuccessModal(!!editingId, rec);
+  clearForm();
+  populateYearFilter();
+}
+
+ 
+/* ============ หน้าล็อกอิน (ต้องล็อกอินก่อนเห็นข้อมูลใดๆ) ============ */
+let appStarted = false;
+
+function gateEl(){ return document.getElementById('authGate'); }
+
+function hideLoadingOverlay(){
+  const overlay = document.getElementById('pageLoadingOverlay');
+  if (overlay) overlay.classList.add('hide');
+}
+
+function renderAuthGate(errorMsg){
+  const g = gateEl();
+  if (!g) return;
+  hideLoadingOverlay();
+  g.classList.add('show');
+  const head = `
+    <img src="logo.png" alt="ตรากรมทางหลวง" class="auth-logo">
+    <h2>งานอุบัติเหตุ</h2>
+    <p class="auth-sub">หมวดทางหลวงเชิงเนิน · แขวงทางหลวงระยอง</p>`;
+  const errHtml = `<p class="hint auth-error" id="gateError" style="${errorMsg ? '' : 'display:none'}">${escapeHtml(errorMsg || '')}</p>`;
+
+  // อ่านรายชื่อทีมไม่ได้ (เช่น ยังไม่ได้วาง firestore.rules หรือเน็ตหลุด) — ห้ามขึ้นหน้า "ตั้งเจ้าของครั้งแรก" ผิดๆ
+  if (teamLoadError) {
+    g.innerHTML = `
+      <div class="auth-card">
+        ${head}
+        <h3 class="auth-h3">เชื่อมต่อฐานข้อมูลไม่สำเร็จ</h3>
+        <p class="hint auth-error">${escapeHtml(teamLoadError)}</p>
+        <button class="btn btn-primary auth-btn" id="gateRetry">ลองอีกครั้ง</button>
+      </div>`;
+    document.getElementById('gateRetry').onclick = () => location.reload();
+    return;
+  }
+
+  if (!teamConfig.members.length) {
+    g.innerHTML = `
+      <div class="auth-card">
+        ${head}
+        <h3 class="auth-h3">ตั้งค่าเจ้าของระบบครั้งแรก</h3>
+        <p class="hint" style="margin-bottom:14px">ยังไม่มีเจ้าหน้าที่ในระบบ — คนแรกที่ตั้งค่าจะเป็น "เจ้าของระบบ" และเพิ่มเจ้าหน้าที่คนอื่นได้ภายหลัง</p>
+        <div class="field" style="margin-bottom:12px"><label>ชื่อ-นามสกุลของคุณ</label><input type="text" id="gateOwnerName" autocomplete="off"></div>
+        <div class="field" style="margin-bottom:12px"><label>ตั้งรหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>${pwField('gateOwnerPass')}</div>
+        <div class="field" style="margin-bottom:14px"><label>ยืนยันรหัสผ่าน</label>${pwField('gateOwnerPass2')}</div>
+        ${errHtml}
+        <button class="btn btn-primary auth-btn" id="gateClaim">ตั้งค่าและเข้าสู่ระบบ</button>
+      </div>`;
+    const claim = async () => {
+      const n = document.getElementById('gateOwnerName').value.trim();
+      const p1 = document.getElementById('gateOwnerPass').value;
+      const p2 = document.getElementById('gateOwnerPass2').value;
+      if (!n || !p1) return showGateError('กรอกชื่อและรหัสผ่านให้ครบ');
+      if (p1.length < 6) return showGateError('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+      if (p1 !== p2) return showGateError('รหัสผ่านสองช่องไม่ตรงกัน');
+      const btn = document.getElementById('gateClaim');
+      btn.disabled = true; btn.textContent = 'กำลังตั้งค่า...';
+      try {
+        const user = await bootstrapOwner(n, p1);
+        handleAuthResult(user);
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'ตั้งค่าและเข้าสู่ระบบ';
+        showGateError(e.message);
+      }
+    };
+    document.getElementById('gateClaim').onclick = claim;
+    g.querySelectorAll('input').forEach(i => i.addEventListener('keydown', ev => { if (ev.key === 'Enter') claim(); }));
+    return;
+  }
+
+  const options = teamConfig.members.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}${m.isOwner ? ' (เจ้าของระบบ)' : ''}</option>`).join('');
+  g.innerHTML = `
+    <div class="auth-card">
+      ${head}
+      <h3 class="auth-h3">เข้าสู่ระบบ</h3>
+      <div class="field" style="margin-bottom:12px"><label>ชื่อผู้ใช้งาน</label><select id="gateName"><option value="">— เลือกชื่อของคุณ —</option>${options}</select></div>
+      <div class="field" style="margin-bottom:14px"><label>รหัสผ่าน</label>${pwField('gatePass')}</div>
+      ${errHtml}
+      <button class="btn btn-primary auth-btn" id="gateOk">เข้าสู่ระบบ</button>
+    </div>`;
+  const login = async () => {
+    const name = document.getElementById('gateName').value;
+    const pass = document.getElementById('gatePass').value;
+    if (!name) return showGateError('เลือกชื่อของคุณก่อน');
+    if (!pass) return showGateError('กรอกรหัสผ่าน');
+    const btn = document.getElementById('gateOk');
+    btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...';
+    try {
+      await FBL.login(name, pass);
+      // สำเร็จ → onAuth เรียก handleAuthResult ต่อเอง
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      showGateError(e.message);
+    }
+  };
+  document.getElementById('gateOk').onclick = login;
+  document.getElementById('gatePass').addEventListener('keydown', ev => { if (ev.key === 'Enter') login(); });
+}
+
+function showGateError(msg){
+  const el = document.getElementById('gateError');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function handleAuthResult(user, errorMsg){
+  if (!user) { renderAuthGate(errorMsg); return; }
+  recorderName = user.name;
+  const g = gateEl();
+  if (g) { g.classList.remove('show'); g.innerHTML = ''; }
+  startApp();
+}
+
+// เดิมเปิดหน้าต่างล็อกอิน — ตอนนี้ระบบบังคับล็อกอินตั้งแต่ต้น จึงแค่เปิดหน้าล็อกอินอีกครั้ง
+function openRecorderModal(onDone){ renderAuthGate(); }
+
+async function startAuth(){
+  if (!window.FBL) {
+    hideLoadingOverlay();
+    const g = gateEl();
+    if (g) {
+      g.classList.add('show');
+      g.innerHTML = '<div class="auth-card"><h3 class="auth-h3">โหลดระบบฐานข้อมูลไม่สำเร็จ</h3><p class="hint">ตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้านี้อีกครั้ง</p></div>';
+    }
+    return;
+  }
+  FBL.onError = msg => showToast(msg);
+  await loadTeamConfig();   // รายชื่อทีมอ่านได้ก่อนล็อกอิน (ใช้แสดงในหน้าล็อกอิน)
+  FBL.onAuth(handleAuthResult);
+}
+
+async function startApp(){
+  if (appStarted) return;
+  appStarted = true;
+  const overlay = document.getElementById('pageLoadingOverlay');
+  if (overlay) overlay.classList.remove('hide');
+  try {
+    await Promise.all([loadMaterialPrices(), loadRoutesData(), loadRecords()]);
+    populateHighwaySelect();
+    populateYearFilter();
+    updateWhoDisplay();
+  } catch (e) {
+    console.error('startApp failed', e);
+    showToast('โหลดข้อมูลไม่สำเร็จ ลองรีเฟรชหน้านี้');
+  } finally {
+    hideLoadingOverlay();
+  }
+  renderTable();
+  renderRoutesTable();
+  renderDashboard();
+}
+
+/* ============ นำเข้าข้อมูลจากไฟล์ Excel ของระบบเดิม (เจ้าของระบบ ครั้งเดียว) ============ */
+async function runImport(){
+  if (!isOwner()) { showToast('เฉพาะเจ้าของระบบเท่านั้น'); return; }
+  const file = document.getElementById('importFile').files[0];
+  if (!file) { showToast('เลือกไฟล์ Excel ก่อน'); return; }
+  const btn = document.getElementById('btnImport');
+  const log = document.getElementById('importLog');
+  log.style.display = 'block';
+  log.textContent = 'กำลังอ่านไฟล์...';
+  btn.disabled = true;
+  try {
+    const buf = await file.arrayBuffer();
+    const report = await FBL.importWorkbook(XLSX, buf, m => { log.textContent = m; });
+    log.textContent = '✓ นำเข้าสำเร็จ\n' + report.join('\n') + '\n\nรันซ้ำได้ปลอดภัย (เขียนทับรายการเดิม ไม่เกิดซ้ำ)';
+    showToast('นำเข้าข้อมูลสำเร็จ');
+  } catch (e) {
+    console.error('import failed', e);
+    log.textContent = '✗ นำเข้าไม่สำเร็จ: ' + FBL.errorText(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function computeSeqMap(){
+  
+  const map = {};
+  const byYear = {};
+  records.forEach(r => {
+    if (!byYear[r.fiscalYear]) byYear[r.fiscalYear] = [];
+    byYear[r.fiscalYear].push(r);
+  });
+  Object.keys(byYear).forEach(y => {
+    byYear[y].sort((a,b) => (a.dateIncident||'').localeCompare(b.dateIncident||''));
+    byYear[y].forEach((r,i) => { map[r.id] = i + 1; });
+  });
+  return map;
+}
+function statusPill(status, type){
+  if (!status) return `<span class="status-pill unknown">ไม่ระบุ</span>`;
+  const isDone = type === 'comp' ? status === 'ชดใช้แล้ว' : status === 'จัดซ่อมแล้ว';
+  return `<span class="status-pill ${isDone?'done':'pending'}">${escapeHtml(status)}</span>`;
+}
+function renderTable(){
+  populateYearFilter();
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const fYear = document.getElementById('filterYear').value;
+  const fHw = document.getElementById('filterHighway').value;
+  const fStatus = document.getElementById('filterStatus').value;
+  const seqMap = computeSeqMap();
+
+  let rows = records.filter(r => {
+    if (fYear && String(r.fiscalYear) !== fYear) return false;
+    if (fHw && String(r.highway) !== fHw) return false;
+    if (fStatus === 'open' && r.closedDate) return false;
+    if (fStatus === 'closed' && !r.closedDate) return false;
+    if (q) {
+      const otherPlates = (r.otherPartiesList || []).map(p => p.plate).join(' ');
+      const otherNames = (r.otherPartiesList || []).map(p => p.driverName).join(' ');
+      const dateText = formatThaiDate(r.dateIncident) + ' ' + (r.dateIncident || '');
+      const caseNo = (r.fiscalYear || '') + '-' + (seqMap[r.id] || '');
+      const kmText = formatKm(r.km);
+      const hay = [r.plate, r.trailerPlate, otherPlates, r.driverName, otherNames, r.section, r.vehicleBrand, r.note, dateText, caseNo, kmText].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  rows.sort((a,b) => (b.dateIncident||'').localeCompare(a.dateIncident||''));
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  document.getElementById('emptyState').style.display = rows.length ? 'none' : 'block';
+
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.innerHTML = `
+      <td class="mono nowrap-cell center-cell">${r.fiscalYear || ''}-${seqMap[r.id] || ''}</td>
+      <td class="mono nowrap-cell center-cell">${formatThaiDate(r.dateIncident)}</td>
+      <td class="hw-cell">ทล.${escapeHtml(r.highway)}<br><span class="hint">${escapeHtml(r.section)}</span></td>
+      <td class="nowrap-cell center-cell"><span class="km-badge">${escapeHtml(formatKm(r.km))}</span></td>
+      <td class="nowrap-cell violator-cell">${escapeHtml(r.driverName || '-')}</td>
+      <td class="mono plate-cell">${formatPlateCellHtml(r)}</td>
+      <td class="mono nowrap-cell center-cell">${formatMoney(r.totalPrice)}</td>
+      <td class="nowrap-cell center-cell">${statusPill(r.compensationStatus,'comp')}</td>
+      <td class="nowrap-cell center-cell">${statusPill(r.repairStatus,'repair')}</td>
+      <td class="mono nowrap-cell center-cell">${r.closedDate ? formatThaiDate(r.closedDate) : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const rec = rows[Array.from(tbody.children).indexOf(tr)];
+      if (rec) openCaseDetailModal(rec.id);
+    });
+  });
+}
+function closeAllRowMenus(){
+  document.querySelectorAll('.row-menu.open').forEach(m => m.classList.remove('open'));
+}
+function confirmDelete(id, onCancel){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-head"><h3>ลบรายการอุบัติเหตุ ?</h3><button class="modal-close" id="delClose" type="button">×</button></div>
+        <p>ยืนยันการลบรายการ ข้อมูลถูกย้ายไปที่ "ถังขยะ"</p>
+        <div class="actions">
+          <button class="btn btn-outline" id="delCancel">ยกเลิก</button>
+          <button class="btn btn-danger" id="delOk">ยืนยัน</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('delClose').onclick = () => {
+    root.innerHTML = '';
+    if (onCancel) onCancel();
+  };
+  document.getElementById('delCancel').onclick = () => {
+    root.innerHTML = '';
+    if (onCancel) onCancel();
+  };
+  document.getElementById('delOk').onclick = async () => {
+    const btn = document.getElementById('delOk');
+    busyButton(btn, 'กำลังลบ...');
+    const removed = await apiDeleteRecord(id);
+    if (!removed) { root.innerHTML = ''; renderTable(); return; }
+    records = records.filter(r => r.id !== id);
+    await doneButton(btn, '✓ ลบแล้ว');
+    root.innerHTML = '';
+    renderTable();
+    showToast('ลบเคสแล้ว (กู้คืนได้จากถังขยะ)');
+  };
+}
+
+/* ============ ถังขยะ (soft-deleted cases) ============ */
+// แสดงรายการเคสที่ถูกลบ พร้อมปุ่มกู้คืนทีละรายการ — เข้าถึงได้จากหน้าตั้งค่า (เจ้าของระบบเท่านั้น)
+async function openTrashModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal" style="max-width:640px">
+        <div class="modal-head"><h3>🗑 ถังขยะ — เคสที่ถูกลบ</h3><button class="modal-close" id="trashClose" type="button">×</button></div>
+        <div id="trashList"><p class="hint">กำลังโหลด...</p></div>
+      </div>
+    </div>`;
+  document.getElementById('trashClose').onclick = () => { root.innerHTML = ''; };
+
+  const items = await loadTrashRecords();
+  const listEl = document.getElementById('trashList');
+  if (!root.contains(listEl)) return; // ผู้ใช้ปิดโมดัลไปแล้วระหว่างรอโหลด
+  if (!items.length) {
+    listEl.innerHTML = '<p class="hint">ถังขยะว่างเปล่า ไม่มีเคสที่ถูกลบ</p>';
+    return;
+  }
+  
+  const showPermanentDelete = isOwner();
+  listEl.innerHTML = items.map(r => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)">
+      <div>
+        <div><b>ทล.${escapeHtml(r.highway || '-')}</b> กม.${escapeHtml(String(r.km || '-'))} — ${escapeHtml(r.plate || 'ไม่ระบุทะเบียน')}</div>
+        <div class="hint">ลบโดย ${escapeHtml(r.deletedBy || '-')} เมื่อ ${escapeHtml(normalizeDateStr(r.deletedAt) || String(r.deletedAt || '-'))}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-primary btn-sm" data-restore="${escapeHtml(r.id)}">กู้คืน</button>
+        ${showPermanentDelete ? `<button class="btn btn-danger btn-sm" data-permadelete="${escapeHtml(r.id)}">ลบถาวร</button>` : ''}
+      </div>
+    </div>`).join('');
+  listEl.querySelectorAll('[data-restore]').forEach(btn => {
+    btn.onclick = async () => {
+      busyButton(btn, 'กำลังกู้คืน...');
+      await apiRestoreRecord(btn.dataset.restore);
+      await doneButton(btn, '✓ กู้คืนแล้ว');
+      await loadRecords();
+      renderTable();
+      showToast('กู้คืนเคสแล้ว');
+      openTrashModal(); 
+    };
+  });
+  
+  listEl.querySelectorAll('[data-permadelete]').forEach(btn => {
+    btn.onclick = () => ensureOwnerVerified(async () => {
+      busyButton(btn, 'กำลังลบถาวร...');
+      const ok = await apiPermanentDeleteRecord(btn.dataset.permadelete);
+      if (!ok) { btn.disabled = false; btn.classList.remove('btn-loading'); btn.innerHTML = btn.dataset.originalHTML; return; }
+      await doneButton(btn, '✓ ลบถาวรแล้ว');
+      showToast('ลบเคสถาวรแล้ว กู้คืนไม่ได้อีก');
+      openTrashModal(); 
+    });
+  });
+}
+
+ 
+function openCaseDetailModal(id){
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  const seqMap = computeSeqMap();
+  const caseNo = `${rec.fiscalYear || ''}-${seqMap[rec.id] || ''}`;
+
+  const itemRowsHtml = (rec.items || []).length
+    ? rec.items.map(i => `
+        <tr>
+          <td>${escapeHtml(i.name)}</td>
+          <td class="num">${escapeHtml(i.qty)}</td>
+          <td class="num">${escapeHtml(i.unit)}</td>
+          <td class="num">${i.unitPrice != null ? formatMoney(i.unitPrice) : '-'}</td>
+          <td class="num">${i.price != null ? formatMoney(i.price) : '-'}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="5" style="color:var(--ink-soft);text-align:center;padding:10px 0">ไม่มีรายการทรัพย์สิน</td></tr>`;
+
+  const materialsTotal = rec.materialsTotal != null ? rec.materialsTotal : (rec.items || []).reduce((s,i)=>s+(i.price||0),0);
+  const operationCost = rec.operationCost != null ? rec.operationCost : Math.round(materialsTotal * 0.3);
+  const isLaborMachine = rec.costMethod === 'laborMachine';
+
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal modal-lg">
+        <div class="modal-head"><h3>รายการ ${escapeHtml(caseNo)} — ${escapeHtml(formatThaiDate(rec.dateIncident))}</h3><button class="modal-close" id="caseDetailCloseX" type="button">×</button></div>
+        <p>ทล.${escapeHtml(rec.highway)} ตอน ${escapeHtml(rec.section)} — กม.${escapeHtml(formatKm(rec.km))}</p>
+
+        <div class="detail-section-title">ข้อมูลอุบัติเหตุ</div>
+        <div class="detail-grid">
+          <div><div class="k">วันที่เกิดเหตุ</div><div class="v">${escapeHtml(formatThaiDate(rec.dateIncident)) || '-'}</div></div>
+          <div><div class="k">เวลา</div><div class="v">${escapeHtml(rec.time) || '-'}</div></div>
+          <div><div class="k">ตำแหน่ง / จุดเกิดเหตุ</div><div class="v">${escapeHtml(formatPosition(rec)) || '-'}</div></div>
+          <div><div class="k">วันที่พบ</div><div class="v">${escapeHtml(formatThaiDate(rec.dateFound)) || '-'}</div></div>
+        </div>
+
+        <div class="detail-section-title">รถ / คู่กรณี</div>
+        ${partyDetailBlockHtml({
+          vehicleType: rec.vehicleType, vehicleBrand: rec.vehicleBrand, plate: rec.plate,
+          trailerPlate: rec.trailerPlate, driverName: rec.driverName, driverPhone: rec.driverPhone
+        }, (rec.otherPartiesList && rec.otherPartiesList.length) ? 'ผู้ละเมิดหลัก' : 'ผู้ละเมิด')}
+        <div class="detail-grid" style="margin-top:-6px;margin-bottom:14px">
+          <div><div class="k">ประกันภัย</div><div class="v">${escapeHtml(rec.hasInsurance) || 'ไม่ระบุ'}</div></div>
+          ${rec.hasInsurance === 'มี' ? `<div><div class="k">บริษัทประกัน</div><div class="v">${escapeHtml(rec.insuranceCompany) || '-'}</div></div>` : ''}
+        </div>
+        ${(rec.otherPartiesList || []).map((p, i) => partyDetailBlockHtml(p, 'คู่กรณีร่วมที่ ' + (i + 2))).join('')}
+
+        <div class="detail-section-title">รายการทรัพย์สินเสียหาย</div>
+        <table class="detail-items-table">
+          <thead><tr><th>รายการ</th><th class="num">จำนวน</th><th class="num">หน่วย</th><th class="num">ราคา/หน่วย</th><th class="num">เป็นเงิน</th></tr></thead>
+          <tbody>${itemRowsHtml}</tbody>
+          <tfoot>
+            <tr class="totals-row totals-row-first">
+              <td></td>
+              <td colspan="2" class="dt-label">รวมค่าวัสดุ</td>
+              <td class="dt-colon">:</td>
+              <td class="dt-value"><span class="dt-num">${formatMoney(materialsTotal)}</span><span class="dt-unit">บาท</span></td>
+            </tr>
+            ${isLaborMachine ? `
+            <tr class="totals-row">
+              <td></td>
+              <td colspan="2" class="dt-label">ค่าแรง</td>
+              <td class="dt-colon">:</td>
+              <td class="dt-value"><span class="dt-num">${formatMoney(rec.laborCost || 0)}</span><span class="dt-unit">บาท</span></td>
+            </tr>
+            <tr class="totals-row">
+              <td></td>
+              <td colspan="2" class="dt-label">ค่าเครื่องจักร</td>
+              <td class="dt-colon">:</td>
+              <td class="dt-value"><span class="dt-num">${formatMoney(rec.machineCost || 0)}</span><span class="dt-unit">บาท</span></td>
+            </tr>
+            ` : `
+            <tr class="totals-row">
+              <td></td>
+              <td colspan="2" class="dt-label">ค่าดำเนินการ 30%</td>
+              <td class="dt-colon">:</td>
+              <td class="dt-value"><span class="dt-num">${formatMoney(operationCost)}</span><span class="dt-unit">บาท</span></td>
+            </tr>
+            `}
+            <tr class="totals-row totals-row-grand">
+              <td></td>
+              <td colspan="2" class="dt-label">รวมทั้งสิ้น</td>
+              <td class="dt-colon">:</td>
+              <td class="dt-value"><b class="dt-num">${formatMoney(rec.totalPrice)}</b><span class="dt-unit">บาท</span></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="detail-section-title">ผลการติดตาม</div>
+        <div class="detail-grid">
+          <div><div class="k">การชดใช้</div><div class="v">${statusPill(rec.compensationStatus,'comp')}</div></div>
+          <div><div class="k">การจัดซ่อม</div><div class="v">${statusPill(rec.repairStatus,'repair')}</div></div>
+          <div><div class="k">วันที่ปิดเคส</div><div class="v">${rec.closedDate ? formatThaiDate(rec.closedDate) : '-'}</div></div>
+          <div><div class="k">เลขที่อ้างอิง</div><div class="v">${escapeHtml(rec.referenceNo) || '-'}</div></div>
+          <div class="full"><div class="k">หมายเหตุ</div><div class="v">${escapeHtml(rec.note) || '-'}</div></div>
+          <div class="full"><div class="k">ผู้บันทึก</div><div class="v">${escapeHtml(rec.recordedBy) || '-'}</div></div>
+        </div>
+
+        <div class="actions" style="margin-top:18px">
+          <button class="btn btn-danger" id="caseDetailDelete" style="margin-right:auto">ลบรายการ</button>
+          <button class="btn btn-outline" id="caseDetailClose">ปิด</button>
+          <button class="btn btn-primary" id="caseDetailEdit">แก้ไขรายการ</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('caseDetailCloseX').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('caseDetailClose').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('caseDetailEdit').onclick = () => {
+    root.innerHTML = '';
+    loadRecordIntoForm(rec);
+  };
+  document.getElementById('caseDetailDelete').onclick = () => {
+    confirmDelete(rec.id, () => openCaseDetailModal(rec.id));
+  };
+}
+
+ 
+function renderDashYearFilter(){
+  const years = Array.from(new Set(records.map(r => r.fiscalYear).filter(Boolean))).sort((a,b)=>b-a);
+  const el = document.getElementById('dashYearFilter');
+  const isAll = dashYear === 'ทั้งหมด';
+  const yearBtnLabel = isAll ? 'เลือกปีงบ' : ('ปีงบ ' + dashYear);
+  el.innerHTML = `
+    <button type="button" data-y="ทั้งหมด" class="${isAll ? 'active' : ''}">ทุกปีงบประมาณ</button>
+    <div class="year-dropdown-wrap">
+      <button type="button" class="year-dropdown-btn${isAll ? '' : ' active'}" id="yearDropdownBtn">${yearBtnLabel} <span class="caret">▾</span></button>
+      <div class="year-dropdown-menu" id="yearDropdownMenu">
+        ${years.map(y => `<div class="year-dropdown-item${String(y)===String(dashYear)?' active':''}" data-y="${y}">ปีงบ ${y}</div>`).join('')}
+      </div>
+    </div>`;
+  el.querySelector('button[data-y="ทั้งหมด"]').addEventListener('click', () => {
+    dashYear = 'ทั้งหมด'; renderDashboard();
+  });
+  const dropdownBtn = document.getElementById('yearDropdownBtn');
+  const dropdownMenu = document.getElementById('yearDropdownMenu');
+  dropdownBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle('open');
+  });
+  dropdownMenu.querySelectorAll('.year-dropdown-item').forEach(item => {
+    item.addEventListener('click', () => {
+      dashYear = item.dataset.y;
+      renderDashboard();
+    });
+  });
+}
+function renderDashboard(){
+  renderDashYearFilter();
+  const rows = records.filter(r =>
+    (dashYear === 'ทั้งหมด' || String(r.fiscalYear) === String(dashYear)) &&
+    ROUTE_HIGHWAYS.has(String(r.highway))
+  );
+
+  document.getElementById('statTotal').textContent = rows.length;
+  document.getElementById('statValue').textContent = formatMoney(rows.reduce((s,r)=>s+(r.totalPrice||0),0));
+  document.getElementById('statClosed').textContent = rows.filter(r=>r.closedDate).length;
+  document.getElementById('statOpen').textContent = rows.filter(r=>!r.closedDate).length;
+  
+  document.getElementById('cardClosed').onclick = () => goToFilteredList(dashYear, 'closed');
+  document.getElementById('cardOpen').onclick = () => goToFilteredList(dashYear, 'open');
+
+  
+  const byHw = {};
+  rows.forEach(r => { byHw[r.highway] = (byHw[r.highway]||0) + 1; });
+  const hwRoutesSorted = ROUTES.filter(r => byHw[r.highway]).sort((a,b) => Number(a.highway) - Number(b.highway));
+  try { renderHighwayBarChart(hwRoutesSorted, byHw); } catch(e) { console.error('bar chart render failed', e); }
+
+  
+  const spotMap = {};
+  rows.forEach(r => {
+    if (r.km === null || r.km === undefined) return;
+    const roundedKm = Math.round(r.km / 50) * 50;
+    const key = String(r.highway) + '|' + roundedKm;
+    if (!spotMap[key]) spotMap[key] = {highway:String(r.highway), km:roundedKm, count:0};
+    spotMap[key].count++;
+  });
+  const spots = Object.values(spotMap).filter(s => s.count >= 2).sort((a,b) => (Number(a.highway)-Number(b.highway)) || (a.km-b.km));
+  const spotColorClass = (count) => count >= 5 ? 'spot-5' : 'spot-' + count;
+  const chipHtml = (s, showHw) => `<div class="blackspot-chip ${spotColorClass(s.count)}"><span class="km">${showHw ? 'ทล.' + escapeHtml(s.highway) + ' · ' : ''}กม.${formatKm(s.km)}</span><span class="blackspot-count">${s.count} ครั้ง</span></div>`;
+  const hwFilterEl = document.getElementById('blackspotHwFilter');
+  const blackspotListEl = document.getElementById('blackspotList');
+  if (dashYear === 'ทั้งหมด') {
+    // ประหยัดพื้นที่: โชว์ปุ่ม "ทล.?" ให้เลือกดูทีละสาย แทนการแสดงทุกจุดรวมกันยาวๆ
+    const hwList = Array.from(new Set(spots.map(s => s.highway))).sort((a,b) => Number(a)-Number(b));
+    if (hwList.length) {
+      if (!hwList.includes(blackspotHwSelected)) blackspotHwSelected = hwList[0];
+      hwFilterEl.style.display = 'flex';
+      hwFilterEl.innerHTML = hwList.map(hw => {
+        const n = spots.filter(s => s.highway === hw).length;
+        return `<button type="button" data-hw="${escapeHtml(hw)}" class="${hw===blackspotHwSelected?'active':''}">ทล.${escapeHtml(hw)} (${n})</button>`;
+      }).join('');
+      // เรนเดอร์ "ทุกสายทาง" ซ้อนกันไว้ในตำแหน่งเดียวกัน (แค่สลับ visibility) แทนการสลับ innerHTML ทั้งก้อน
+      
+      blackspotListEl.className = 'blackspot-stack';
+      blackspotListEl.innerHTML = hwList.map(hw => {
+        const shown = spots.filter(s => s.highway === hw);
+        return `<div class="blackspot-grid blackspot-hw-group${hw===blackspotHwSelected?' active':''}" data-hw-group="${escapeHtml(hw)}">${shown.map(s => chipHtml(s, false)).join('')}</div>`;
+      }).join('');
+    } else {
+      hwFilterEl.style.display = 'none';
+      hwFilterEl.innerHTML = '';
+      blackspotListEl.className = '';
+      blackspotListEl.innerHTML = '<p class="hint">ยังไม่พบจุดที่เกิดซ้ำ</p>';
+    }
+  } else {
+    // ดูเฉพาะปีเดียว: แสดงเป็น chip grid เหมือนหน้าทุกปีงบประมาณ แต่ไม่ใช้ปุ่ม ทล. (โชว์ทุกสายทางรวมกัน จึงใส่ ทล. กำกับไว้ในชิปด้วย)
+    hwFilterEl.style.display = 'none';
+    hwFilterEl.innerHTML = '';
+    blackspotListEl.className = 'blackspot-grid';
+    blackspotListEl.innerHTML = spots.length ? spots.map(s => chipHtml(s, true)).join('') : '<p class="hint">ยังไม่พบจุดที่เกิดซ้ำ</p>';
+  }
+
+  // trend by fiscal year — แสดงเฉพาะตอนดู "ทุกปีงบประมาณ" เพราะกราฟแนวโน้มเทียบข้ามปีไม่มีความหมายเมื่อกรองดูปีเดียว
+  
+  const trendCard = document.getElementById('trendCard');
+  const dashFirstRow = document.getElementById('dashFirstRow');
+  const blackspotCard = document.getElementById('blackspotCard');
+  if (dashYear === 'ทั้งหมด') {
+    trendCard.style.display = '';
+    if (blackspotCard.parentElement === dashFirstRow) {
+      dashFirstRow.insertAdjacentElement('afterend', blackspotCard);
+    }
+    const totalByYear = {};
+    rows.forEach(r => {
+      if (!r.fiscalYear) return;
+      totalByYear[r.fiscalYear] = (totalByYear[r.fiscalYear]||0) + 1;
+    });
+    const years = Object.keys(totalByYear).map(Number).sort((a,b)=>a-b);
+    try { renderTrendChart(years, totalByYear); } catch(e) { console.error('trend chart render failed', e); }
+  } else {
+    trendCard.style.display = 'none';
+    if (blackspotCard.parentElement !== dashFirstRow) {
+      dashFirstRow.appendChild(blackspotCard);
+    }
+  }
+}
+
+
+function goToFilteredList(fiscalYear, status){
+  document.querySelector('.tab-btn[data-view="list"]').click();
+  document.getElementById('filterYear').value = (fiscalYear === 'ทั้งหมด') ? '' : String(fiscalYear);
+  document.getElementById('filterStatus').value = status;
+  renderTable();
+}
+
+ 
+ 
+
+function levenshteinDistance(a, b){
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = new Array(n + 1);
+  for (let j = 0; j <= n; j++) dp[j] = j;
+  for (let i = 1; i <= m; i++){
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= n; j++){
+      const temp = dp[j];
+      dp[j] = a[i-1] === b[j-1] ? prev : 1 + Math.min(prev, dp[j], dp[j-1]);
+      prev = temp;
+    }
+  }
+  return dp[n];
+}
+
+function nameSimilarity(a, b){
+  const s1 = (a || '').replace(/\s+/g, '').toLowerCase();
+  const s2 = (b || '').replace(/\s+/g, '').toLowerCase();
+  if (!s1 || !s2) return 0;
+  const dist = levenshteinDistance(s1, s2);
+  return 1 - dist / Math.max(s1.length, s2.length);
+}
+
+const FUZZY_MATCH_THRESHOLD = 0.92;
+
+function findMaterialPriceMatch(itemName){
+  let bestKey = null, bestScore = 0;
+  for (const key in materialPriceMap){
+    const score = nameSimilarity(itemName, key);
+    if (score > bestScore){ bestScore = score; bestKey = key; }
+  }
+  if (bestKey && bestScore >= FUZZY_MATCH_THRESHOLD){
+    return { matchedName: bestKey, unit: materialPriceMap[bestKey].unit, price: materialPriceMap[bestKey].price, score: bestScore };
+  }
+  return null;
+}
+
+async function exportExcel(){
+  if (!window.XLSX) { showToast('กำลังโหลดเครื่องมือส่งออก ลองใหม่อีกครั้งใน 2 วินาที'); return; }
+  const seqMap = computeSeqMap();
+  const rows = records.slice().sort((a,b) => (a.fiscalYear-b.fiscalYear) || (a.dateIncident||'').localeCompare(b.dateIncident||''));
+
+  
+  const summaryData = rows.map(r => ({
+    'ที่': seqMap[r.id],
+    'ปีงบประมาณ': r.fiscalYear,
+    'วันที่เกิดเหตุ': r.dateIncident,
+    'วันที่ตรวจพบ': r.dateFound,
+    'เวลา': r.time,
+    'ทล.': r.highway,
+    'ตอน': r.section,
+    'กม.': formatKm(r.km),
+    'ด้าน': r.side,
+    'บริเวณโดยสังเขป': r.location,
+    'จำนวนรายการวัสดุเสียหาย': (r.items || []).length,
+    'ราคาประเมินรวม': r.totalPrice,
+    'ประเภทรถ': r.vehicleType,
+    'ยี่ห้อรถ': r.vehicleBrand,
+    'ทะเบียนรถ': (r.vehicleType === 'รถพ่วง' && r.trailerPlate) ? `หัว ${r.plate} / หาง ${r.trailerPlate}` : r.plate,
+    'ผู้ขับขี่/ผู้ละเมิด': r.driverName,
+    'อายุ': r.driverAge,
+    'เบอร์โทร': r.driverPhone,
+    'คู่กรณีร่วม': (r.otherPartiesList || []).map(p =>
+      `${p.driverName || 'ไม่ทราบชื่อ'} (${p.vehicleType || '-'} ${p.vehicleBrand || ''} ${p.plate || '-'}${p.trailerPlate ? ' / หาง ' + p.trailerPlate : ''})`
+    ).join('; '),
+    'การชดใช้': r.compensationStatus,
+    'การจัดซ่อม': r.repairStatus,
+    'ยุติเรื่อง': r.closedDate,
+    'เลขที่หนังสืออ้างอิง': r.referenceNo,
+    'หมายเหตุ': r.note,
+    'ผู้บันทึก': r.recordedBy,
+  }));
+
+  // ชีต 2: รายการทรัพย์สินเสียหาย แยกแถว 1 แถว/1 รายการ — ราคาต่อหน่วยได้จาก fuzzy match กับราคากลางสด ณ ตอน export (ไม่เก็บถาวร กันราคาค้าง)
+  const itemsData = [];
+  rows.forEach(r => {
+    (r.items || []).forEach(item => {
+      const match = findMaterialPriceMatch(item.name);
+      const qtyNum = Number(item.qty) || 0;
+      const unitPrice = match ? match.price : (item.price != null ? item.price : null);
+      const lineTotal = unitPrice != null ? qtyNum * unitPrice : null;
+      itemsData.push({
+        'ที่ (อ้างอิงเคส)': seqMap[r.id],
+        'วันที่เกิดเหตุ': r.dateIncident,
+        'ทล.': r.highway,
+        'ตอน': r.section,
+        'กม.': formatKm(r.km),
+        'รายการ': item.name,
+        'จำนวน': item.qty,
+        'หน่วย': item.unit,
+        'ราคาต่อหน่วย': unitPrice,
+        'เป็นเงิน': lineTotal,
+        'จับคู่ราคากลางจาก': match ? match.matchedName : (item.price != null ? '(ราคาที่กรอกไว้เดิมในเคส)' : '- ไม่พบราคากลางที่ตรงพอ -'),
+        'ความมั่นใจการจับคู่ (%)': match ? Math.round(match.score * 100) : '',
+      });
+    });
+  });
+
+  const ws1 = window.XLSX.utils.json_to_sheet(summaryData);
+  const ws2 = window.XLSX.utils.json_to_sheet(itemsData);
+  const wb = window.XLSX.utils.book_new();
+  window.XLSX.utils.book_append_sheet(wb, ws1, 'สรุปเคส');
+  window.XLSX.utils.book_append_sheet(wb, ws2, 'รายการทรัพย์สินเสียหาย');
+  const fname = 'ฐานข้อมูล_อบ_' + new Date().toISOString().slice(0,10) + '.xlsx';
+  window.XLSX.writeFile(wb, fname);
+  showToast('ส่งออกไฟล์ Excel แล้ว (2 ชีต)');
+}
+
+/* ============ reset all ============ */
+/* ============ routes reference view ============ */
+function fmtNum(n){
+  if (n === null || n === undefined) return '-';
+  return n.toLocaleString('th-TH', {maximumFractionDigits: 3});
+}
+function renderRoutesTable(){
+  const tbody = document.getElementById('routesTableBody');
+  if (!tbody) return;
+  const owner = isOwner();
+  const rows = ROUTES.slice().sort((a,b) => Number(a.highway) - Number(b.highway));
+  tbody.innerHTML = rows.length ? rows.map((r, i) => `
+    <tr data-idx="${i}"${owner ? ' style="cursor:pointer"' : ''}>
+      <td class="mono" style="text-align:center">${escapeHtml(r.highway)}</td>
+      <td class="mono" style="text-align:center">${escapeHtml(r.controlNo || '-')}</td>
+      <td style="text-align:center">${escapeHtml(r.section || '-')}</td>
+      <td class="mono" style="text-align:center">${kmRangesHtml(r)}</td>
+      <td class="mono" style="text-align:center">${fmtNum(r.distanceActual)}</td>
+      <td class="mono" style="text-align:center">${fmtNum(r.distance2Lane)}</td>
+      <td class="mono" style="text-align:center">${fmtNum(r.asphalt)}</td>
+      <td class="mono" style="text-align:center">${fmtNum(r.concrete)}</td>
+      <td class="mono" style="text-align:center">${fmtNum(r.workQty)}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="9" class="hint" style="text-align:center;padding:20px">ยังไม่มีสายทางในรายชื่อ</td></tr>`;
+
+  if (owner) {
+    tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const idx = Number(tr.dataset.idx);
+        openRouteEditModal(rows[idx]);
+      });
+    });
+  }
+  const addBtn = document.getElementById('btnAddRoute');
+  if (addBtn) {
+    addBtn.style.display = owner ? '' : 'none';
+    addBtn.onclick = () => openRouteEditModal(null);
+  }
+  updateRoutesUpdatedHint();
+}
+// แยกช่วง กม. หลายช่วงที่คั่นด้วยจุลภาค เช่น "0+000 - 1+308, 2+346 - 3+292" กลับเป็น [[0,1308],[2346,3292]]
+function parseKmRangesText(text){
+  if (!text || !text.trim()) return [];
+  // รองรับขีดหลายแบบ (en-dash –, em-dash —, minus sign −) เผื่อพิมพ์ผ่านคีย์บอร์ด/auto-correct ที่แปลงขีดสั้นให้เอง
+  const normalized = text.replace(/[–—−]/g, '-');
+  return normalized.split(',').map(part => {
+    const seg = part.split('-').map(s => s.trim());
+    if (seg.length !== 2) return null;
+    const from = parseKm(seg[0]);
+    const to = parseKm(seg[1]);
+    return (from !== null && to !== null) ? [from, to] : null;
+  }).filter(Boolean);
+}
+// โมดัลเพิ่ม/แก้ไขสายทาง 1 สาย — ส่ง route เป็น null เพื่อเปิดในโหมด "เพิ่มสายทางใหม่", ส่ง object เพื่อแก้ไขของเดิม (เฉพาะเจ้าของระบบ)
+function openRouteEditModal(route){
+  const root = document.getElementById('modalRoot');
+  const isNew = !route;
+  const r = route || { highway:'', controlNo:'', section:'', kmRanges:[], distanceActual:null, distance2Lane:null, asphalt:null, concrete:null, workQty:null };
+  root.innerHTML = `
+    <div class="modal-backdrop"><div class="modal modal-lg">
+      <div class="modal-head"><h3>${isNew ? 'เพิ่มสายทาง' : 'แก้ไขสายทาง ทล.' + escapeHtml(r.highway)}</h3><button class="modal-close" id="routeEditClose" type="button">×</button></div>
+      <div class="grid grid-3" style="margin-bottom:14px">
+        <div class="field"><label>ทางหลวงหมายเลข</label><input type="text" id="re_highway" value="${escapeHtml(r.highway)}" placeholder="เช่น 3145" ${isNew ? '' : 'disabled'}></div>
+        <div class="field"><label>ควบคุม</label><input type="text" id="re_controlNo" value="${escapeHtml(r.controlNo||'')}"></div>
+        <div class="field"><label>ตอน</label><input type="text" id="re_section" value="${escapeHtml(r.section||'')}"></div>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>ตย. เช่น 0+000 - 10+000 หรือ 0+000 - 1+308, 2+346 - 3+292)</label>
+        <input type="text" id="re_kmRanges" value="${escapeHtml(kmRangesText(r))}">
+      </div>
+      <div class="grid grid-2" style="margin-bottom:14px">
+        <div class="field"><label>ระยะทางจริง (กม.)</label><input type="text" id="re_distanceActual" value="${r.distanceActual ?? ''}"></div>
+        <div class="field"><label>ต่อ 2 ช่อง (กม.)</label><input type="text" id="re_distance2Lane" value="${r.distance2Lane ?? ''}"></div>
+      </div>
+      <div class="grid grid-3">
+        <div class="field"><label>แอสฟัลท์ (กม.)</label><input type="text" id="re_asphalt" value="${r.asphalt ?? ''}"></div>
+        <div class="field"><label>คอนกรีต (กม.)</label><input type="text" id="re_concrete" value="${r.concrete ?? ''}"></div>
+        <div class="field"><label>ปริมาณงาน (หน่วย)</label><input type="text" id="re_workQty" value="${r.workQty ?? ''}"></div>
+      </div>
+      <div class="actions" style="margin-top:18px;justify-content:${isNew ? 'flex-end' : 'space-between'}">
+        ${isNew ? '' : '<button class="btn btn-danger" id="routeEditDelete">ลบข้อมูล</button>'}
+        <span style="display:flex;gap:8px">
+          <button class="btn btn-outline" id="routeEditCancel">ปิด</button>
+          <button class="btn btn-primary" id="routeEditSave">บันทึก</button>
+        </span>
+      </div>
+    </div></div>`;
+  const close = () => { root.innerHTML = ''; };
+  document.getElementById('routeEditClose').onclick = close;
+  document.getElementById('routeEditCancel').onclick = close;
+  if (!isNew) {
+    document.getElementById('routeEditDelete').onclick = () => confirmDeleteRoute(r.highway, r.section);
+  }
+  document.getElementById('routeEditSave').onclick = async () => {
+    const highway = document.getElementById('re_highway').value.trim();
+    if (!highway) { showToast('กรอกหมายเลขทางหลวงก่อน'); return; }
+    if (isNew && ROUTES.some(x => String(x.highway) === String(highway))) { showToast('มีสายทางนี้อยู่แล้วในรายชื่อ'); return; }
+    const numOrNull = (id) => { const raw = document.getElementById(id).value.trim(); return raw === '' ? null : parseFloat(raw.replace(/,/g,'')); };
+    const saveBtn = document.getElementById('routeEditSave');
+    busyButton(saveBtn, 'กำลังบันทึก...');
+    const updatedAt = new Date().toISOString().slice(0,10);
+    const payload = {
+      highway,
+      controlNo: document.getElementById('re_controlNo').value.trim(),
+      section: document.getElementById('re_section').value.trim(),
+      kmRanges: parseKmRangesText(document.getElementById('re_kmRanges').value),
+      distanceActual: numOrNull('re_distanceActual'),
+      distance2Lane: numOrNull('re_distance2Lane'),
+      asphalt: numOrNull('re_asphalt'),
+      concrete: numOrNull('re_concrete'),
+      workQty: numOrNull('re_workQty'),
+      updatedAt
+    };
+    let ok;
+    if (isNew) {
+      ok = await apiAddRoute(payload);
+      if (ok) { ROUTES.push(payload); recomputeRouteHighways(); }
+    } else {
+      const backup = Object.assign({}, r);
+      Object.assign(r, payload);
+      ok = await apiUpdateRoute(r);
+      if (!ok) Object.assign(r, backup); // ย้อนกลับค่าเดิมถ้าบันทึกไม่สำเร็จ กันหน้าเว็บโชว์ข้อมูลผิดจากของจริงใน Sheet
+    }
+    refreshHighwayOptions();
+    if (!ok) { doneButton(saveBtn, (isNew ? 'เพิ่มไม่สำเร็จ' : 'บันทึกไม่สำเร็จ')); return; }
+    await doneButton(saveBtn, '✓ ' + (isNew ? 'เพิ่มแล้ว' : 'บันทึกแล้ว'));
+    showToast((isNew ? 'เพิ่ม' : 'บันทึก') + 'สายทาง ทล.' + highway + ' แล้ว');
+    close();
+    renderRoutesTable();
+    renderDashboard();
+  };
+}
+
+function updateRoutesUpdatedHint(){
+  const el = document.getElementById('routesUpdatedHint');
+  if (!el) return;
+  const dates = ROUTES.map(r => r.updatedAt).filter(Boolean).sort();
+  const latest = dates.length ? dates[dates.length-1] : '';
+  el.textContent = latest ? ('อัปเดตล่าสุด ' + formatThaiDate(latest)) : 'ยังไม่มีการแก้ไขข้อมูล';
+}
+
+function confirmDeleteRoute(highway, section){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-head"><h3>ลบสายทาง ทล.${escapeHtml(highway)}?</h3><button class="modal-close" id="delRouteClose" type="button">×</button></div>
+        <p>สายทางจะถูกลบออกจากรายชื่อสายทางที่หมวดฯ ดูแล<br>ไม่กระทบข้อมูลรายการอุบัติเหตุที่เคยบันทึกไปแล้ว</p>
+        <div class="actions">
+          <button class="btn btn-outline" id="delRouteCancel">ยกเลิก</button>
+          <button class="btn btn-danger" id="delRouteOk">ลบสายทางนี้</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('delRouteClose').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('delRouteCancel').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('delRouteOk').onclick = async () => {
+    const btn = document.getElementById('delRouteOk');
+    busyButton(btn, 'กำลังลบ...');
+    const backupRoutes = ROUTES.slice();
+    ROUTES = ROUTES.filter(r => r.highway !== highway);
+    recomputeRouteHighways();
+    const ok = await apiDeleteRoute(highway);
+    if (!ok) { ROUTES = backupRoutes; recomputeRouteHighways(); doneButton(btn, 'ลบไม่สำเร็จ'); return; }
+    refreshHighwayOptions();
+    await doneButton(btn, '✓ ลบแล้ว');
+    root.innerHTML = '';
+    showToast('ลบสายทาง ทล.' + highway + ' แล้ว');
+    renderRoutesTable();
+    renderDashboard();
+  };
+}
+
+// ===== หมวดหมู่รายการทรัพย์สิน (หน้า "ข้อมูลทรัพย์สิน") =====
+const ASSET_CATEGORIES = ['electric', 'guardrail', 'safety', 'road'];
+const ASSET_CATEGORY_LABELS = {
+  electric: 'งานไฟฟ้า',
+  guardrail: 'งานราวกันอันตราย',
+  safety: 'งานอำนวยความปลอดภัย',
+  road: 'งานถนน'
+};
+
+
+const ASSET_ROAD_KEYWORDS = ['สีตีเส้น','สีเทอร์โมพลาสติก','สีน้ำพลาสติก','สีน้ำมัน','สีสะท้อนแสง','สีพ่นอุตสาหกรรม','สีกันสนิม','สีโคลพลาสติก','คอนกรีต','แผ่นทางเท้า','ทินเนอร์','น้ำมันสน','ลูกแก้ว','แคสตาลิส','บ๊อกไซด์','น็อตชุบซิงค์','หลัก กม','กาวอีพ๊อกซี่'];
+const ASSET_ELECTRIC_KEYWORDS = ['ไฟฟ้า','โคม','สายไฟ','ฟิวส์','เบรกเกอร์','บาลาสต์','โซเดียม','แมกเนติก','ทรานฟอร์ม','คาปาซิเตอร์','แท่งกราวด์','โฟโต้เซลล์','กิ่งเดี่ยว','กิ่งคู่','ขาแล็ค','เทปพันสาย'];
+function classifyAssetCategoryFallback(name){
+  const n = name || '';
+  if (n.includes('การ์ดเรล') || n.includes('กร์ดเรล')) return 'guardrail';
+  if (ASSET_ROAD_KEYWORDS.some(k => n.includes(k))) return 'road';
+  if (ASSET_ELECTRIC_KEYWORDS.some(k => n.includes(k))) return 'electric';
+  return 'safety';
+}
+
+
+
+function naturalCompareTh(a, b){
+  const re = /(\d+(?:\.\d+)?)/g;
+  const pa = a.split(re);
+  const pb = b.split(re);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const sa = pa[i] || '';
+    const sb = pb[i] || '';
+    if (sa === sb) continue;
+    const isNumA = /^\d+(\.\d+)?$/.test(sa);
+    const isNumB = /^\d+(\.\d+)?$/.test(sb);
+    if (isNumA && isNumB) {
+      const na = parseFloat(sa), nb = parseFloat(sb);
+      if (na !== nb) return na - nb;
+      continue;
+    }
+    const c = sa.localeCompare(sb, 'th');
+    if (c !== 0) return c;
+  }
+  return 0;
+}
+
+
+function getAllAssetItems(){
+  const map = {};
+  
+  
+  Object.values(MATERIAL_LIBRARY).forEach(cat => {
+    cat.items.forEach(it => { map[it.name] = { name: it.name, unit: it.unit, price: it.price, frequent: true }; });
+    if (cat.linkedExtra) { const li = cat.linkedExtra.item; map[li.name] = { name: li.name, unit: li.unit, price: li.price, frequent: true }; }
+  });
+  
+  Object.keys(materialPriceMap).forEach(name => {
+    if (!map[name]) {
+      map[name] = { name, unit: materialPriceMap[name].unit, price: materialPriceMap[name].price, frequent: false };
+    }
+  });
+  return Object.values(map);
+}
+
+function renderAssetCategoryChips(countsByCategory, total){
+  const wrap = document.getElementById('assetCategoryChips');
+  if (!wrap) return;
+  const chips = [{ key: 'all', label: 'ทั้งหมด', count: total }]
+    .concat(ASSET_CATEGORIES.map(key => ({ key, label: ASSET_CATEGORY_LABELS[key], count: countsByCategory[key] || 0 })));
+  wrap.innerHTML = chips.map(c => `
+    <button type="button" class="asset-cat-chip${assetsCategoryFilter === c.key ? ' active' : ''}" data-cat="${c.key}">
+      ${escapeHtml(c.label)} (${c.count})
+    </button>
+  `).join('');
+  wrap.querySelectorAll('.asset-cat-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      assetsCategoryFilter = btn.dataset.cat;
+      renderAssetsPanel();
+    });
+  });
+}
+
+function renderAssetsPanel(){
+  const tbody = document.getElementById('assetsTableBody');
+  if (!tbody) return;
+  const q = (document.getElementById('assetsSearchBox').value || '').trim().toLowerCase();
+
+  // รวมรายการทั้งหมด (ยังไม่กรองหมวด) ไว้นับจำนวนต่อหมวดสำหรับโชว์บนชิป
+  const allVisible = getAllAssetItems()
+    .map(it => {
+      const live = materialPriceMap[it.name];
+      const category = (live && live.category) ? live.category : classifyAssetCategoryFallback(it.name);
+      
+      const frequent = (live && live.frequent !== null && live.frequent !== undefined) ? live.frequent : !!it.frequent;
+      return {
+        name: it.name,
+        unit: live ? live.unit : it.unit,
+        price: live ? live.price : it.price,
+        updatedAt: live ? live.updatedAt : '',
+        key: live ? live.key : '',
+        hidden: live ? !!live.hidden : false,
+        frequent,
+        category
+      };
+    })
+    .filter(it => !it.hidden)
+    .filter(it => !q || it.name.toLowerCase().includes(q));
+
+  const countsByCategory = {};
+  allVisible.forEach(it => { countsByCategory[it.category] = (countsByCategory[it.category] || 0) + 1; });
+  renderAssetCategoryChips(countsByCategory, allVisible.length);
+
+  const filtered = assetsCategoryFilter === 'all' ? allVisible : allVisible.filter(it => it.category === assetsCategoryFilter);
+
+  
+  const catOrder = assetsCategoryFilter === 'all' ? ASSET_CATEGORIES : [assetsCategoryFilter];
+  const items = [];
+  catOrder.forEach(cat => {
+    const group = filtered.filter(it => it.category === cat).sort((a,b) => naturalCompareTh(a.name, b.name));
+    if (group.length) items.push({ header: assetsCategoryFilter === 'all' ? cat : null, group });
+  });
+
+  const owner = isOwner();
+  let idx = 0;
+  const rowsHtml = [];
+  items.forEach(({ header, group }) => {
+    if (header) rowsHtml.push(`<tr class="asset-cat-header"><td colspan="3">${escapeHtml(ASSET_CATEGORY_LABELS[header])} (${group.length})</td></tr>`);
+    group.forEach(it => {
+      rowsHtml.push(`
+        <tr data-idx="${idx}" class="${it.frequent ? 'asset-frequent' : ''}"${owner ? ' style="cursor:pointer"' : ''}>
+          <td>${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★ ใช้บ่อย</span>' : ''}</td>
+          <td class="mono" style="text-align:center">${escapeHtml(it.unit)}</td>
+          <td class="mono" style="text-align:center">${formatMoney(it.price)}</td>
+        </tr>
+      `);
+      idx++;
+    });
+  });
+  const flatItems = items.flatMap(g => g.group);
+
+  tbody.innerHTML = rowsHtml.length ? rowsHtml.join('') : `<tr><td colspan="3" class="hint" style="text-align:center;padding:20px">ไม่พบรายการที่ค้นหา</td></tr>`;
+
+  if (owner) {
+    tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const i = Number(tr.dataset.idx);
+        openAssetEditModal(flatItems[i]);
+      });
+    });
+  }
+  const addBtn = document.getElementById('btnAddAsset');
+  if (addBtn) {
+    addBtn.style.display = owner ? '' : 'none';
+    addBtn.onclick = () => openAssetEditModal(null);
+  }
+  updateAssetsUpdatedHint();
+}
+
+function openAssetEditModal(item){
+  const root = document.getElementById('modalRoot');
+  const isNew = !item;
+  const it = item || { name:'', unit:'', price:0, key:'', category:'', frequent:false };
+  const currentCategory = it.category || (isNew ? '' : classifyAssetCategoryFallback(it.name));
+  let frequentState = !!it.frequent; 
+  root.innerHTML = `
+    <div class="modal-backdrop"><div class="modal">
+      <div class="modal-head"><h3>${isNew ? 'เพิ่มรายการทรัพย์สิน' : 'แก้ไขรายการทรัพย์สิน'}</h3><button class="modal-close" id="assetEditClose" type="button">×</button></div>
+      <div class="field" style="margin-bottom:14px">
+        <label>หมวดหมู่</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="assetEditCategory" style="flex:1">
+            ${ASSET_CATEGORIES.map(c => `<option value="${c}"${currentCategory === c ? ' selected' : ''}>${escapeHtml(ASSET_CATEGORY_LABELS[c])}</option>`).join('')}
+          </select>
+          <button type="button" id="assetEditFrequentBtn" class="btn ${frequentState ? 'btn-primary' : 'btn-outline'}" style="flex-shrink:0;width:44px;height:40px;padding:0;font-size:20px;line-height:1;justify-content:center" title="${frequentState ? 'ติดดาวอยู่ (กดเพื่อยกเลิก)' : 'ไม่ได้ติดดาว (กดเพื่อติดดาว)'}">${frequentState ? '★' : '☆'}</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>ชื่อรายการ</label>
+        <input type="text" id="assetEditName" value="${escapeHtml(it.name)}" placeholder="เช่น ป้ายเตือนสามเหลี่ยม สะท้อนแสง">
+      </div>
+      <div class="grid grid-2" style="margin-bottom:6px">
+        <div class="field">
+          <label>ราคาต่อหน่วย (บาท)</label>
+          <input type="text" id="assetEditPrice" value="${isNew ? '' : formatThousands(String(it.price))}">
+        </div>
+        <div class="field">
+          <label>หน่วย</label>
+          <input type="text" id="assetEditUnit" value="${escapeHtml(it.unit)}" placeholder="เช่น แผ่น, ต้น, ชุด">
+        </div>
+      </div>
+      <div class="actions" style="margin-top:16px;justify-content:${isNew ? 'flex-end' : 'space-between'}">
+        ${isNew ? '' : '<button class="btn btn-danger" id="assetEditDelete">ลบรายการ</button>'}
+        <span style="display:flex;gap:8px">
+          <button class="btn btn-outline" id="assetEditCancel">ปิด</button>
+          <button class="btn btn-primary" id="assetEditSave">บันทึก</button>
+        </span>
+      </div>
+    </div></div>`;
+  const close = () => { root.innerHTML = ''; };
+  document.getElementById('assetEditClose').onclick = close;
+  document.getElementById('assetEditCancel').onclick = close;
+  const frequentBtn = document.getElementById('assetEditFrequentBtn');
+  frequentBtn.onclick = () => {
+    frequentState = !frequentState;
+    frequentBtn.className = 'btn ' + (frequentState ? 'btn-primary' : 'btn-outline');
+    frequentBtn.style.justifyContent = 'center';
+    frequentBtn.textContent = frequentState ? '★' : '☆';
+    frequentBtn.title = frequentState ? 'ติดดาวอยู่ (กดเพื่อยกเลิก)' : 'ไม่ได้ติดดาว (กดเพื่อติดดาว)';
+  };
+  if (!isNew) {
+    document.getElementById('assetEditDelete').onclick = () => confirmDeleteAsset(it, close);
+  }
+  const priceInput = document.getElementById('assetEditPrice');
+  priceInput.addEventListener('input', () => {
+    const cursorFromEnd = priceInput.value.length - priceInput.selectionStart;
+    priceInput.value = formatThousands(priceInput.value);
+    const newPos = priceInput.value.length - cursorFromEnd;
+    priceInput.setSelectionRange(newPos, newPos);
+  });
+  document.getElementById('assetEditSave').onclick = () => {
+    
+    
+    const name = document.getElementById('assetEditName').value.trim();
+    const category = document.getElementById('assetEditCategory').value;
+    const unit = document.getElementById('assetEditUnit').value.trim();
+    const price = parseFloat(priceInput.value.replace(/,/g,'')) || 0;
+    if (!name || !unit) { showToast('กรอกชื่อและหน่วยให้ครบ'); return; }
+    if (isNew && getAllAssetItems().some(x => x.name === name) && !(materialPriceMap[name] && materialPriceMap[name].hidden)) { showToast('มีรายการชื่อนี้อยู่แล้วในระบบ'); return; }
+    ensureOwnerVerified(async () => {
+    
+    
+    const saveBtn = document.getElementById('assetEditSave');
+    const btnUsable = saveBtn && saveBtn.isConnected;
+    if (btnUsable) busyButton(saveBtn, 'กำลังบันทึก...');
+    const updatedAt = new Date().toISOString().slice(0,10);
+    const nameChanged = !isNew && name !== it.name;
+    
+    
+    if (nameChanged) {
+      await apiHideMaterial(it);
+      const newKey = 'mat-' + Date.now().toString(36);
+      if (!(await apiSaveMaterial({ key: newKey, name, unit, price, category, updatedAt, frequent: frequentState, hidden: false }))) return;
+      materialPriceMap[name] = { key: newKey, unit, price, category, updatedAt, frequent: frequentState };
+    } else if (it.key) {
+      if (!(await apiSaveMaterial({ key: it.key, name, unit, price, category, updatedAt, frequent: frequentState, hidden: false }))) return;
+      materialPriceMap[name] = { ...(materialPriceMap[name] || {}), key: it.key, unit, price, category, updatedAt, frequent: frequentState };
+    } else {
+      const key = 'mat-' + Date.now().toString(36);
+      if (!(await apiSaveMaterial({ key, name, unit, price, category, updatedAt, frequent: frequentState, hidden: false }))) return;
+      materialPriceMap[name] = { key, unit, price, category, updatedAt, frequent: frequentState };
+    }
+    if (btnUsable) await doneButton(saveBtn, '✓ ' + (isNew ? 'เพิ่มแล้ว' : 'บันทึกแล้ว'));
+    showToast((isNew ? 'เพิ่มรายการ "' : 'บันทึกรายการ "') + name + '" แล้ว');
+    close();
+    renderAssetsPanel();
+    });
+  };
+
+}
+
+function confirmDeleteAsset(item, closeEditModal){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-head"><h3>ลบรายการ<br>"${escapeHtml(item.name)}"?</h3><button class="modal-close" id="delAssetClose" type="button">×</button></div>
+        <p>รายการนี้จะหายไปจากหน้า "ข้อมูลทรัพย์สิน" ถาวร<br>ไม่กระทบข้อมูลรายการอุบัติเหตุที่เคยบันทึกไปแล้ว</p>
+        <div class="actions">
+          <button class="btn btn-outline" id="delAssetCancel">ยกเลิก</button>
+          <button class="btn btn-danger" id="delAssetOk">ลบรายการนี้</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('delAssetClose').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('delAssetCancel').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('delAssetOk').onclick = () => ensureOwnerVerified(async () => {
+    const okBtn = document.getElementById('delAssetOk');
+    const btnUsable = okBtn && okBtn.isConnected;
+    if (btnUsable) busyButton(okBtn, 'กำลังลบ...');
+    await apiHideMaterial(item);
+    if (btnUsable) await doneButton(okBtn, '✓ ลบแล้ว');
+    root.innerHTML = '';
+    closeEditModal();
+    showToast('ลบรายการ "' + item.name + '" แล้ว');
+    renderAssetsPanel();
+  });
+}
+// ซ่อนรายการทรัพย์สินออกจากหน้า "ข้อมูลทรัพย์สิน" ถาวร โดยไม่แตะรายการเริ่มต้นของระบบ (MATERIAL_LIBRARY) — ใช้ flag hidden เก็บลง Sheet
+async function apiHideMaterial(item){
+  const updatedAt = new Date().toISOString().slice(0,10);
+  const key = item.key || ('mat-' + Date.now().toString(36));
+  if (await apiSaveMaterial({ key, name: item.name, unit: item.unit, price: item.price, updatedAt, hidden: true })) {
+    materialPriceMap[item.name] = { key, unit: item.unit, price: item.price, updatedAt, hidden: true };
+  }
+}
+function updateAssetsUpdatedHint(){
+  const el = document.getElementById('assetsUpdatedHint');
+  if (!el) return;
+  const dates = Object.values(materialPriceMap).map(m => m.updatedAt).filter(Boolean).sort();
+  const latest = dates.length ? dates[dates.length-1] : '';
+  el.textContent = latest ? ('อัปเดตล่าสุด ' + formatThaiDate(latest)) : 'ยังไม่มีการแก้ไขราคา';
+}
+
+ 
+
+async function loadRoutesData(){
+  try {
+    const docs = await FBL.watch('routes', onRemoteChange);
+    applyRouteDocs(docs);
+  } catch (e) {
+    console.error('load routes failed', e);
+  }
+}
+
+async function apiUpdateRoute(route){
+  try { await FBL.saveRoute(route); return true; }
+  catch (e) { console.error('update route failed', e); showToast('บันทึกข้อมูลสายทางไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+
+async function apiAddRoute(route){
+  try { await FBL.saveRoute(route); return true; }
+  catch (e) { console.error('add route failed', e); showToast('เพิ่มสายทางไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+
+async function apiDeleteRoute(highway){
+  try { await FBL.deleteRoute(highway); return true; }
+  catch (e) { console.error('delete route failed', e); showToast('ลบสายทางไม่สำเร็จ: ' + FBL.errorText(e)); return false; }
+}
+
+async function init(){
+  initTabs();
+  initPasswordToggles();
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.row-menu-wrap')) closeAllRowMenus();
+    if (!e.target.closest('.year-dropdown-wrap')) {
+      const menu = document.getElementById('yearDropdownMenu');
+      if (menu) menu.classList.remove('open');
+    }
+    
+    const hwBtn = e.target.closest('#blackspotHwFilter button[data-hw]');
+    if (hwBtn) {
+      const scrollY = window.scrollY;
+      blackspotHwSelected = hwBtn.dataset.hw;
+      renderDashboard();
+      window.scrollTo(window.scrollX, scrollY);
+    }
+  });
+  populateFiscalYearSelect();
+  clearForm();
+
+  document.getElementById('assetsSearchBox').addEventListener('input', () => {
+    const wrap = document.getElementById('assetsSearchWrap');
+    wrap.classList.toggle('has-text', !!document.getElementById('assetsSearchBox').value);
+    renderAssetsPanel();
+  });
+  document.getElementById('assetsSearchClear').addEventListener('click', () => {
+    document.getElementById('assetsSearchBox').value = '';
+    document.getElementById('assetsSearchWrap').classList.remove('has-text');
+    renderAssetsPanel();
+    document.getElementById('assetsSearchBox').focus();
+  });
+
+  document.getElementById('f_costMethod').addEventListener('change', updateCostMethodVisibility);
+  attachThousandsFormatting(document.getElementById('f_laborCost'), updateItemsSum);
+  attachThousandsFormatting(document.getElementById('f_machineCost'), updateItemsSum);
+  document.getElementById('btnAddItem').addEventListener('click', () => addItemRow());
+  document.getElementById('btnClearForm').addEventListener('click', clearForm);
+  document.getElementById('f_vehicleType').addEventListener('change', updateTrailerFieldVisibility);
+  document.getElementById('f_hasInsurance').addEventListener('change', updateInsuranceFieldVisibility);
+  document.getElementById('btnAddOtherParty').addEventListener('click', () => addOtherPartyBlock());
+  document.getElementById('btnSave').addEventListener('click', saveForm);
+  document.getElementById('btnChangeWho').addEventListener('click', () => {
+    if (recorderName) { logoutRecorder(); } else { openRecorderModal(); }
+  });
+  document.getElementById('searchBox').addEventListener('input', () => {
+    document.getElementById('searchWrap').classList.toggle('has-text', !!document.getElementById('searchBox').value);
+    renderTable();
+  });
+  document.getElementById('searchClear').addEventListener('click', () => {
+    document.getElementById('searchBox').value = '';
+    document.getElementById('searchWrap').classList.remove('has-text');
+    renderTable();
+    document.getElementById('searchBox').focus();
+  });
+  document.getElementById('filterYear').addEventListener('change', renderTable);
+  document.getElementById('filterHighway').addEventListener('change', renderTable);
+  document.getElementById('filterStatus').addEventListener('change', renderTable);
+  document.getElementById('btnExport').addEventListener('click', exportExcel);
+  document.getElementById('btnImport').addEventListener('click', runImport);
+  document.getElementById('btnOpenTrash').addEventListener('click', openTrashModal);
+  populateMaterialCategorySelect();
+  document.getElementById('btnApplyMaterialCategory').addEventListener('click', applyMaterialCategory);
+  document.getElementById('btnItemsInfoToggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const panel = document.getElementById('itemsInfoPanel');
+    const wasOpen = panel.classList.contains('open');
+    closeAllRowMenus();
+    if (!wasOpen) panel.classList.add('open');
+  });
+
+  renderTable();
+  renderRoutesTable();
+  renderDashboard();
+
+  // ต้องล็อกอินก่อน: แสดงหน้าล็อกอิน แล้วค่อยโหลดข้อมูลเมื่อยืนยันตัวตนสำเร็จ (ดู startAuth / startApp)
+  startAuth();
+}
+init();
+
+</script>
+</body>
+</html>
