@@ -295,8 +295,8 @@ table.data td.hw-cell{white-space:normal;min-width:80px}
 table.data td.plate-cell{white-space:normal}
 table.data td.plate-cell .plate-entry{margin-bottom:4px}
 table.data td.plate-cell .plate-entry:last-child{margin-bottom:0}
-table.data td.plate-cell .plate-num{font-weight:600}
-table.data td.plate-cell .plate-province{font-family:'Kanit',sans-serif;font-weight:400;font-size:11.5px;color:var(--ink-soft)}
+table.data td.plate-cell .plate-num{font-weight:400}
+table.data td.plate-cell .plate-province{font-family:'Sarabun',sans-serif;font-weight:400;font-size:11.5px;color:var(--ink-mute);line-height:1.3;margin-top:1px}
 table.data td.violator-cell{white-space:nowrap}
 table.data tr:nth-child(even) td{background:#fafbfa}
 table.data tr:hover td{background:#f2f5f8}
@@ -684,17 +684,11 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .follow-foot a{color:var(--amber);font-weight:600;cursor:pointer}
 #dashSecondRow.single{grid-template-columns:1fr}
 /* ===== ฟอร์มบันทึก: สารบัญด้านซ้าย + แถบบันทึกลอยด้านล่าง ===== */
-.form-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:16px;align-items:start}
-.form-index{position:sticky;top:12px;padding:12px 10px}
-.form-index .fi-title{font-size:12px;color:var(--ink-mute);margin:0 8px 6px}
-.form-index a{display:block;padding:8px 10px;border-radius:9px;color:var(--ink-soft);font-size:14px;cursor:pointer;text-decoration:none}
-.form-index a:hover{background:var(--paper)}
-.form-index a.active{background:var(--amber-glow);color:var(--amber);font-weight:600}
+.form-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
 .form-main{min-width:0}
 .form-savebar{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;justify-content:flex-end;align-items:center;
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:12px 16px;margin-top:14px}
 .form-main .card{scroll-margin-top:14px}
-@media(max-width:900px){.form-layout{grid-template-columns:1fr}.form-index{display:none}}
 /* ===== ตารางสายทาง: แถวรวม + ปุ่มแก้ไข ===== */
 .route-transferred td{color:var(--ink-mute);background:#fafaf8}
 .route-badge{display:inline-block;margin-left:6px;padding:0 8px;border-radius:99px;background:var(--paper-2);color:var(--ink-soft);font-size:11.5px;font-weight:600;font-family:'Sarabun',sans-serif}
@@ -745,9 +739,13 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .em-kchip b:hover{background:var(--rust-bg);color:var(--rust)}
 .em-kplus{border:1px dashed #b8c0c9;background:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:14px;color:var(--ink-soft);cursor:pointer}
 .em-kadd{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+#re_kmChips + .em-kadd{margin-top:10px}
+.em-kadd:first-child{margin-top:0}
+.em-kaddbtn{white-space:nowrap}
 .em-kadd input{width:150px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px}
 .em-strips{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
-.em-strip{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;cursor:text}
+.em-strip{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;cursor:text}
+.em-strip .em-lb{margin-bottom:0;line-height:1.3;min-height:2.6em}
 .em-strip input{border:0;background:transparent;font-family:'Kanit',sans-serif;font-size:18px;font-weight:600;color:var(--ink);padding:0;width:100%;outline:none;font-variant-numeric:tabular-nums}
 .em-seg{display:inline-flex;background:var(--paper-2);border-radius:10px;padding:3px;flex-wrap:wrap}
 .em-seg button{border:0;background:transparent;border-radius:8px;padding:7px 14px;font:inherit;font-size:14px;color:#4d5a66;cursor:pointer}
@@ -765,6 +763,8 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 #dataTable th,#dataTable td{text-align:left}
 #dataTable td.case-cell b{font-weight:600}
 .c-sub{display:block;font-size:11.5px;color:var(--ink-mute);line-height:1.3;margin-top:1px}
+/* หน้าบันทึกรายการใหม่: ใช้ฟอนต์ Sarabun ทั้งหน้า ยกเว้นหัวเรื่อง 1-4 (.section-title) และแถบปุ่ม ล้างฟอร์ม/บันทึกข้อมูล (.form-savebar) ที่คงเดิม */
+#view-form :not(.section-title):not(.section-title *):not(.form-savebar):not(.form-savebar *){font-family:'Sarabun',sans-serif}
 .quick-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px}
 .export-group{margin-left:auto;display:flex;gap:8px;position:relative}
 .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(10,37,64,.28);padding:6px;z-index:40;min-width:290px;max-width:360px}
@@ -872,13 +872,6 @@ tr.route-editable:hover td{background:var(--amber-glow)}
   
   <div class="view" id="view-form">
    <div class="form-layout">
-    <nav class="card form-index" id="formIndex">
-      <div class="fi-title">ข้ามไปที่</div>
-      <a data-sec="fsec1">1 · ข้อมูลอุบัติเหตุ</a>
-      <a data-sec="fsec2">2 · รถ / คู่กรณี</a>
-      <a data-sec="fsec3">3 · ทรัพย์สินเสียหาย</a>
-      <a data-sec="fsec4">4 · ผลการติดตาม</a>
-    </nav>
     <div class="form-main">
     <div class="edit-mode-banner" id="editModeBanner">
       <div class="em-icon">✏️</div>
@@ -4439,11 +4432,11 @@ function openRouteEditModal(route, preset){
         <div class="em-sec"><span class="em-num">2</span> ช่วง กม.</div>
         <div class="em-field">
           <div class="em-kchips" id="re_kmChips"></div>
-          <div class="em-kadd" id="re_kmAddRow" style="display:none">
+          <div class="em-kadd" id="re_kmAddRow">
             <input type="text" id="re_kmFrom" placeholder="จาก กม. เช่น 0+000">
             <span>ถึง</span>
             <input type="text" id="re_kmTo" placeholder="ถึง กม. เช่น 10+000">
-            <button type="button" class="btn btn-primary btn-sm" id="re_kmAddOk">เพิ่ม</button>
+            <button type="button" class="btn btn-outline btn-sm em-kaddbtn" id="re_kmAddOk">+ เพิ่มช่วง กม.</button>
           </div>
         </div>
         <div class="em-sec"><span class="em-num">3</span> ระยะและปริมาณงาน</div>
@@ -4468,7 +4461,6 @@ function openRouteEditModal(route, preset){
             <div class="field"><label>วันที่โอน</label><input type="date" id="re_transferredDate" value="${escapeHtml(r.transferredDate || '')}"></div>
             <div class="field"><label>โอนให้ / หมายเหตุ</label><input type="text" id="re_transferNote" value="${escapeHtml(r.transferNote || '')}" placeholder="เช่น โอนให้หมวดทางหลวง… ตามคำสั่ง…"></div>
           </div>
-          <div class="em-hint">สายทางที่โอนแล้วจะไม่ปรากฏในรายการเลือกตอนบันทึกเคสใหม่ และไม่นับรวมในยอดระยะทางที่ดูแล แต่ <b>รายการอุบัติเหตุที่เคยเกิดยังอยู่ครบ</b> ทั้งในหน้ารายการ ภาพรวม และการส่งออก</div>
         </div>
       </div>
       <div class="cd-foot">
@@ -4483,16 +4475,10 @@ function openRouteEditModal(route, preset){
   document.getElementById('routeEditCancel').onclick = close;
   // ช่วง กม.: ชิปเพิ่ม/ลบทีละช่วง (ไม่ต้องพิมพ์คั่นจุลภาคเอง)
   const renderKm = () => {
-    document.getElementById('re_kmChips').innerHTML =
-      kmList.map((k, i) => `<span class="em-kchip">${escapeHtml(formatKm(k[0]) + ' - ' + formatKm(k[1]))}<b data-rm="${i}" title="ลบช่วงนี้">✕</b></span>`).join('') +
-      '<button type="button" class="em-kplus" id="re_kmPlus">+ เพิ่มช่วง กม.</button>';
-    document.getElementById('re_kmPlus').onclick = () => {
-      const row = document.getElementById('re_kmAddRow');
-      row.style.display = '';
-      document.getElementById('re_kmFrom').focus();
-    };
-  };
-  // คืนค่า true ถ้าเพิ่มช่วงจากช่องกรอกได้ (หรือช่องว่างทั้งคู่), false ถ้ากรอกไม่ถูกรูปแบบ
+    const box = document.getElementById('re_kmChips');
+    box.style.display = kmList.length ? '' : 'none';
+    box.innerHTML = kmList.map((k, i) => `<span class="em-kchip">${escapeHtml(formatKm(k[0]) + ' - ' + formatKm(k[1]))}<b data-rm="${i}" title="ลบช่วงนี้">✕</b></span>`).join('');
+  };  // คืนค่า true ถ้าเพิ่มช่วงจากช่องกรอกได้ (หรือช่องว่างทั้งคู่), false ถ้ากรอกไม่ถูกรูปแบบ
   const commitKmInputs = (silent) => {
     const fromEl = document.getElementById('re_kmFrom'), toEl = document.getElementById('re_kmTo');
     const a = fromEl.value.trim(), b = toEl.value.trim();
@@ -4513,7 +4499,6 @@ function openRouteEditModal(route, preset){
   document.getElementById('re_kmAddOk').onclick = () => commitKmInputs(false);
   ['re_kmFrom', 're_kmTo'].forEach(id => document.getElementById(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitKmInputs(false); } }));
   renderKm();
-  if (isNew) document.getElementById('re_kmAddRow').style.display = '';
   // สถานะ: ปุ่มสลับ (ตัวจริงยังเป็น <select id="re_status"> ที่ซ่อนไว้ เพื่อให้ตรรกะเดิมทำงานเหมือนเดิม)
   const statusSel = document.getElementById('re_status');
   const syncSeg = () => document.querySelectorAll('#re_statusSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === statusSel.value));
@@ -5020,31 +5005,8 @@ function syncFiscalYearFromDate(){
   sel.value = String(fy);
 }
 
-// สารบัญด้านซ้ายของฟอร์ม: กดแล้วเลื่อนไปหมวดนั้น และไฮไลต์หมวดที่กำลังดูอยู่ตามการเลื่อนหน้า
-function initFormIndex(){
-  const nav = document.getElementById('formIndex');
-  if (!nav) return;
-  const links = [...nav.querySelectorAll('a[data-sec]')];
-  links.forEach(a => a.addEventListener('click', () => {
-    const target = document.getElementById(a.dataset.sec);
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }));
-  const spy = () => {
-    if (!document.getElementById('view-form').classList.contains('active')) return;
-    let current = links[0];
-    links.forEach(a => {
-      const t = document.getElementById(a.dataset.sec);
-      if (t && t.getBoundingClientRect().top <= 140) current = a;
-    });
-    links.forEach(a => a.classList.toggle('active', a === current));
-  };
-  window.addEventListener('scroll', spy, { passive: true });
-  spy();
-}
-
 async function init(){
   initModalScroll();
-  initFormIndex();
   document.getElementById('f_dateIncident').addEventListener('change', syncFiscalYearFromDate);
   initTabs();
   initPasswordToggles();
