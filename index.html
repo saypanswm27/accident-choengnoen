@@ -628,6 +628,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .backlog-row:hover{background:var(--paper)}
 .mini-track{height:8px;background:var(--paper-2);border-radius:9px;overflow:hidden}
 .mini-track i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#f6a35c,#e0620f)}
+.backlog-row .mini-track i{background:linear-gradient(90deg,#9db4cc,#5f7a96)}
 .spot-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
 .spot-table th{text-align:left;font-size:12px;color:var(--ink-mute);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
 .spot-table td{padding:8px;border-bottom:1px solid var(--line)}
@@ -1317,8 +1318,8 @@ function renderHighwayBarChart(hwRoutesSorted, byHw){
   }
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, canvas.parentElement.clientWidth || 400, 0);
-  gradient.addColorStop(0, '#f6a35c');
-  gradient.addColorStop(1, '#e0620f');
+  gradient.addColorStop(0, '#5b93bf');
+  gradient.addColorStop(1, '#1c4b73');
   const labels = hwRoutesSorted.map(r => `ทล.${r.highway} (${r.section})`);
   const data = hwRoutesSorted.map(r => byHw[r.highway] || 0);
   barChartInstance = new Chart(ctx, {
@@ -1379,8 +1380,8 @@ function renderTrendChart(years, totalByYear){
   }
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, canvas.parentElement.clientWidth || 400, 0);
-  gradient.addColorStop(0, '#f6a35c');
-  gradient.addColorStop(1, '#e0620f');
+  gradient.addColorStop(0, '#5cbfb1');
+  gradient.addColorStop(1, '#1f7a70');
   const labels = years.map(y => 'ปีงบ ' + y);
   const data = years.map(y => totalByYear[y] || 0);
   trendChartInstance = new Chart(ctx, {
