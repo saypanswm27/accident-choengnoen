@@ -257,6 +257,9 @@ h1,h2,h3,.display{font-family:'Kanit',sans-serif;font-weight:700}
 .seg-ctrl{display:inline-flex;background:var(--paper-2);border-radius:10px;padding:3px;flex-wrap:wrap}
 .seg-ctrl button{border:0;background:transparent;padding:6px 13px;border-radius:8px;font:inherit;font-size:13px;color:#4d5a66;cursor:pointer}
 .seg-ctrl button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+/* ปุ่มเลือกวิธีคิดค่าดำเนินการ: เรียงบน-ล่าง (ตัวเลือกละบรรทัด) */
+#costMethodSeg{display:flex;flex-direction:column;align-items:stretch;width:100%;max-width:300px;gap:2px}
+#costMethodSeg button{text-align:left;padding:8px 14px}
 .it-receipt{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:12px 16px}
 .it-receipt .ln{display:flex;align-items:baseline;gap:8px;font-size:14px;padding:3px 0}
 .it-receipt .ln i{flex:1;border-bottom:2px dotted #e4cfae;transform:translateY(-3px)}
@@ -709,6 +712,47 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .p-line{display:flex;align-items:center;gap:12px;min-width:0}
 .p-sub{display:block;font-size:12px;color:var(--ink-mute);line-height:1.3}
 .p-sub.on{color:var(--green)}
+/* ===== หน้าต่างแก้ไขทรัพย์สิน / สายทาง (แบบ 2: หัวขาว + ชิป + ราคาเด่น) ===== */
+.modal.edit-modal{padding:0;max-width:560px}
+.modal.em-route{max-width:660px}
+.em-head{padding:18px 26px 8px}
+.em-lbl{font-size:12.5px;color:var(--ink-mute)}
+.em-head h3{font-family:'Kanit',sans-serif;font-size:22px;margin:2px 0 0;color:var(--navy-900)}
+.edit-modal > .modal-body{padding:8px 20px 12px 26px;margin-right:0}
+.em-field{margin-bottom:14px}
+.em-lb{display:block;font-size:12.5px;color:var(--ink-soft);font-weight:600;margin-bottom:6px}
+.em-chips{display:flex;gap:8px;flex-wrap:wrap}
+.em-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;color:var(--ink-soft);cursor:pointer}
+.em-chip:hover{border-color:var(--navy-800)}
+.em-chip.on{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+.em-price{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.em-price-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.em-price-big{font-family:'Kanit',sans-serif;font-size:32px;font-weight:600;color:var(--amber);border:0;border-bottom:2px dotted #e4cfae;background:transparent;width:170px;padding:0 4px;font-variant-numeric:tabular-nums;outline:none}
+.em-price-big:focus{border-bottom-color:var(--amber)}
+.em-unit{width:110px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:14.5px;background:#fff}
+.em-unit:focus{outline:none;border-color:var(--amber-500);box-shadow:0 0 0 3px rgba(224,98,15,.14)}
+.em-hint{font-size:12.5px;color:var(--ink-mute);margin-top:8px;line-height:1.5}
+.em-switch-row{display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:8px}
+.em-switch-row b{font-weight:600}
+.em-switch{width:42px;height:24px;border-radius:999px;background:#cfd5dc;position:relative;flex:none;transition:background .15s}
+.em-switch::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
+.em-switch.on{background:var(--amber)}.em-switch.on::after{left:21px}
+.em-sec{display:flex;align-items:center;gap:8px;font-family:'Kanit',sans-serif;font-weight:600;font-size:15px;margin:14px 0 10px;color:var(--ink)}
+.em-num{width:22px;height:22px;border-radius:7px;background:var(--amber);color:#fff;display:grid;place-items:center;font-size:12.5px;flex:none}
+.em-kchips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.em-kchip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 8px 5px 14px;font-size:14px;font-variant-numeric:tabular-nums}
+.em-kchip b{width:20px;height:20px;border-radius:50%;background:#e4e7e2;display:grid;place-items:center;font-size:11px;font-weight:400;color:#5b6773;cursor:pointer}
+.em-kchip b:hover{background:var(--rust-bg);color:var(--rust)}
+.em-kplus{border:1px dashed #b8c0c9;background:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:14px;color:var(--ink-soft);cursor:pointer}
+.em-kadd{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.em-kadd input{width:150px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:14px}
+.em-strips{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
+.em-strip{background:linear-gradient(180deg,#fffaf3,#fff);border:1px solid #f1d9bd;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;cursor:text}
+.em-strip input{border:0;background:transparent;font-family:'Kanit',sans-serif;font-size:18px;font-weight:600;color:var(--ink);padding:0;width:100%;outline:none;font-variant-numeric:tabular-nums}
+.em-seg{display:inline-flex;background:var(--paper-2);border-radius:10px;padding:3px;flex-wrap:wrap}
+.em-seg button{border:0;background:transparent;border-radius:8px;padding:7px 14px;font:inherit;font-size:14px;color:#4d5a66;cursor:pointer}
+.em-seg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.em-xbox{margin-top:12px;padding:12px 14px;border:1px solid #f1d9bd;border-radius:10px;background:#fff8ec}
 .quick-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px}
 .export-group{margin-left:auto;display:flex;gap:8px;position:relative}
 .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px -10px rgba(10,37,64,.28);padding:6px;z-index:40;min-width:290px;max-width:360px}
@@ -717,6 +761,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .export-menu button:hover{background:var(--amber-glow)}
 .export-menu button span{color:var(--ink-mute);margin-left:6px}
 .export-menu button small{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:2px;white-space:normal}
+table.data td.repair-cell,table.data th.repair-th{text-align:left;padding-left:20px}
 .ins-sub{display:block;font-size:11.5px;color:var(--ink-mute);margin-top:3px;line-height:1.3;white-space:normal}
 tr.route-editable{cursor:pointer;user-select:none}
 tr.route-editable:hover td{background:var(--amber-glow)}
@@ -959,7 +1004,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
         <select id="f_materialCategory" class="it-preset" title="เพิ่มรายการวัสดุทั้งชุดพร้อมราคามาตรฐาน">
           <option value="">ดึงชุดวัสดุ…</option>
         </select>
-        <button class="btn btn-outline btn-sm" id="btnAddItem" type="button">＋ รายการอื่น (พิมพ์เอง)</button>
+        <button class="btn btn-outline btn-sm" id="btnAddItem" type="button">＋ รายการอื่น</button>
       </div>
 
       <div class="items-head" id="itemsHead" style="display:none">
@@ -1096,7 +1141,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           <thead>
             <tr>
               <th>ที่</th><th>วันที่</th><th>ทล./ตอน</th><th>กม.</th><th>ผู้ละเมิด</th>
-              <th>ทะเบียนรถ</th><th>ราคาประเมิน</th><th>ชดใช้</th><th>จัดซ่อม</th><th>ยุติเรื่อง</th>
+              <th>ทะเบียนรถ</th><th>ราคาประเมิน</th><th>ชดใช้</th><th class="repair-th">จัดซ่อม</th><th>ยุติเรื่อง</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -2555,7 +2600,7 @@ function initItemEntryUi(){
     active = hits.length ? 0 : -1;
     dd.innerHTML = hits.length
       ? hits.map((it, i) => `<div class="it-dd-item" data-i="${i}"><span class="nm">${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★</span>' : ''}<span class="cat">${escapeHtml(it.catLabel)}</span></span><b class="mono">${formatMoney(it.price)} บาท / ${escapeHtml(it.unit)}</b></div>`).join('')
-      : `<div class="it-dd-empty">ไม่พบ "${escapeHtml(input.value.trim())}" — กด "＋ รายการอื่น (พิมพ์เอง)" เพื่อเพิ่มเอง</div>`;
+      : `<div class="it-dd-empty">ไม่พบ "${escapeHtml(input.value.trim())}" — กด "＋ รายการอื่น" เพื่อเพิ่มเอง</div>`;
     dd.style.display = '';
     paintActive();
   };
@@ -3226,7 +3271,7 @@ function renderTable(){
       <td class="mono plate-cell">${formatPlateCellHtml(r)}</td>
       <td class="mono nowrap-cell center-cell">${formatMoney(r.totalPrice)}</td>
       <td class="nowrap-cell center-cell">${statusPill(r.compensationStatus,'comp')}</td>
-      <td class="center-cell">${statusPill(r.repairStatus,'repair')}${r.hasInsurance === 'มี' ? '<span class="ins-sub">ประกัน: ' + (escapeHtml(r.insuranceCompany) || 'มี') + '</span>' : ''}</td>
+      <td class="repair-cell">${statusPill(r.repairStatus,'repair')}${r.hasInsurance === 'มี' ? '<span class="ins-sub" title="' + escapeHtml(r.insuranceCompany || 'มีประกันภัย') + '">ประกัน: ' + (escapeHtml(shortInsurerName(r.insuranceCompany, 14)) || 'มี') + '</span>' : ''}</td>
       <td class="mono nowrap-cell center-cell">${r.closedDate ? formatThaiDate(r.closedDate) : '-'}</td>
     `;
     tbody.appendChild(tr);
@@ -3336,18 +3381,35 @@ async function openTrashModal(){
 }
 
  
-// ผู้ละเมิด/คู่กรณี 1 คน ในหน้าต่างรายละเอียดเคส (อวาตาร์ + ชื่อ/โทร + ประเภทรถ/ยี่ห้อ/ทะเบียนเป็นป้าย)
-function caseDetailPersonHtml(p, label){
-  const name = p.driverName || '';
-  const initial = name.replace(/^(นางสาว|นาง|นาย|น\.ส\.)\s*/, '').charAt(0) || '?';
+// ย่อชื่อบริษัทประกัน: ตัดคำนำ (บริษัท/บมจ./บ./หจก.) และคำท้าย (จำกัด/(มหาชน)/ประกันภัย) แล้วจำกัดความยาวถ้าระบุ maxLen
+// ใช้แสดงในตาราง/รายงานเท่านั้น — ชื่อเต็มยังเก็บครบในฐานข้อมูลและแสดงในหน้ารายละเอียดเคส/ไฟล์ Excel
+function shortInsurerName(name, maxLen){
+  const full = String(name || '').trim();
+  if (!full) return '';
+  let s = full.replace(/^(บริษัท|บมจ\.?|บ\.|หจก\.?)\s*/, '')
+              .replace(/\s*\(?มหาชน\)?/g, '')
+              .replace(/\s*จำกัด\s*/g, ' ')
+              .replace(/ประกันภัย\s*$/, '')
+              .trim();
+  if (!s) s = full;
+  return (maxLen && s.length > maxLen) ? s.slice(0, maxLen) + '…' : s;
+}
+// ผู้ละเมิด/คู่กรณี 1 คน ในหน้าต่างรายละเอียดเคส (แบบ ข: ข้อมูลทุกอย่างเป็นแถว "หัวข้อ – ค่า" เหมือนการ์ดอื่น ไม่มีวงกลมตัวอักษร)
+// extraRows = แถว <dt>/<dd> เพิ่มท้ายรายการ (ใช้ใส่ข้อมูลประกันของผู้ละเมิดหลัก)
+function caseDetailPersonHtml(p, label, extraRows){
   const plateRows = (p.vehicleType === 'รถพ่วง' && p.trailerPlate)
     ? `<dt>ทะเบียนหัว</dt><dd>${p.plate ? `<span class="cd-plate">${escapeHtml(p.plate)}</span>` : '-'}</dd>
        <dt>ทะเบียนหาง</dt><dd><span class="cd-plate">${escapeHtml(p.trailerPlate)}</span></dd>`
     : `<dt>ทะเบียนรถ</dt><dd>${p.plate ? `<span class="cd-plate">${escapeHtml(p.plate)}</span>` : '-'}</dd>`;
-  return `
-    <div class="cd-person"><div class="cd-av">${escapeHtml(initial)}</div>
-      <div><b>${escapeHtml(name) || 'ไม่ระบุชื่อ'}</b><div class="cd-k">${label ? escapeHtml(label) + ' · ' : ''}โทร ${escapeHtml(p.driverPhone) || '-'}${p.driverAge ? ' · อายุ ' + escapeHtml(p.driverAge) + ' ปี' : ''}</div></div></div>
-    <dl class="cd-dl"><dt>ประเภทรถ</dt><dd>${escapeHtml(p.vehicleType) || '-'}</dd><dt>ยี่ห้อ / สี</dt><dd>${escapeHtml(p.vehicleBrand) || '-'}</dd>${plateRows}</dl>`;
+  return `${label ? `<div class="cd-k" style="font-weight:600;margin-bottom:6px">${escapeHtml(label)}</div>` : ''}
+    <dl class="cd-dl">
+      <dt>ชื่อ</dt><dd>${escapeHtml(p.driverName) || 'ไม่ระบุชื่อ'}</dd>
+      <dt>โทร</dt><dd>${escapeHtml(p.driverPhone) || '-'}</dd>
+      ${p.driverAge ? `<dt>อายุ</dt><dd>${escapeHtml(p.driverAge)} ปี</dd>` : ''}
+      <dt>ประเภทรถ</dt><dd>${escapeHtml(p.vehicleType) || '-'}</dd>
+      <dt>ยี่ห้อ / สี</dt><dd>${escapeHtml(p.vehicleBrand) || '-'}</dd>
+      ${plateRows}${extraRows || ''}
+    </dl>`;
 }
 
 // หน้าต่างรายละเอียดเคส (แบบ ข): หัวสีกรมท่า → แผ่นสถานะ 4 ช่อง → การ์ดข้อมูล/ผู้ละเมิด + รายการทรัพย์สินพร้อมใบสรุปเงิน → ปุ่มตรึงด้านล่าง
@@ -3395,7 +3457,7 @@ function openCaseDetailModal(id){
     </div>`;
 
   const others = rec.otherPartiesList || [];
-  const insuranceHtml = `<dl class="cd-dl" style="margin-top:6px"><dt>ประกันภัย</dt><dd>${escapeHtml(rec.hasInsurance) || 'ไม่ระบุ'}</dd>${rec.hasInsurance === 'มี' ? `<dt>บริษัทประกัน</dt><dd>${escapeHtml(rec.insuranceCompany) || '-'}</dd>` : ''}</dl>`;
+  const insuranceRows = `<dt>ประกันภัย</dt><dd>${escapeHtml(rec.hasInsurance) || 'ไม่ระบุ'}</dd>${rec.hasInsurance === 'มี' ? `<dt>บริษัทประกัน</dt><dd>${escapeHtml(rec.insuranceCompany) || '-'}</dd>` : ''}`;
   const mainParty = { vehicleType: rec.vehicleType, vehicleBrand: rec.vehicleBrand, plate: rec.plate, trailerPlate: rec.trailerPlate, driverName: rec.driverName, driverPhone: rec.driverPhone, driverAge: rec.driverAge };
 
   const root = document.getElementById('modalRoot');
@@ -3422,7 +3484,7 @@ function openCaseDetailModal(id){
                   <dt>วันที่พบ</dt><dd>${escapeHtml(formatThaiDate(rec.dateFound)) || '-'}</dd>
                 </dl></div>
               <div class="cd-card"><div class="cd-sec">${others.length ? 'ผู้ละเมิดหลัก' : 'ผู้ละเมิด'}</div>
-                ${caseDetailPersonHtml(mainParty)}${insuranceHtml}
+                ${caseDetailPersonHtml(mainParty, '', insuranceRows)}
                 ${others.map((p, i) => `<div class="cd-divider"></div>${caseDetailPersonHtml(p, 'คู่กรณีร่วมที่ ' + (i + 2))}`).join('')}
               </div>
               <div class="cd-card"><div class="cd-sec">อ้างอิงและหมายเหตุ</div>
@@ -4180,7 +4242,7 @@ function buildReportHtml(rows, meta){
       <td class="nw">${th(plateText(r) || '-')}</td>
       <td class="r nw">${th(formatMoney(m.total))}</td>
       <td class="c">${pill(r.compensationStatus, 'ชดใช้แล้ว')}</td>
-      <td class="c">${pill(r.repairStatus, 'จัดซ่อมแล้ว')}${r.hasInsurance === 'มี' ? `<div class="sub">ประกัน: ${th(r.insuranceCompany || 'มี')}</div>` : ''}</td>
+      <td class="c">${pill(r.repairStatus, 'จัดซ่อมแล้ว')}${r.hasInsurance === 'มี' ? `<div class="sub">ประกัน: ${th(shortInsurerName(r.insuranceCompany) || 'มี')}</div>` : ''}</td>
       <td class="c nw">${r.closedDate ? th(formatThaiDate(r.closedDate)) : '-'}</td>
     </tr>`;
   }).join('');
@@ -4345,55 +4407,114 @@ function openRouteEditModal(route, preset){
   const isNew = !route;
   const r = route || { highway:'', controlNo:'', section:'', kmRanges:[], distanceActual:null, distance2Lane:null, asphalt:null, concrete:null, workQty:null, status:'active' };
   const initStatus = (preset && preset.status) ? preset.status : (isRouteActive(r) ? 'active' : 'transferred');
+  let kmList = (r.kmRanges || []).map(x => [x[0], x[1]]);
+  const numField = (id, label, v) => `<label class="em-strip"><span class="em-lb">${label}</span><input type="text" id="${id}" inputmode="decimal" value="${v ?? ''}" placeholder="0"></label>`;
   root.innerHTML = `
-    <div class="modal-backdrop"><div class="modal modal-lg">
-      <div class="modal-head"><h3>${isNew ? 'เพิ่มสายทาง' : 'แก้ไขสายทาง ทล.' + escapeHtml(r.highway)}</h3><button class="modal-close" id="routeEditClose" type="button">×</button></div>
-      <div class="grid grid-3" style="margin-bottom:14px">
-        <div class="field"><label>ทางหลวงหมายเลข</label><input type="text" id="re_highway" value="${escapeHtml(r.highway)}" placeholder="เช่น 3145" ${isNew ? '' : 'disabled'}></div>
-        <div class="field"><label>ควบคุม</label><input type="text" id="re_controlNo" value="${escapeHtml(r.controlNo||'')}"></div>
-        <div class="field"><label>ตอน</label><input type="text" id="re_section" value="${escapeHtml(r.section||'')}"></div>
+    <div class="modal-backdrop"><div class="modal edit-modal em-route">
+      <div class="modal-head em-head">
+        <div><div class="em-lbl">ข้อมูลสายทาง</div><h3>${isNew ? 'เพิ่มสายทาง' : 'แก้ไขสายทาง ทล.' + escapeHtml(r.highway)}</h3></div>
+        <button class="modal-close" id="routeEditClose" type="button">×</button>
       </div>
-      <div class="field" style="margin-bottom:14px">
-        <label>ตย. เช่น 0+000 - 10+000 หรือ 0+000 - 1+308, 2+346 - 3+292)</label>
-        <input type="text" id="re_kmRanges" value="${escapeHtml(kmRangesText(r))}">
-      </div>
-      <div class="grid grid-2" style="margin-bottom:14px">
-        <div class="field"><label>ระยะทางจริง (กม.)</label><input type="text" id="re_distanceActual" value="${r.distanceActual ?? ''}"></div>
-        <div class="field"><label>ต่อ 2 ช่อง (กม.)</label><input type="text" id="re_distance2Lane" value="${r.distance2Lane ?? ''}"></div>
-      </div>
-      <div class="grid grid-3">
-        <div class="field"><label>แอสฟัลท์ (กม.)</label><input type="text" id="re_asphalt" value="${r.asphalt ?? ''}"></div>
-        <div class="field"><label>คอนกรีต (กม.)</label><input type="text" id="re_concrete" value="${r.concrete ?? ''}"></div>
-        <div class="field"><label>ปริมาณงาน (หน่วย)</label><input type="text" id="re_workQty" value="${r.workQty ?? ''}"></div>
-      </div>
-      <div class="route-status-box">
-        <div class="field" style="max-width:320px"><label>สถานะสายทาง</label>
-          <select id="re_status">
-            <option value="active" ${initStatus === 'active' ? 'selected' : ''}>ดูแลอยู่ (หมวดฯ รับผิดชอบ)</option>
-            <option value="transferred" ${initStatus === 'transferred' ? 'selected' : ''}>โอนให้หมวดอื่นแล้ว</option>
-          </select></div>
-        <div id="re_transferBox" class="grid grid-2" style="margin-top:10px;display:${initStatus === 'transferred' ? '' : 'none'}">
-          <div class="field"><label>วันที่โอน</label><input type="date" id="re_transferredDate" value="${escapeHtml(r.transferredDate || '')}"></div>
-          <div class="field"><label>โอนให้ / หมายเหตุ</label><input type="text" id="re_transferNote" value="${escapeHtml(r.transferNote || '')}" placeholder="เช่น โอนให้หมวดทางหลวง… ตามคำสั่ง…"></div>
+      <div class="modal-body em-body">
+        <div class="em-sec"><span class="em-num">1</span> ข้อมูลสายทาง</div>
+        <div class="grid grid-3 em-field">
+          <div class="field"><label>ทางหลวงหมายเลข</label><input type="text" id="re_highway" value="${escapeHtml(r.highway)}" placeholder="เช่น 3145" ${isNew ? '' : 'disabled'}></div>
+          <div class="field"><label>ควบคุม</label><input type="text" id="re_controlNo" value="${escapeHtml(r.controlNo||'')}"></div>
+          <div class="field"><label>ตอน</label><input type="text" id="re_section" value="${escapeHtml(r.section||'')}"></div>
         </div>
-        <p class="hint" style="margin:10px 0 0">สายทางที่โอนแล้วจะไม่ปรากฏในรายการเลือกตอนบันทึกเคสใหม่ และไม่นับรวมในยอดระยะทางที่ดูแล แต่ <b>รายการอุบัติเหตุที่เคยเกิดยังอยู่ครบ</b> ทั้งในหน้ารายการ ภาพรวม และการส่งออก</p>
+        <div class="em-sec"><span class="em-num">2</span> ช่วง กม.</div>
+        <div class="em-field">
+          <div class="em-kchips" id="re_kmChips"></div>
+          <div class="em-kadd" id="re_kmAddRow" style="display:none">
+            <input type="text" id="re_kmFrom" placeholder="จาก กม. เช่น 0+000">
+            <span>ถึง</span>
+            <input type="text" id="re_kmTo" placeholder="ถึง กม. เช่น 10+000">
+            <button type="button" class="btn btn-primary btn-sm" id="re_kmAddOk">เพิ่ม</button>
+          </div>
+        </div>
+        <div class="em-sec"><span class="em-num">3</span> ระยะและปริมาณงาน</div>
+        <div class="em-strips em-field">
+          ${numField('re_distanceActual', 'ระยะทางจริง (กม.)', r.distanceActual)}
+          ${numField('re_distance2Lane', 'ต่อ 2 ช่อง (กม.)', r.distance2Lane)}
+          ${numField('re_asphalt', 'แอสฟัลท์ (กม.)', r.asphalt)}
+          ${numField('re_concrete', 'คอนกรีต (กม.)', r.concrete)}
+          ${numField('re_workQty', 'ปริมาณงาน (หน่วย)', r.workQty)}
+        </div>
+        <div class="em-sec"><span class="em-num">4</span> สถานะสายทาง</div>
+        <div class="em-field">
+          <div class="em-seg" id="re_statusSeg">
+            <button type="button" data-v="active" class="${initStatus === 'active' ? 'on' : ''}">ดูแลอยู่ (หมวดฯ รับผิดชอบ)</button>
+            <button type="button" data-v="transferred" class="${initStatus === 'transferred' ? 'on' : ''}">โอนให้หมวดอื่นแล้ว</button>
+          </div>
+          <select id="re_status" style="display:none">
+            <option value="active" ${initStatus === 'active' ? 'selected' : ''}>ดูแลอยู่</option>
+            <option value="transferred" ${initStatus === 'transferred' ? 'selected' : ''}>โอนให้หมวดอื่นแล้ว</option>
+          </select>
+          <div id="re_transferBox" class="grid grid-2 em-xbox" style="display:${initStatus === 'transferred' ? '' : 'none'}">
+            <div class="field"><label>วันที่โอน</label><input type="date" id="re_transferredDate" value="${escapeHtml(r.transferredDate || '')}"></div>
+            <div class="field"><label>โอนให้ / หมายเหตุ</label><input type="text" id="re_transferNote" value="${escapeHtml(r.transferNote || '')}" placeholder="เช่น โอนให้หมวดทางหลวง… ตามคำสั่ง…"></div>
+          </div>
+          <div class="em-hint">สายทางที่โอนแล้วจะไม่ปรากฏในรายการเลือกตอนบันทึกเคสใหม่ และไม่นับรวมในยอดระยะทางที่ดูแล แต่ <b>รายการอุบัติเหตุที่เคยเกิดยังอยู่ครบ</b> ทั้งในหน้ารายการ ภาพรวม และการส่งออก</div>
+        </div>
       </div>
-      <div class="actions" style="margin-top:18px;justify-content:${isNew ? 'flex-end' : 'space-between'}">
-        ${isNew ? '' : '<button class="btn btn-danger" id="routeEditDelete">ลบข้อมูล</button>'}
-        <span style="display:flex;gap:8px">
-          <button class="btn btn-outline" id="routeEditCancel">ปิด</button>
-          <button class="btn btn-primary" id="routeEditSave">บันทึก</button>
-        </span>
+      <div class="cd-foot">
+        ${isNew ? '' : '<button class="btn btn-danger" id="routeEditDelete" type="button">ลบสายทาง</button>'}
+        <span style="flex:1"></span>
+        <button class="btn btn-outline" id="routeEditCancel" type="button">ปิด</button>
+        <button class="btn btn-primary" id="routeEditSave" type="button">บันทึก</button>
       </div>
     </div></div>`;
   const close = () => { root.innerHTML = ''; };
   document.getElementById('routeEditClose').onclick = close;
   document.getElementById('routeEditCancel').onclick = close;
-  document.getElementById('re_status').onchange = (e) => {
+  // ช่วง กม.: ชิปเพิ่ม/ลบทีละช่วง (ไม่ต้องพิมพ์คั่นจุลภาคเอง)
+  const renderKm = () => {
+    document.getElementById('re_kmChips').innerHTML =
+      kmList.map((k, i) => `<span class="em-kchip">${escapeHtml(formatKm(k[0]) + ' - ' + formatKm(k[1]))}<b data-rm="${i}" title="ลบช่วงนี้">✕</b></span>`).join('') +
+      '<button type="button" class="em-kplus" id="re_kmPlus">+ เพิ่มช่วง กม.</button>';
+    document.getElementById('re_kmPlus').onclick = () => {
+      const row = document.getElementById('re_kmAddRow');
+      row.style.display = '';
+      document.getElementById('re_kmFrom').focus();
+    };
+  };
+  // คืนค่า true ถ้าเพิ่มช่วงจากช่องกรอกได้ (หรือช่องว่างทั้งคู่), false ถ้ากรอกไม่ถูกรูปแบบ
+  const commitKmInputs = (silent) => {
+    const fromEl = document.getElementById('re_kmFrom'), toEl = document.getElementById('re_kmTo');
+    const a = fromEl.value.trim(), b = toEl.value.trim();
+    if (!a && !b) return true;
+    const from = parseKm(a), to = parseKm(b);
+    if (from === null || to === null) { if (!silent) showToast('กรอก กม. ให้ถูกรูปแบบ เช่น 0+000 และ 10+000'); return false; }
+    kmList.push([from, to]);
+    fromEl.value = ''; toEl.value = '';
+    renderKm();
+    return true;
+  };
+  document.getElementById('re_kmChips').addEventListener('click', (e) => {
+    const rm = e.target.closest('[data-rm]');
+    if (!rm) return;
+    kmList.splice(Number(rm.dataset.rm), 1);
+    renderKm();
+  });
+  document.getElementById('re_kmAddOk').onclick = () => commitKmInputs(false);
+  ['re_kmFrom', 're_kmTo'].forEach(id => document.getElementById(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitKmInputs(false); } }));
+  renderKm();
+  if (isNew) document.getElementById('re_kmAddRow').style.display = '';
+  // สถานะ: ปุ่มสลับ (ตัวจริงยังเป็น <select id="re_status"> ที่ซ่อนไว้ เพื่อให้ตรรกะเดิมทำงานเหมือนเดิม)
+  const statusSel = document.getElementById('re_status');
+  const syncSeg = () => document.querySelectorAll('#re_statusSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === statusSel.value));
+  document.getElementById('re_statusSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-v]');
+    if (!b) return;
+    statusSel.value = b.dataset.v;
+    statusSel.dispatchEvent(new Event('change'));
+  });
+  statusSel.onchange = (e) => {
     document.getElementById('re_transferBox').style.display = e.target.value === 'transferred' ? '' : 'none';
     if (e.target.value === 'transferred' && !document.getElementById('re_transferredDate').value) {
       document.getElementById('re_transferredDate').value = new Date().toISOString().slice(0, 10);
     }
+    syncSeg();
   };
   if (initStatus === 'transferred' && !document.getElementById('re_transferredDate').value) {
     document.getElementById('re_transferredDate').value = new Date().toISOString().slice(0, 10);
@@ -4404,6 +4525,7 @@ function openRouteEditModal(route, preset){
   document.getElementById('routeEditSave').onclick = async () => {
     const highway = document.getElementById('re_highway').value.trim();
     if (!highway) { showToast('กรอกหมายเลขทางหลวงก่อน'); return; }
+    if (!commitKmInputs(true)) { showToast('ช่วง กม. ที่กำลังกรอกไม่ถูกรูปแบบ — แก้ให้ถูกต้องหรือล้างช่องก่อนบันทึก'); return; }
     if (isNew && ROUTES.some(x => String(x.highway) === String(highway))) { showToast('มีสายทางนี้อยู่แล้วในรายชื่อ'); return; }
     const numOrNull = (id) => { const raw = document.getElementById(id).value.trim(); return raw === '' ? null : parseFloat(raw.replace(/,/g,'')); };
     const saveBtn = document.getElementById('routeEditSave');
@@ -4414,7 +4536,7 @@ function openRouteEditModal(route, preset){
       highway,
       controlNo: document.getElementById('re_controlNo').value.trim(),
       section: document.getElementById('re_section').value.trim(),
-      kmRanges: parseKmRangesText(document.getElementById('re_kmRanges').value),
+      kmRanges: kmList,
       distanceActual: numOrNull('re_distanceActual'),
       distance2Lane: numOrNull('re_distance2Lane'),
       asphalt: numOrNull('re_asphalt'),
@@ -4669,50 +4791,61 @@ function openAssetEditModal(item){
   const currentCategory = it.category || (isNew ? '' : classifyAssetCategoryFallback(it.name));
   let frequentState = !!it.frequent; 
   root.innerHTML = `
-    <div class="modal-backdrop"><div class="modal">
-      <div class="modal-head"><h3>${isNew ? 'เพิ่มรายการทรัพย์สิน' : 'แก้ไขรายการทรัพย์สิน'}</h3><button class="modal-close" id="assetEditClose" type="button">×</button></div>
-      <div class="field" style="margin-bottom:14px">
-        <label>หมวดหมู่</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="assetEditCategory" style="flex:1">
-            ${ASSET_CATEGORIES.map(c => `<option value="${c}"${currentCategory === c ? ' selected' : ''}>${escapeHtml(ASSET_CATEGORY_LABELS[c])}</option>`).join('')}
-          </select>
-          <button type="button" id="assetEditFrequentBtn" class="btn ${frequentState ? 'btn-primary' : 'btn-outline'}" style="flex-shrink:0;width:44px;height:40px;padding:0;font-size:20px;line-height:1;justify-content:center" title="${frequentState ? 'ติดดาวอยู่ (กดเพื่อยกเลิก)' : 'ไม่ได้ติดดาว (กดเพื่อติดดาว)'}">${frequentState ? '★' : '☆'}</button>
+    <div class="modal-backdrop"><div class="modal edit-modal">
+      <div class="modal-head em-head">
+        <div><div class="em-lbl">ข้อมูลทรัพย์สิน</div><h3>${isNew ? 'เพิ่มรายการทรัพย์สิน' : 'แก้ไขรายการทรัพย์สิน'}</h3></div>
+        <button class="modal-close" id="assetEditClose" type="button">×</button>
+      </div>
+      <div class="modal-body em-body">
+        <div class="em-field">
+          <label class="em-lb">หมวดหมู่</label>
+          <div class="em-chips" id="assetEditChips">
+            ${ASSET_CATEGORIES.map(c => `<button type="button" class="em-chip${currentCategory === c ? ' on' : ''}" data-cat="${c}">${escapeHtml(ASSET_CATEGORY_LABELS[c])}</button>`).join('')}
+          </div>
+          <input type="hidden" id="assetEditCategory" value="${escapeHtml(currentCategory || ASSET_CATEGORIES[0])}">
+        </div>
+        <div class="field em-field">
+          <label>ชื่อรายการ</label>
+          <input type="text" id="assetEditName" value="${escapeHtml(it.name)}" placeholder="เช่น ป้ายเตือนสามเหลี่ยม สะท้อนแสง">
+        </div>
+        <div class="em-price">
+          <label class="em-lb" for="assetEditPrice">ราคาต่อหน่วย</label>
+          <div class="em-price-row">
+            <input type="text" id="assetEditPrice" class="em-price-big" inputmode="decimal" placeholder="0" value="${isNew ? '' : formatThousands(String(it.price))}">
+            <span>บาท ต่อ</span>
+            <input type="text" id="assetEditUnit" class="em-unit" placeholder="หน่วย" value="${escapeHtml(it.unit)}">
+          </div>
+          <div class="em-hint">ใช้เป็นราคาตั้งต้นเมื่อเพิ่มรายการในเคสใหม่ (เคสเดิมที่บันทึกไว้แล้วไม่เปลี่ยนราคา)</div>
+        </div>
+        <div class="em-switch-row" id="assetEditFrequentBtn" role="switch" tabindex="0" aria-checked="${frequentState}">
+          <span class="em-switch${frequentState ? ' on' : ''}"></span>
+          <div><b>ใช้บ่อย ★</b><div class="em-hint" style="margin-top:0">ขึ้นเป็นลำดับแรกเมื่อค้นหาในหน้าบันทึกรายการใหม่</div></div>
         </div>
       </div>
-      <div class="field" style="margin-bottom:14px">
-        <label>ชื่อรายการ</label>
-        <input type="text" id="assetEditName" value="${escapeHtml(it.name)}" placeholder="เช่น ป้ายเตือนสามเหลี่ยม สะท้อนแสง">
-      </div>
-      <div class="grid grid-2" style="margin-bottom:6px">
-        <div class="field">
-          <label>ราคาต่อหน่วย (บาท)</label>
-          <input type="text" id="assetEditPrice" value="${isNew ? '' : formatThousands(String(it.price))}">
-        </div>
-        <div class="field">
-          <label>หน่วย</label>
-          <input type="text" id="assetEditUnit" value="${escapeHtml(it.unit)}" placeholder="เช่น แผ่น, ต้น, ชุด">
-        </div>
-      </div>
-      <div class="actions" style="margin-top:16px;justify-content:${isNew ? 'flex-end' : 'space-between'}">
-        ${isNew ? '' : '<button class="btn btn-danger" id="assetEditDelete">ลบรายการ</button>'}
-        <span style="display:flex;gap:8px">
-          <button class="btn btn-outline" id="assetEditCancel">ปิด</button>
-          <button class="btn btn-primary" id="assetEditSave">บันทึก</button>
-        </span>
+      <div class="cd-foot">
+        ${isNew ? '' : '<button class="btn btn-danger" id="assetEditDelete" type="button">ลบรายการ</button>'}
+        <span style="flex:1"></span>
+        <button class="btn btn-outline" id="assetEditCancel" type="button">ปิด</button>
+        <button class="btn btn-primary" id="assetEditSave" type="button">บันทึก</button>
       </div>
     </div></div>`;
   const close = () => { root.innerHTML = ''; };
   document.getElementById('assetEditClose').onclick = close;
   document.getElementById('assetEditCancel').onclick = close;
+  document.getElementById('assetEditChips').addEventListener('click', (e) => {
+    const b = e.target.closest('.em-chip');
+    if (!b) return;
+    document.getElementById('assetEditCategory').value = b.dataset.cat;
+    document.querySelectorAll('#assetEditChips .em-chip').forEach(x => x.classList.toggle('on', x === b));
+  });
   const frequentBtn = document.getElementById('assetEditFrequentBtn');
-  frequentBtn.onclick = () => {
+  const toggleFrequent = () => {
     frequentState = !frequentState;
-    frequentBtn.className = 'btn ' + (frequentState ? 'btn-primary' : 'btn-outline');
-    frequentBtn.style.justifyContent = 'center';
-    frequentBtn.textContent = frequentState ? '★' : '☆';
-    frequentBtn.title = frequentState ? 'ติดดาวอยู่ (กดเพื่อยกเลิก)' : 'ไม่ได้ติดดาว (กดเพื่อติดดาว)';
+    frequentBtn.setAttribute('aria-checked', String(frequentState));
+    frequentBtn.querySelector('.em-switch').classList.toggle('on', frequentState);
   };
+  frequentBtn.onclick = toggleFrequent;
+  frequentBtn.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleFrequent(); } };
   if (!isNew) {
     document.getElementById('assetEditDelete').onclick = () => confirmDeleteAsset(it, close);
   }
