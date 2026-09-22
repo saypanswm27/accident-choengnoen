@@ -785,7 +785,7 @@ tr.asset-frequent:hover td{background:#fbe9c9 !important}
 .dsel-item.sel{font-weight:600}
 .dsel-tick{color:var(--amber);font-size:13px;margin-left:12px}
 .dsel.it-preset{width:190px;padding:0;border:0;border-radius:0;background:none}
-.dsel.it-preset .dsel-btn{border-radius:10px;padding:9px 12px;font-size:14px}.ins-row{grid-template-columns:200px minmax(0,440px)}
+.dsel.it-preset .dsel-btn{border-radius:10px;padding:9px 12px;font-size:14px}.ins-row{grid-template-columns:1fr 2fr}
 @media(max-width:720px){.ins-row{grid-template-columns:1fr}}
 .ref-field{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden;transition:border-color .15s ease,box-shadow .15s ease}
 .ref-field:focus-within{border-color:var(--amber-500);box-shadow:0 0 0 3px rgba(224,98,15,.14)}
@@ -938,6 +938,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
         <div class="field">
           <label>ทล. (สายทาง) <span class="req">*</span></label>
           <select id="f_highway"></select>
+          <span class="hint km-hint" id="highwayHint"></span>
           <!-- ชื่อตอนแสดงอยู่ในรายการเลือกทล.แล้ว จึงไม่แสดงเป็นช่องแยก — เก็บเป็นช่องซ่อน (ตั้งอัตโนมัติจากทล.) เพื่อให้ยังบันทึกตอนลงเคสเหมือนเดิม -->
           <input type="hidden" id="f_section">
         </div>
@@ -972,7 +973,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
 
       <div class="party-block" data-role="main">
         <div class="party-block-title"><span>ผู้ละเมิดหลัก</span></div>
-        <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,110px) minmax(0,1.3fr)">
+        <div class="grid grid-3">
           <div class="field">
             <label>ชื่อผู้ขับขี่ / ผู้ละเมิด</label>
             <input type="text" id="f_driverName">
@@ -1291,7 +1292,6 @@ tr.route-editable:hover td{background:var(--amber-glow)}
     <div class="settings-row">
       <div class="card" id="cardTrash">
         <div class="section-title">🗑 ถังขยะ</div>
-        <p class="hint">เคสที่ลบไว้ กู้คืนหรือลบถาวรได้</p>
         <button class="btn btn-outline" id="btnOpenTrash">เปิดถังขยะ</button>
       </div>
       <div class="card" id="cardInsurer" style="display:none">
@@ -1301,7 +1301,6 @@ tr.route-editable:hover td{background:var(--amber-glow)}
       </div>
       <div class="card" id="cardImport" style="display:none">
         <div class="section-title">⬆ นำเข้าจากระบบเดิม</div>
-        <p class="hint">เลือกไฟล์ Excel จาก Google Sheet ของระบบ Apps Script เดิม (แท็บ accidents, materials, routes, activity_log) รันซ้ำได้ ไม่เกิดข้อมูลซ้ำ แต่เคสที่แก้ในระบบนี้แล้วจะถูกเขียนทับด้วยของไฟล์</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input type="file" id="importFile" accept=".xlsx" style="max-width:100%">
           <button class="btn btn-primary" id="btnImport" type="button">เริ่มนำเข้า</button>
@@ -1746,6 +1745,14 @@ function kmRangesHtml(route){
   if (!route || !route.kmRanges || !route.kmRanges.length) return '-';
   return route.kmRanges.map(([f,t]) => '<span style="white-space:nowrap">' + escapeHtml(formatKm(f) + ' - ' + formatKm(t)) + '</span>').join(',<br>');
 }
+function updateHighwayHint(){
+  const hw = document.getElementById('f_highway').value;
+  const hint = document.getElementById('highwayHint');
+  const route = findRoute(hw);
+  if (!hw || isRouteActive(route)) { hint.textContent = ''; hint.classList.remove('warn'); return; }
+  hint.textContent = 'สายทางถูกโอนย้ายแล้ว';
+  hint.classList.add('warn');
+}
 function updateKmHint(){
   const hw = document.getElementById('f_highway').value;
   const kmVal = parseKm(document.getElementById('f_km').value);
@@ -1901,7 +1908,7 @@ async function loadTrashRecords(){
 /* ----- ทีม (รายชื่อผู้ใช้) ----- */
 function buildTeamConfig(list){
   const owner = list.find(m => m.isOwner);
-  return { ownerName: owner ? owner.name : '', members: list.map(m => ({ name: m.name, isOwner: !!m.isOwner })) };
+  return { ownerName: owner ? owner.name : '', members: list.map(m => ({ name: m.name, isOwner: !!m.isOwner, isAdmin: !!m.isAdmin })) };
 }
 let teamLoadError = '';
 async function loadTeamConfig(){
@@ -1946,7 +1953,7 @@ async function logoutRecorder(){
   location.reload();
 }
 function updateWhoDisplay(){
-  const ownerTag = isOwner() ? ' 👑' : '';
+  const ownerTag = isOwner() ? ' 👑' : (isAdmin() ? ' 🛡️' : '');
   const el = document.getElementById('whoDisplay');
   const btn = document.getElementById('btnChangeWho');
   if (recorderName) {
@@ -1961,9 +1968,9 @@ function updateWhoDisplay(){
   
   const settingsTab = document.querySelector('.tab-btn[data-view="settings"]');
   if (settingsTab) {
-    settingsTab.style.display = isOwner() ? '' : 'none';
-    
-    if (!isOwner() && settingsTab.classList.contains('active')) {
+    settingsTab.style.display = isPrivileged() ? '' : 'none';
+
+    if (!isPrivileged() && settingsTab.classList.contains('active')) {
       document.querySelector('.tab-btn[data-view="dash"]').click();
     }
   }
@@ -1973,7 +1980,7 @@ function updateWhoDisplay(){
   if (teamCard) teamCard.style.display = recorderName ? '' : 'none';
   if (trashCard) trashCard.style.display = recorderName ? '' : 'none';
   const importCard = document.getElementById('cardImport');
-  if (importCard) importCard.style.display = isOwner() ? '' : 'none';
+  if (importCard) importCard.style.display = isPrivileged() ? '' : 'none';
   updateInsurerCard();
   renderTeamPanel(); 
   
@@ -1988,11 +1995,24 @@ function updateWhoDisplay(){
 function isOwner(){
   return !!(window.FBL && FBL.user && FBL.user.isOwner);
 }
+// ผู้ดูแลระบบ: ทำได้ทุกอย่างเหมือนเจ้าของระบบ ยกเว้นจัดการทีม (เพิ่ม/ลบ/ตั้งรหัสผ่านใหม่/ตั้งผู้ดูแล)
+function isAdmin(){
+  return !!(window.FBL && FBL.user && FBL.user.isAdmin);
+}
+function isPrivileged(){
+  return isOwner() || isAdmin();
+}
 
 // สิทธิ์เจ้าของระบบถูกตรวจซ้ำที่ Firestore Rules เสมอ — ฟังก์ชันนี้แค่กันการกดพลาดในหน้าเว็บ
+// ใช้กับเฉพาะการจัดการทีม (เพิ่ม/ลบ/ตั้งรหัสผ่านใหม่/ตั้งผู้ดูแล) ที่ยังเป็นสิทธิ์เจ้าของระบบเท่านั้น
 function ensureOwnerVerified(onReady){
   if (isOwner()) { onReady(); }
   else { showToast('เฉพาะเจ้าของระบบเท่านั้น'); }
+}
+// ใช้กับสิ่งที่เจ้าของระบบและผู้ดูแลระบบทำได้เหมือนกัน (ลบถาวร/แก้ราคาวัสดุ/นำเข้าข้อมูล ฯลฯ)
+function ensurePrivilegedVerified(onReady){
+  if (isPrivileged()) { onReady(); }
+  else { showToast('เฉพาะเจ้าของระบบหรือผู้ดูแลระบบเท่านั้น'); }
 }
 function findMember(name){
   return teamConfig.members.find(m => m.name === name);
@@ -2008,13 +2028,13 @@ async function bootstrapOwner(name, password){
   showToast('ตั้งค่าให้คุณเป็นเจ้าของระบบแล้ว');
   return user;
 }
-async function addTeamMember(name, password){
+async function addTeamMember(name, password, isAdmin){
   name = (name || '').trim();
   if (!name || !password) { showToast('กรอกชื่อและรหัสผ่านให้ครบ'); return false; }
   if (password.length < 6) { showToast('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'); return false; }
   if (findMember(name)) { showToast('มีชื่อนี้เป็นเจ้าหน้าที่อยู่แล้ว'); return false; }
   try {
-    await FBL.addMember(name, password);
+    await FBL.addMember(name, password, isAdmin);
     await refreshTeamConfig();
     renderTeamPanel();
     showToast('เพิ่ม ' + name + ' เป็นเจ้าหน้าที่แล้ว');
@@ -2022,6 +2042,16 @@ async function addTeamMember(name, password){
   } catch (e) {
     showToast('เพิ่มเจ้าหน้าที่ไม่สำเร็จ: ' + e.message);
     return false;
+  }
+}
+async function toggleMemberAdmin(name, makeAdmin){
+  try {
+    await FBL.setMemberAdmin(name, makeAdmin);
+    await refreshTeamConfig();
+    renderTeamPanel();
+    showToast((makeAdmin ? 'ตั้ง ' : 'ยกเลิกสิทธิ์ผู้ดูแลของ ') + name + (makeAdmin ? ' เป็นผู้ดูแลระบบแล้ว' : ' แล้ว'));
+  } catch (e) {
+    showToast('บันทึกไม่สำเร็จ: ' + e.message);
   }
 }
 async function removeTeamMember(name){
@@ -2111,7 +2141,7 @@ function presenceStatusOf(name){
   return { on: false, text: 'ออฟไลน์ · ใช้งานล่าสุด ' + lastSeenText(p.lastSeen) };
 }
 function refreshPresenceUi(){
-  if (!isOwner()) return;
+  if (!isPrivileged()) return;
   let online = 0, total = 0;
   document.querySelectorAll('#teamPanel [data-pstatus]').forEach(sub => {
     const st = presenceStatusOf(sub.dataset.pstatus);
@@ -2131,7 +2161,7 @@ function refreshPresenceUi(){
 function startPresenceTracking(){
   if (!window.FBL || !FBL.startPresence) return;
   FBL.startPresence();                       // ทุกคนส่งสัญญาณของตัวเอง
-  if (isOwner()) {                           // เจ้าของระบบรับสถานะของทุกคน
+  if (isPrivileged()) {                      // เจ้าของระบบ/ผู้ดูแลระบบรับสถานะของทุกคน
     FBL.watch('presence', (col, docs) => applyPresenceDocs(docs)).then(docs => applyPresenceDocs(docs)).catch(() => {});
     if (!presenceUiTimer) presenceUiTimer = setInterval(refreshPresenceUi, 30000);  // ให้สถานะหมดอายุเองแม้ไม่มีสัญญาณใหม่
   }
@@ -2162,11 +2192,12 @@ function renderTeamPanelInner(){
   }
   const memberRows = teamConfig.members.map(m => `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">
-      ${isOwner()
-        ? `<span class="p-line"><i class="p-dot" data-pdot="${escapeHtml(m.name)}"></i><span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : ''}<small class="p-sub" data-pstatus="${escapeHtml(m.name)}"></small></span></span>`
-        : `<span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : ''}</span>`}
+      ${isPrivileged()
+        ? `<span class="p-line"><i class="p-dot" data-pdot="${escapeHtml(m.name)}"></i><span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : (m.isAdmin ? ' 🛡️' : '')}<small class="p-sub" data-pstatus="${escapeHtml(m.name)}"></small></span></span>`
+        : `<span>${escapeHtml(m.name)}${m.name === teamConfig.ownerName ? ' 👑' : (m.isAdmin ? ' 🛡️' : '')}</span>`}
       ${isOwner() ? `
         <span style="display:flex;gap:6px">
+          ${m.name !== teamConfig.ownerName ? `<button class="btn btn-outline btn-sm" data-toggleadmin="${escapeHtml(m.name)}">${m.isAdmin ? 'ยกเลิกผู้ดูแล' : 'ตั้งเป็นผู้ดูแล'}</button>` : ''}
           <button class="btn btn-outline btn-sm" data-resetpw="${escapeHtml(m.name)}">ตั้งรหัสผ่านใหม่</button>
           ${m.name !== teamConfig.ownerName ? `<button class="btn btn-danger btn-sm" data-remove="${escapeHtml(m.name)}">ลบ</button>` : ''}
         </span>
@@ -2188,6 +2219,9 @@ function renderTeamPanelInner(){
           <div class="modal-head"><h3>เพิ่มเจ้าหน้าที่ใหม่</h3><button class="modal-close" id="addMemberClose" type="button">×</button></div>
           <div class="field" style="margin-bottom:14px"><label>ชื่อ-นามสกุล</label><input type="text" id="newMemberInput"></div>
           <div class="field" style="margin-bottom:16px"><label>ตั้งรหัสผ่าน</label>${pwField('newMemberPass')}</div>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:14px">
+            <input type="checkbox" id="newMemberIsAdmin"> ตั้งเป็นผู้ดูแลระบบ (ทำได้ทุกอย่างเหมือนเจ้าของ ยกเว้นจัดการทีม)
+          </label>
           <div class="actions">
             <button class="btn btn-outline" id="addMemberCancel">ปิด</button>
             <button class="btn btn-primary" id="addMemberOk">บันทึก</button>
@@ -2199,12 +2233,13 @@ function renderTeamPanelInner(){
       document.getElementById('addMemberOk').onclick = () => {
         const n = document.getElementById('newMemberInput').value;
         const p = document.getElementById('newMemberPass').value;
+        const asAdmin = document.getElementById('newMemberIsAdmin').checked;
         if (!(n||'').trim() || !p) { showToast('กรอกชื่อและรหัสผ่านให้ครบ'); return; }
         ensureOwnerVerified(async () => {
           const btn = document.getElementById('addMemberOk');
           const btnUsable = btn && btn.isConnected;
           if (btnUsable) busyButton(btn, 'กำลังเพิ่ม...');
-          const ok = await addTeamMember(n, p);
+          const ok = await addTeamMember(n, p, asAdmin);
           if (ok) {
             if (btnUsable) await doneButton(btn, '✓ เพิ่มแล้ว');
             close();
@@ -2216,6 +2251,18 @@ function renderTeamPanelInner(){
     };
     el.querySelectorAll('[data-remove]').forEach(btn => {
       btn.addEventListener('click', () => confirmRemoveTeamMember(btn.dataset.remove));
+    });
+    el.querySelectorAll('[data-toggleadmin]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.toggleadmin;
+        const m = findMember(name);
+        ensureOwnerVerified(async () => {
+          const btnUsable = btn.isConnected;
+          if (btnUsable) busyButton(btn, 'กำลังบันทึก...');
+          await toggleMemberAdmin(name, !(m && m.isAdmin));
+          if (btnUsable) await doneButton(btn, '✓ บันทึกแล้ว');
+        });
+      });
     });
     el.querySelectorAll('[data-resetpw]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -2286,8 +2333,8 @@ function initTabs(){
         showLoginRequiredModal(btn.dataset.view);
         return;
       }
-      if (btn.dataset.view === 'settings' && !isOwner()) {
-        showToast('หน้านี้สำหรับเจ้าของระบบเท่านั้น');
+      if (btn.dataset.view === 'settings' && !isPrivileged()) {
+        showToast('หน้านี้สำหรับเจ้าของระบบและผู้ดูแลระบบเท่านั้น');
         return;
       }
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -2342,13 +2389,15 @@ function populateFiscalYearSelect(){
   }
 }
 // สร้าง option ให้ select ทั้งสองจุด — เรียกซ้ำได้ปลอดภัย (ใช้ตอนโหลดครั้งแรก และตอนเพิ่ม/ลบ/แก้สายทางในหน้า "ข้อมูลสายทาง")
-// - ช่องเลือก ทล. ตอนบันทึกเคสใหม่: แสดงเฉพาะสายทางที่หมวดฯ ยังดูแลอยู่ (สายที่โอนไปแล้วไม่ให้เลือก)
+// - ช่องเลือก ทล. ตอนบันทึกเคสใหม่: แสดงทุกสายทาง รวมสายที่โอนให้หมวดอื่นแล้ว (เพื่อให้ยังย้อนหลังบันทึกเคสเก่าของสายนั้นได้) — คำเตือนว่าโอนแล้วไปแสดงเป็นข้อความสีแดงใต้ช่องแทน (ดู updateHighwayHint)
 // - ตัวกรองในหน้ารายการ: แสดงทุกสายทาง รวมสายที่โอนแล้ว เพื่อยังกรองดูเคสเก่าของสายนั้นได้
 function refreshHighwayOptions(){
   const sel = document.getElementById('f_highway');
   const prevVal = sel.value;
   sel.innerHTML = '<option value="">— เลือก —</option>';
-  ROUTES.filter(isRouteActive).forEach(r => {
+  const active = ROUTES.filter(isRouteActive);
+  const transferred = ROUTES.filter(r => !isRouteActive(r));
+  active.concat(transferred).forEach(r => {
     const opt = document.createElement('option');
     opt.value = r.highway;
     opt.textContent = r.highway + ' (' + r.section + ')';
@@ -2383,6 +2432,7 @@ function populateHighwaySelect(){
   sel.addEventListener('change', () => {
     document.getElementById('f_section').value = highwaySection(sel.value);
     updateKmHint();
+    updateHighwayHint();
   });
   document.getElementById('f_km').addEventListener('input', updateKmHint);
 }
@@ -2757,7 +2807,7 @@ function addOtherPartyBlock(data){
       <span><span class="tag">คู่กรณีร่วม</span></span>
       <button type="button" class="party-remove-btn" data-remove-party="${idx}">ลบคู่กรณีนี้</button>
     </div>
-    <div class="grid grid-2">
+    <div class="grid grid-3">
       <div class="field">
         <label>ชื่อผู้ขับขี่ / ผู้ละเมิด</label>
         <input type="text" id="f_op_${idx}_driverName" value="${escapeHtml(data.driverName || '')}">
@@ -2897,6 +2947,7 @@ function clearForm(){
   updateInsuranceFieldVisibility();
   updateCostMethodVisibility();
   updateKmHint();
+  updateHighwayHint();
 }
 
 function loadRecordIntoForm(rec){
@@ -2957,6 +3008,7 @@ function loadRecordIntoForm(rec){
   });
   updateItemsSum();
   updateKmHint();
+  updateHighwayHint();
   document.querySelector('.tab-btn[data-view="form"]').click();
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -3255,7 +3307,7 @@ async function startApp(){
 
 /* ============ นำเข้าข้อมูลจากไฟล์ Excel ของระบบเดิม (เจ้าของระบบ ครั้งเดียว) ============ */
 async function runImport(){
-  if (!isOwner()) { showToast('เฉพาะเจ้าของระบบเท่านั้น'); return; }
+  if (!isPrivileged()) { showToast('เฉพาะเจ้าของระบบหรือผู้ดูแลระบบเท่านั้น'); return; }
   const file = document.getElementById('importFile').files[0];
   if (!file) { showToast('เลือกไฟล์ Excel ก่อน'); return; }
   const btn = document.getElementById('btnImport');
@@ -3396,7 +3448,7 @@ async function openTrashModal(){
     return;
   }
   
-  const showPermanentDelete = isOwner();
+  const showPermanentDelete = isPrivileged();
   listEl.innerHTML = items.map(r => `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)">
       <div>
@@ -3421,7 +3473,7 @@ async function openTrashModal(){
   });
   
   listEl.querySelectorAll('[data-permadelete]').forEach(btn => {
-    btn.onclick = () => ensureOwnerVerified(async () => {
+    btn.onclick = () => ensurePrivilegedVerified(async () => {
       busyButton(btn, 'กำลังลบถาวร...');
       const ok = await apiPermanentDeleteRecord(btn.dataset.permadelete);
       if (!ok) { btn.disabled = false; btn.classList.remove('btn-loading'); btn.innerHTML = btn.dataset.originalHTML; return; }
@@ -3467,11 +3519,11 @@ function insurerOptions(){
   (typeof records !== 'undefined' ? records : []).forEach(r => { const n = normalizeInsurer(r.insuranceCompany); if (n) set.add(n); });
   return [...set].sort(naturalCompareTh);
 }
-// การ์ด "ชื่อบริษัทประกัน" ในหน้าตั้งค่า แสดงเฉพาะเจ้าของระบบ และเฉพาะตอนที่ยังมีเคสที่ชื่อไม่ตรงมาตรฐาน — จัดระเบียบเสร็จแล้วการ์ดหายไปเอง
+// การ์ด "ชื่อบริษัทประกัน" ในหน้าตั้งค่า แสดงเฉพาะเจ้าของระบบ/ผู้ดูแลระบบ และเฉพาะตอนที่ยังมีเคสที่ชื่อไม่ตรงมาตรฐาน — จัดระเบียบเสร็จแล้วการ์ดหายไปเอง
 function updateInsurerCard(){
   const card = document.getElementById('cardInsurer');
   if (!card) return;
-  card.style.display = (isOwner() && buildInsurerCleanupPlan().changes.length) ? '' : 'none';
+  card.style.display = (isPrivileged() && buildInsurerCleanupPlan().changes.length) ? '' : 'none';
 }
 /* ===== ช่องเลือก (select) แบบเดียวกันทั้งระบบ =====
    แทนรายการเลือกของเบราว์เซอร์ด้วยรายการพื้นขาวขอบบาง แถวที่ชี้เป็นสีส้มอ่อน เหมือนช่องค้นหาทรัพย์สิน/บริษัทประกัน
@@ -3676,7 +3728,7 @@ function buildInsurerCleanupPlan(){
   return { changes, groups, refPairs };
 }
 function openInsurerCleanupModal(){
-  if (!isOwner()) { showToast('เฉพาะเจ้าของระบบเท่านั้น'); return; }
+  if (!isPrivileged()) { showToast('เฉพาะเจ้าของระบบหรือผู้ดูแลระบบเท่านั้น'); return; }
   const { changes, groups, refPairs } = buildInsurerCleanupPlan();
   const root = document.getElementById('modalRoot');
   const names = Object.keys(groups).sort(naturalCompareTh);
@@ -4673,7 +4725,7 @@ function routeTransferNote(r){
 function renderRoutesTable(){
   const tbody = document.getElementById('routesTableBody');
   if (!tbody) return;
-  const owner = isOwner();
+  const owner = isPrivileged();
   const byNo = (a, b) => Number(a.highway) - Number(b.highway);
   const active = ROUTES.filter(isRouteActive).sort(byNo);
   const transferred = ROUTES.filter(r => !isRouteActive(r)).sort(byNo);
@@ -5085,7 +5137,7 @@ function renderAssetsPanel(){
   // ดูแบบ "ทั้งหมด" = รายการเรียงตามชื่อรวมเป็นชุดเดียว
   const items = [{ header: null, group: filtered.slice().sort((a,b) => naturalCompareTh(a.name, b.name)) }];
 
-  const owner = isOwner();
+  const owner = isPrivileged();
   const colSpan = 3;
   let idx = 0;
   const rowsHtml = [];
@@ -5202,7 +5254,7 @@ function openAssetEditModal(item){
     const price = parseFloat(priceInput.value.replace(/,/g,'')) || 0;
     if (!name || !unit) { showToast('กรอกชื่อและหน่วยให้ครบ'); return; }
     if (isNew && getAllAssetItems().some(x => x.name === name) && !(materialPriceMap[name] && materialPriceMap[name].hidden)) { showToast('มีรายการชื่อนี้อยู่แล้วในระบบ'); return; }
-    ensureOwnerVerified(async () => {
+    ensurePrivilegedVerified(async () => {
     
     
     const saveBtn = document.getElementById('assetEditSave');
@@ -5249,7 +5301,7 @@ function confirmDeleteAsset(item, closeEditModal){
     </div>`;
   document.getElementById('delAssetClose').onclick = () => { root.innerHTML = ''; };
   document.getElementById('delAssetCancel').onclick = () => { root.innerHTML = ''; };
-  document.getElementById('delAssetOk').onclick = () => ensureOwnerVerified(async () => {
+  document.getElementById('delAssetOk').onclick = () => ensurePrivilegedVerified(async () => {
     const okBtn = document.getElementById('delAssetOk');
     const btnUsable = okBtn && okBtn.isConnected;
     if (btnUsable) busyButton(okBtn, 'กำลังลบ...');

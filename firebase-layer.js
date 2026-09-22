@@ -40,9 +40,9 @@
   const FBL = {};
   window.FBL = FBL;
 
-  FBL.user = null;          // { uid, name, isOwner } เมื่อล็อกอินแล้ว
+  FBL.user = null;          // { uid, name, isOwner, isAdmin } เมื่อล็อกอินแล้ว
   FBL.onError = null;       // callback(message) สำหรับข้อผิดพลาดจาก realtime listener
-  let team = [];            // [{ uid, name, email, isOwner }]
+  let team = [];            // [{ uid, name, email, isOwner, isAdmin }]
   let suppressAuthEvents = false;
 
   /* ---------- ข้อความผิดพลาดภาษาไทย ---------- */
@@ -76,6 +76,10 @@
   function newEmail() { return 'm-' + randomId(12) + '@' + EMAIL_DOMAIN; }
   function requireOwner() {
     if (!FBL.user || !FBL.user.isOwner) throw new Error('เฉพาะเจ้าของระบบเท่านั้น');
+  }
+  // ผู้ดูแลระบบ หรือ เจ้าของระบบ — ทุกอย่างยกเว้นจัดการทีม
+  function requirePrivileged() {
+    if (!FBL.user || !(FBL.user.isOwner || FBL.user.isAdmin)) throw new Error('เฉพาะเจ้าของระบบหรือผู้ดูแลระบบเท่านั้น');
   }
   // Firestore ไม่รับ undefined และ NaN/Infinity
   function clean(o) {
@@ -116,7 +120,7 @@
           cb(null, 'บัญชีนี้ไม่ได้อยู่ในรายชื่อเจ้าหน้าที่ กรุณาติดต่อเจ้าของระบบ');
           return;
         }
-        FBL.user = { uid: u.uid, name: d.data().name, isOwner: !!d.data().isOwner };
+        FBL.user = { uid: u.uid, name: d.data().name, isOwner: !!d.data().isOwner, isAdmin: !!d.data().isAdmin };
         cb(FBL.user);
       } catch (e) {
         FBL.user = null;
@@ -182,15 +186,15 @@
       const uid = cred.user.uid;
       try {
         const batch = db.batch();
-        batch.set(db.collection('team').doc(uid), { name: name, email: email, isOwner: true, createdAt: nowIso() });
+        batch.set(db.collection('team').doc(uid), { name: name, email: email, isOwner: true, isAdmin: false, createdAt: nowIso() });
         batch.set(db.collection('config').doc('bootstrap'), { uid: uid, at: nowIso() });
         await batch.commit();
       } catch (e) {
         try { await cred.user.delete(); } catch (_) { /* ล้างบัญชีที่ค้าง */ }
         throw e;
       }
-      FBL.user = { uid: uid, name: name, isOwner: true };
-      team = [{ uid: uid, name: name, email: email, isOwner: true }];
+      FBL.user = { uid: uid, name: name, isOwner: true, isAdmin: false };
+      team = [{ uid: uid, name: name, email: email, isOwner: true, isAdmin: false }];
       return FBL.user;
     } catch (e) {
       throw new Error(thErr(e));
@@ -208,7 +212,7 @@
     return uid;
   }
 
-  FBL.addMember = async function (name, password) {
+  FBL.addMember = async function (name, password, isAdmin) {
     requireOwner();
     name = String(name || '').trim();
     if (!name) throw new Error('กรอกชื่อ-นามสกุลก่อน');
@@ -216,8 +220,8 @@
     try {
       const email = newEmail();
       const uid = await createAuthUserSecondary(email, password);
-      await db.collection('team').doc(uid).set({ name: name, email: email, isOwner: false, createdAt: nowIso() });
-      team.push({ uid: uid, name: name, email: email, isOwner: false });
+      await db.collection('team').doc(uid).set({ name: name, email: email, isOwner: false, isAdmin: !!isAdmin, createdAt: nowIso() });
+      team.push({ uid: uid, name: name, email: email, isOwner: false, isAdmin: !!isAdmin });
     } catch (e) { throw new Error(thErr(e)); }
   };
 
@@ -229,6 +233,18 @@
     try {
       await db.collection('team').doc(m.uid).delete();
       team = team.filter(function (t) { return t.uid !== m.uid; });
+    } catch (e) { throw new Error(thErr(e)); }
+  };
+
+  // ตั้ง/ยกเลิกสิทธิ์ "ผู้ดูแลระบบ" ให้เจ้าหน้าที่คนหนึ่ง (เจ้าของระบบเท่านั้นที่ตั้งได้) — ผู้ดูแลทำได้ทุกอย่างเหมือนเจ้าของ ยกเว้นจัดการทีม
+  FBL.setMemberAdmin = async function (name, makeAdmin) {
+    requireOwner();
+    const m = team.find(function (t) { return t.name === name; });
+    if (!m) throw new Error('ไม่พบชื่อนี้ในรายชื่อ');
+    if (m.isOwner) throw new Error('เจ้าของระบบมีสิทธิ์ครบอยู่แล้ว');
+    try {
+      await db.collection('team').doc(m.uid).update({ isAdmin: !!makeAdmin });
+      m.isAdmin = !!makeAdmin;
     } catch (e) { throw new Error(thErr(e)); }
   };
 
@@ -247,10 +263,10 @@
       const uid = await createAuthUserSecondary(email, newPassword);
       const batch = db.batch();
       batch.delete(db.collection('team').doc(m.uid));
-      batch.set(db.collection('team').doc(uid), { name: m.name, email: email, isOwner: !!m.isOwner, createdAt: nowIso() });
+      batch.set(db.collection('team').doc(uid), { name: m.name, email: email, isOwner: !!m.isOwner, isAdmin: !!m.isAdmin, createdAt: nowIso() });
       await batch.commit();
       team = team.filter(function (t) { return t.uid !== m.uid; });
-      team.push({ uid: uid, name: m.name, email: email, isOwner: !!m.isOwner });
+      team.push({ uid: uid, name: m.name, email: email, isOwner: !!m.isOwner, isAdmin: !!m.isAdmin });
     } catch (e) { throw new Error(thErr(e)); }
   };
 
@@ -328,7 +344,7 @@
   };
 
   FBL.permanentDeleteAccident = async function (id) {
-    requireOwner();
+    requirePrivileged();
     const ref = db.collection('accidents').doc(String(id));
     const before = await readBefore(ref);
     const batch = db.batch();
@@ -339,7 +355,7 @@
 
   /* ---------- วัสดุ/ทรัพย์สิน และสายทาง ---------- */
   FBL.saveMaterial = async function (m) {
-    requireOwner();
+    requirePrivileged();
     const key = String(m.key);
     const data = clean({
       key: key, name: m.name, unit: m.unit, price: m.price, updatedAt: m.updatedAt,
@@ -451,7 +467,7 @@
 
   // XLSXlib = ตัวแปร XLSX (SheetJS) ที่หน้าเว็บโหลดไว้แล้ว, buffer = ArrayBuffer ของไฟล์ .xlsx
   FBL.importWorkbook = async function (XLSXlib, buffer, progress) {
-    requireOwner();
+    requirePrivileged();
     const wb = XLSXlib.read(buffer, { type: 'array' });
     function rows(name) {
       const ws = wb.Sheets[name];
