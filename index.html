@@ -1245,7 +1245,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
   <div class="view" id="view-routes">
     <div class="card">
       <div class="assets-toolbar" style="justify-content:flex-end">
-        <button class="btn btn-outline btn-sm" id="btnAddRoute" type="button">+ เพิ่มสายทาง</button>
+        <button class="btn btn-outline btn-sm" id="btnAddRoute" type="button" style="display:none">+ เพิ่มสายทาง</button>
         <div class="assets-updated-badge" id="routesUpdatedHint"></div>
       </div>
       <div class="table-wrap">
@@ -1272,7 +1272,7 @@ tr.route-editable:hover td{background:var(--amber-glow)}
           <input type="text" id="assetsSearchBox" name="asset-filter" autocomplete="off" placeholder="พิมพ์ค้นหารายการทรัพย์สิน...">
           <button type="button" class="assets-search-clear" id="assetsSearchClear" title="ล้างคำค้นหา">✕</button>
         </div>
-        <button class="btn btn-outline btn-sm" id="btnAddAsset" type="button">+ เพิ่มรายการทรัพย์สิน</button>
+        <button class="btn btn-outline btn-sm" id="btnAddAsset" type="button" style="display:none"></button>
         <div class="assets-updated-badge" id="assetsUpdatedHint"></div>
       </div>
       <div class="asset-category-chips" id="assetCategoryChips"></div>
@@ -1862,10 +1862,20 @@ function overlayMasterAssets(){
   if (!masterAssetsOn) return;
   const upd = normalizeDateStr(CNMaster.updatedAt('assets_' + (CNMaster.assetsYear ? CNMaster.assetsYear() : CNMaster.fiscalYear())));
   Object.keys(materialPriceMap).forEach(n => { materialPriceMap[n].fromMaster = false; });
+  // ชื่อซ้ำในฐานกลาง (รหัสต่างกัน เช่น ขนาด/หน่วยต่างกัน) → แยกเป็น "ชื่อ (หน่วย · รหัส)" ไม่ให้ตัวหลังทับราคาตัวก่อน
+  // รายการที่ซ่อนแล้วไม่นับ และไม่ทับรายการชื่อเดียวกันที่ยังใช้อยู่
+  const visibleCount = {};
+  list.forEach(a => { if (!a.hidden) visibleCount[a.name] = (visibleCount[a.name] || 0) + 1; });
   list.forEach(a => {
-    materialPriceMap[a.name] = {
+    const dup = !a.hidden && visibleCount[a.name] > 1;
+    const name = dup ? a.name + ' (' + a.unit + ' · ' + a.key + ')' : a.name;
+    if (dup && materialPriceMap[a.name] && !materialPriceMap[a.name].fromMaster) delete materialPriceMap[a.name]; // ชื่อเดิมของระบบนี้ (ราคาเก่า) — ฐานกลางแทนที่แล้ว
+    const prev = materialPriceMap[name];
+    if (a.hidden && prev && prev.fromMaster && !prev.hidden) return;
+    materialPriceMap[name] = {
       key: a.key, unit: a.unit, price: Number(a.price) || 0, updatedAt: upd,
-      hidden: !!a.hidden, category: a.category || '', frequent: a.frequent ? true : null, fromMaster: true
+      hidden: !!a.hidden, category: a.category || '', frequent: a.frequent ? true : null, fromMaster: true,
+      dupName: dup
     };
   });
 }
@@ -2646,6 +2656,8 @@ function addItemRow(data){
   row.className = 'item-row';
   row.dataset.id = id;
   if (data.dividerId) row.dataset.dividerId = data.dividerId;
+  // รหัสราคาประเมินของรายการ (เก็บไว้อ้างอิงในเคส) — ใช้ได้ตราบที่ยังไม่ได้แก้ชื่อรายการในแถว
+  if (data.key) { row.dataset.key = data.key; row.dataset.keyName = String(data.name || '').trim(); }
   row.innerHTML = `
     <div class="field"><label class="item-col-label">รายการทรัพย์สิน</label>
       <textarea class="it-name" rows="1" placeholder="เช่น เสาไฟฟ้าขนาด 9 ม.">${escapeHtml(data.name)}</textarea></div>
@@ -2724,7 +2736,9 @@ function collectItems(){
     const unitPrice = unitPriceRaw === '' ? null : parseFloat(unitPriceRaw.replace(/,/g,''));
     const priceRaw = row.querySelector('.it-price').value.trim();
     const price = priceRaw === '' ? null : parseFloat(priceRaw.replace(/,/g,''));
-    if (name) items.push({name, qty, unit, unitPrice: isNaN(unitPrice) ? null : unitPrice, price: isNaN(price) ? null : price});
+    const item = {name, qty, unit, unitPrice: isNaN(unitPrice) ? null : unitPrice, price: isNaN(price) ? null : price};
+    if (row.dataset.key && row.dataset.keyName === name) item.key = row.dataset.key;
+    if (name) items.push(item);
   });
   return items;
 }
@@ -2783,6 +2797,7 @@ function getCatalogItems(){
     const cat = (live && live.category) ? live.category : classifyAssetCategoryFallback(it.name);
     return {
       name: it.name,
+      key: (live && live.key) || '',
       unit: (live && live.unit) ? live.unit : it.unit,
       price: catalogPrice(it.name, it.price), // ราคาตามปีงบที่เลือกในฟอร์ม (ฐานกลาง)
       hidden: live ? !!live.hidden : false,
@@ -2806,7 +2821,7 @@ function addCatalogItem(it){
     ex.querySelector('.qs-inc').click();
     flashItemRow(ex);
   } else {
-    addItemRow({ name: it.name, qty: 1, unit: it.unit, unitPrice: it.price, price: it.price });
+    addItemRow({ name: it.name, key: it.key, qty: 1, unit: it.unit, unitPrice: it.price, price: it.price });
     const rows = document.querySelectorAll('#itemsContainer .item-row');
     flashItemRow(rows[rows.length - 1]);
   }
@@ -4865,7 +4880,7 @@ function renderRoutesTable(){
   const rowHtml = (r, i) => {
     const off = !isRouteActive(r);
     return `
-    <tr data-idx="${i}" class="${off ? 'route-transferred' : ''}${owner ? ' route-editable' : ''}"${owner ? ' title="ดับเบิลคลิกเพื่อแก้ไข"' : ''}>
+    <tr data-idx="${i}" class="${off ? 'route-transferred' : ''}">
       <td class="mono" style="text-align:center">${escapeHtml(r.highway)}${off ? '<span class="route-badge">โอนแล้ว</span>' : ''}</td>
       <td class="mono" style="text-align:center">${escapeHtml(r.controlNo || '-')}</td>
       <td style="text-align:center">${escapeHtml(r.section || '-')}${off ? `<div class="route-note">${escapeHtml(routeTransferNote(r))}</div>` : ''}</td>
@@ -4900,20 +4915,9 @@ function renderRoutesTable(){
   }
   tbody.innerHTML = html;
 
-  if (owner) {
-    tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
-      tr.addEventListener('dblclick', () => {
-        if (masterRoutesOn) { showMasterEditInfo('ข้อมูลสายทาง', 'routes'); return; }
-        const idx = Number(tr.dataset.idx);
-        openRouteEditModal(rows[idx]);
-      });
-    });
-  }
+  // สายทางแก้ได้ที่ฐานข้อมูลกลางเท่านั้น — ระบบนี้ไม่มีปุ่ม/ลิงก์แก้ไข (รวมตอนต่อฐานกลางไม่ได้)
   const addBtn = document.getElementById('btnAddRoute');
-  if (addBtn) {
-    addBtn.style.display = owner && !masterRoutesOn ? '' : 'none'; // ใช้ฐานกลางอยู่ → เพิ่มสายทางที่ฐานกลาง
-    addBtn.onclick = () => openRouteEditModal(null);
-  }
+  if (addBtn) addBtn.style.display = 'none';
   updateRoutesUpdatedHint();
 }
 // แยกช่วง กม. หลายช่วงที่คั่นด้วยจุลภาค เช่น "0+000 - 1+308, 2+346 - 3+292" กลับเป็น [[0,1308],[2346,3292]]
@@ -5093,7 +5097,7 @@ function updateRoutesUpdatedHint(){
   if (!el) return;
   if (masterRoutesOn) {
     const upd = normalizeDateStr(CNMaster.updatedAt('routes'));
-    el.innerHTML = 'จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink('routes') : '');
+    el.innerHTML = 'จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + '';
     return;
   }
   const dates = ROUTES.map(r => r.updatedAt).filter(Boolean).sort();
@@ -5257,6 +5261,7 @@ function renderAssetsPanel(){
         key: live ? live.key : '',
         hidden: live ? !!live.hidden : false,
         fromMaster: !!(live && live.fromMaster),
+        dupName: !!(live && live.dupName),
         frequent,
         category
       };
@@ -5282,8 +5287,8 @@ function renderAssetsPanel(){
   items.forEach(({ group }) => {
     group.forEach(it => {
       rowsHtml.push(`
-        <tr data-idx="${idx}" class="${it.frequent ? 'asset-frequent' : ''}${owner ? ' route-editable' : ''}"${owner ? ' title="ดับเบิลคลิกเพื่อแก้ไข"' : ''}>
-          <td>${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★ ใช้บ่อย</span>' : ''}${masterAssetsOn && !it.fromMaster ? '<span class="asset-frequent-badge" style="background:#FDE2E0;color:#B92A22" title="ยังไม่มีในฐานข้อมูลกลาง — ส่งออกแล้วนำเข้าที่ฐานกลาง">เฉพาะระบบนี้</span>' : ''}</td>
+        <tr data-idx="${idx}" class="${it.frequent ? 'asset-frequent' : ''}">
+          <td>${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★ ใช้บ่อย</span>' : ''}${masterAssetsOn && !it.fromMaster ? '<span class="asset-frequent-badge" style="background:#FDE2E0;color:#B92A22" title="ยังไม่มีในฐานข้อมูลกลาง — ส่งออกแล้วนำเข้าที่ฐานกลาง">เฉพาะระบบนี้</span>' : ''}${it.dupName ? '<span class="asset-frequent-badge" style="background:#FDE2E0;color:#B92A22" title="ฐานข้อมูลกลางมีหลายรายการชื่อเดียวกัน">ชื่อซ้ำในฐานกลาง</span>' : ''}</td>
           <td class="mono" style="text-align:center">${escapeHtml(it.unit)}</td>
           <td class="mono" style="text-align:center">${formatMoney(it.price)}</td>
         </tr>
@@ -5295,30 +5300,15 @@ function renderAssetsPanel(){
 
   tbody.innerHTML = rowsHtml.length ? rowsHtml.join('') : `<tr><td colspan="${colSpan}" class="hint" style="text-align:center;padding:20px">ไม่พบรายการที่ค้นหา</td></tr>`;
 
-  if (owner) {
-    tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
-      tr.addEventListener('dblclick', () => {
-        const i = Number(tr.dataset.idx);
-        // รายการจากฐานกลางแก้ที่ฐานกลาง / รายการเฉพาะระบบนี้ยังแก้ที่นี่ได้ (จนกว่าจะย้ายเข้าฐานกลาง)
-        if (flatItems[i].fromMaster) { showMasterEditInfo('ราคาประเมินทรัพย์สิน', 'assets'); return; }
-        openAssetEditModal(flatItems[i]);
-      });
-    });
-  }
+  // ราคาประเมินแก้ได้ที่ฐานข้อมูลกลางเท่านั้น — ระบบนี้ไม่มีปุ่ม/ลิงก์แก้ไข (รวมตอนต่อฐานกลางไม่ได้)
+  // ปุ่มเดียวที่เหลือ = ส่งออกรายการเฉพาะระบบนี้ (ไม่แก้ข้อมูล) ไว้นำเข้าที่ฐานกลาง
   const addBtn = document.getElementById('btnAddAsset');
   if (addBtn) {
-    addBtn.style.display = owner ? '' : 'none';
-    if (masterAssetsOn) {
-      const n = allVisible.filter(it => !it.fromMaster).length;
-      addBtn.textContent = 'ส่งออกรายการเฉพาะระบบนี้ (' + n + ')';
-      addBtn.title = 'ดาวน์โหลดรายการที่ยังไม่มีในฐานข้อมูลกลาง เพื่อนำเข้าที่หน้าฐานข้อมูลกลาง';
-      addBtn.style.display = owner && n ? '' : 'none';
-      addBtn.onclick = exportLocalOnlyAssets;
-    } else {
-      addBtn.textContent = '+ เพิ่มรายการทรัพย์สิน';
-      addBtn.title = '';
-      addBtn.onclick = () => openAssetEditModal(null);
-    }
+    const n = masterAssetsOn ? allVisible.filter(it => !it.fromMaster).length : 0;
+    addBtn.textContent = 'ส่งออกรายการเฉพาะระบบนี้ (' + n + ')';
+    addBtn.title = 'ดาวน์โหลดรายการที่ยังไม่มีในฐานข้อมูลกลาง เพื่อนำเข้าที่หน้าฐานข้อมูลกลาง';
+    addBtn.style.display = owner && n ? '' : 'none';
+    addBtn.onclick = exportLocalOnlyAssets;
   }
   updateAssetsUpdatedHint();
 }
@@ -5476,7 +5466,7 @@ function updateAssetsUpdatedHint(){
   if (!el) return;
   if (masterAssetsOn) {
     const upd = normalizeDateStr(CNMaster.updatedAt('assets_' + CNMaster.fiscalYear()));
-    el.innerHTML = 'ราคาประเมินปีงบ ' + CNMaster.fiscalYear() + ' จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink('assets') : '');
+    el.innerHTML = 'ราคาประเมินปีงบ ' + CNMaster.fiscalYear() + ' จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + '';
     return;
   }
   const dates = Object.values(materialPriceMap).map(m => m.updatedAt).filter(Boolean).sort();
