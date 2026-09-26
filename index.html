@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<!-- ฐานข้อมูลกลาง (สายทาง / ราคากลางทรัพย์สินแยกปีงบ) จาก CN-Hub — ถ้าโหลดไม่ได้ ระบบใช้ข้อมูลเดิมในโปรเจกต์นี้แทน -->
+<!-- ฐานข้อมูลกลาง (สายทาง / ราคาประเมินทรัพย์สินแยกปีงบ) จาก CN-Hub — ถ้าโหลดไม่ได้ ระบบใช้ข้อมูลเดิมในโปรเจกต์นี้แทน -->
 <script src="https://choengnoen.github.io/choengnoen-hub/master-client.js"></script>
 <script src="firebase-layer.js"></script>
 <style>
@@ -1822,10 +1822,10 @@ function applyMaterialDocs(docs){
   overlayMasterAssets();
 }
 
-/* ===== ฐานข้อมูลกลาง (CN-Hub) — สายทางและราคากลางทรัพย์สินมาจากที่นี่เป็นหลัก =====
+/* ===== ฐานข้อมูลกลาง (CN-Hub) — สายทางและราคาประเมินทรัพย์สินมาจากที่นี่เป็นหลัก =====
    - masterRoutesOn / masterAssetsOn = true เมื่ออ่านฐานกลางได้และมีข้อมูล → ข้อมูลชุดนั้นแก้ที่ฐานกลางเท่านั้น
    - อ่านไม่ได้ (เน็ตหลุด / ฐานกลางยังว่าง) → ใช้ routes / materials เดิมในโปรเจกต์นี้ต่อ เหมือนก่อนเชื่อมต่อ
-   - ราคากลางแยกปีงบ: ราคาที่ใส่ในเคสใช้ปีงบของเคส (ช่อง "ปีงบประมาณ" ในฟอร์ม) */
+   - ราคาประเมินแยกปีงบ: ราคาที่ใส่ในเคสใช้ปีงบของเคส (ช่อง "ปีงบประมาณ" ในฟอร์ม) */
 let masterRoutesOn = false;
 let masterAssetsOn = false;
 function masterReady(ms){
@@ -1851,7 +1851,7 @@ function applyMasterRoutes(){
   recomputeRouteHighways();
   return true;
 }
-// ราคากลางปีงบปัจจุบันจากฐานกลางทับรายการชื่อเดียวกันของระบบนี้ / รายการที่มีเฉพาะในระบบนี้ยังใช้ได้ (ติดป้าย "เฉพาะระบบนี้")
+// ราคาประเมินปีงบปัจจุบันจากฐานกลางทับรายการชื่อเดียวกันของระบบนี้ / รายการที่มีเฉพาะในระบบนี้ยังใช้ได้ (ติดป้าย "เฉพาะระบบนี้")
 function overlayMasterAssets(){
   const list = window.CNMaster ? CNMaster.assets() : [];
   masterAssetsOn = list.length > 0;
@@ -1897,20 +1897,23 @@ function hookMasterChanges(){
   masterHooked = true;
   CNMaster.onChange(onMasterChange);
 }
-function masterEditLink(label){
-  const url = window.CNMaster ? CNMaster.EDIT_URL : '#';
-  return `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(label || 'แก้ไขที่ฐานข้อมูลกลาง ↗')}</a>`;
+// ลิงก์ไปแท็บในหน้าฐานข้อมูลกลาง: 'routes' = สายทาง, 'assets' = ราคาประเมินทรัพย์สิน
+function masterUrl(tab){
+  if (!window.CNMaster) return '#';
+  return (CNMaster.EDIT_URL || '') + (tab ? '#' + tab : '');
 }
-function showMasterEditInfo(what){
+function masterEditLink(tab, label){
+  return `<a href="${masterUrl(tab)}" target="_blank" rel="noopener">${escapeHtml(label || 'แก้ไขที่ฐานข้อมูลกลาง ↗')}</a>`;
+}
+function showMasterEditInfo(what, tab){
   const root = document.getElementById('modalRoot');
   root.innerHTML = `
     <div class="modal-backdrop"><div class="modal">
-      <div class="modal-head"><h3>แก้ไข${escapeHtml(what)}ที่ฐานข้อมูลกลาง</h3><button class="modal-close" id="masterInfoClose" type="button">×</button></div>
-      <p>${escapeHtml(what)}ของทุกระบบงานเก็บไว้ที่ฐานข้อมูลกลางแห่งเดียว แก้ที่นั่นแล้วระบบนี้และระบบอื่นจะเห็นข้อมูลใหม่ทันที</p>
-      <p class="hint">เคสที่บันทึกไว้แล้วไม่เปลี่ยนตาม (ราคาในเคสเป็นราคา ณ ตอนบันทึก)</p>
+      <div class="modal-head"><h3>แก้ไข${escapeHtml(what)}</h3><button class="modal-close" id="masterInfoClose" type="button">×</button></div>
+      <p>แก้ได้ที่ฐานข้อมูลกลาง ทุกระบบเห็นข้อมูลใหม่ทันที${tab === 'assets' ? '<br><span class="hint">เคสเดิมไม่เปลี่ยนราคา</span>' : ''}</p>
       <div class="actions">
         <button class="btn btn-outline" id="masterInfoCancel" type="button">ปิด</button>
-        <a class="btn btn-primary" href="${window.CNMaster ? CNMaster.EDIT_URL : '#'}" target="_blank" rel="noopener">เปิดฐานข้อมูลกลาง ↗</a>
+        <a class="btn btn-primary" style="text-decoration:none" href="${masterUrl(tab)}" target="_blank" rel="noopener">เปิดฐานข้อมูลกลาง ↗</a>
       </div>
     </div></div>`;
   document.getElementById('masterInfoClose').onclick = () => { root.innerHTML = ''; };
@@ -4692,7 +4695,7 @@ function buildItemsSheet(wb, rows, seqMap){
         if (lineTotal == null && hasQty) lineTotal = qtyNum * unitPrice;
       } else {
         const match = findMaterialPriceMatch(item.name);
-        if (match) { unitPrice = match.price; if (hasQty) lineTotal = qtyNum * unitPrice; source = 'ราคากลางล่าสุด: ' + match.matchedName; }
+        if (match) { unitPrice = match.price; if (hasQty) lineTotal = qtyNum * unitPrice; source = 'ราคาประเมินล่าสุด: ' + match.matchedName; }
         else source = 'ไม่พบราคา';
       }
       const vals = [(r.fiscalYear || '') + '-' + (seqMap[r.id] || ''), xlDate(r.dateIncident), String(r.highway || ''), r.section || '', formatKm(r.km),
@@ -4896,7 +4899,7 @@ function renderRoutesTable(){
   if (owner) {
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
       tr.addEventListener('dblclick', () => {
-        if (masterRoutesOn) { showMasterEditInfo('ข้อมูลสายทาง'); return; }
+        if (masterRoutesOn) { showMasterEditInfo('ข้อมูลสายทาง', 'routes'); return; }
         const idx = Number(tr.dataset.idx);
         openRouteEditModal(rows[idx]);
       });
@@ -5086,7 +5089,7 @@ function updateRoutesUpdatedHint(){
   if (!el) return;
   if (masterRoutesOn) {
     const upd = normalizeDateStr(CNMaster.updatedAt('routes'));
-    el.innerHTML = 'จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink() : '');
+    el.innerHTML = 'จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink('routes') : '');
     return;
   }
   const dates = ROUTES.map(r => r.updatedAt).filter(Boolean).sort();
@@ -5293,7 +5296,7 @@ function renderAssetsPanel(){
       tr.addEventListener('dblclick', () => {
         const i = Number(tr.dataset.idx);
         // รายการจากฐานกลางแก้ที่ฐานกลาง / รายการเฉพาะระบบนี้ยังแก้ที่นี่ได้ (จนกว่าจะย้ายเข้าฐานกลาง)
-        if (flatItems[i].fromMaster) { showMasterEditInfo('ราคากลางทรัพย์สิน'); return; }
+        if (flatItems[i].fromMaster) { showMasterEditInfo('ราคาประเมินทรัพย์สิน', 'assets'); return; }
         openAssetEditModal(flatItems[i]);
       });
     });
@@ -5469,7 +5472,7 @@ function updateAssetsUpdatedHint(){
   if (!el) return;
   if (masterAssetsOn) {
     const upd = normalizeDateStr(CNMaster.updatedAt('assets_' + CNMaster.fiscalYear()));
-    el.innerHTML = 'ราคากลางปีงบ ' + CNMaster.fiscalYear() + ' จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink() : '');
+    el.innerHTML = 'ราคาประเมินปีงบ ' + CNMaster.fiscalYear() + ' จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink('assets') : '');
     return;
   }
   const dates = Object.values(materialPriceMap).map(m => m.updatedAt).filter(Boolean).sort();
