@@ -10,6 +10,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<!-- ฐานข้อมูลกลาง (สายทาง / ราคากลางทรัพย์สินแยกปีงบ) จาก CN-Hub — ถ้าโหลดไม่ได้ ระบบใช้ข้อมูลเดิมในโปรเจกต์นี้แทน -->
+<script src="https://choengnoen.github.io/choengnoen-hub/master-client.js"></script>
 <script src="firebase-layer.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@600;700&family=Sarabun:wght@400;500;600;700&display=swap');
@@ -1817,6 +1819,124 @@ function applyMaterialDocs(docs){
     }
   });
   materialPriceMap = map;
+  overlayMasterAssets();
+}
+
+/* ===== ฐานข้อมูลกลาง (CN-Hub) — สายทางและราคากลางทรัพย์สินมาจากที่นี่เป็นหลัก =====
+   - masterRoutesOn / masterAssetsOn = true เมื่ออ่านฐานกลางได้และมีข้อมูล → ข้อมูลชุดนั้นแก้ที่ฐานกลางเท่านั้น
+   - อ่านไม่ได้ (เน็ตหลุด / ฐานกลางยังว่าง) → ใช้ routes / materials เดิมในโปรเจกต์นี้ต่อ เหมือนก่อนเชื่อมต่อ
+   - ราคากลางแยกปีงบ: ราคาที่ใส่ในเคสใช้ปีงบของเคส (ช่อง "ปีงบประมาณ" ในฟอร์ม) */
+let masterRoutesOn = false;
+let masterAssetsOn = false;
+function masterReady(ms){
+  if (!window.CNMaster || !CNMaster.ready) return Promise.resolve(false);
+  return Promise.race([
+    CNMaster.ready.then(() => true, () => false),
+    new Promise(res => setTimeout(() => res(false), ms || 6000))
+  ]);
+}
+function applyMasterRoutes(){
+  const list = window.CNMaster ? CNMaster.routes() : [];
+  masterRoutesOn = list.length > 0;
+  if (!masterRoutesOn) return false;
+  ROUTES = list.map(r => ({
+    highway: String(r.highway), controlNo: r.controlNo || '', section: r.section || '',
+    kmRanges: (r.kmRanges || []).map(p => [p[0], p[1]]),
+    distanceActual: numOrNull(r.distanceActual), distance2Lane: numOrNull(r.distance2Lane),
+    asphalt: numOrNull(r.asphalt), concrete: numOrNull(r.concrete), workQty: numOrNull(r.workQty),
+    status: r.status === 'transferred' ? 'transferred' : 'active',
+    transferredDate: r.transferredDate || '', transferNote: r.transferNote || '',
+    updatedAt: r.asOf || normalizeDateStr(CNMaster.updatedAt('routes'))
+  })).sort((a, b) => (parseFloat(a.highway) - parseFloat(b.highway)) || String(a.highway).localeCompare(String(b.highway)));
+  recomputeRouteHighways();
+  return true;
+}
+// ราคากลางปีงบปัจจุบันจากฐานกลางทับรายการชื่อเดียวกันของระบบนี้ / รายการที่มีเฉพาะในระบบนี้ยังใช้ได้ (ติดป้าย "เฉพาะระบบนี้")
+function overlayMasterAssets(){
+  const list = window.CNMaster ? CNMaster.assets() : [];
+  masterAssetsOn = list.length > 0;
+  if (!masterAssetsOn) return;
+  const upd = normalizeDateStr(CNMaster.updatedAt('assets_' + CNMaster.fiscalYear()));
+  Object.keys(materialPriceMap).forEach(n => { materialPriceMap[n].fromMaster = false; });
+  list.forEach(a => {
+    materialPriceMap[a.name] = {
+      key: a.key, unit: a.unit, price: Number(a.price) || 0, updatedAt: upd,
+      hidden: !!a.hidden, category: a.category || '', frequent: a.frequent ? true : null, fromMaster: true
+    };
+  });
+}
+// ราคาต่อหน่วยที่ใช้ใส่ในเคส: ใช้ราคาของปีงบที่เลือกในฟอร์ม (ถ้าฐานกลางมีปีนั้น) ไม่งั้นใช้ราคาปัจจุบัน
+function catalogPrice(name, fallback){
+  const live = materialPriceMap[name];
+  if (!live) return fallback;
+  if (live.fromMaster && window.CNMaster) {
+    const fy = Number((document.getElementById('f_fiscalYear') || {}).value);
+    if (fy && fy !== CNMaster.fiscalYear()) {
+      const p = CNMaster.priceInYear(live.key, fy);
+      if (p) return Number(p.price) || 0;
+    }
+  }
+  return live.price;
+}
+function preloadMasterAssetsForForm(){
+  const fy = Number((document.getElementById('f_fiscalYear') || {}).value);
+  if (fy && window.CNMaster && masterAssetsOn) CNMaster.loadAssets(fy).catch(() => {});
+}
+function onMasterChange(docId){
+  if (docId === 'routes') {
+    if (!applyMasterRoutes()) return;
+    try { refreshHighwayOptions(); } catch(e){}
+  } else if (/^assets_/.test(docId)) {
+    applyMaterialDocs(FBL.docs('materials'));
+  } else return;
+  refreshVisibleViews();
+}
+let masterHooked = false;
+function hookMasterChanges(){
+  if (masterHooked || !window.CNMaster) return;
+  masterHooked = true;
+  CNMaster.onChange(onMasterChange);
+}
+function masterEditLink(label){
+  const url = window.CNMaster ? CNMaster.EDIT_URL : '#';
+  return `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(label || 'แก้ไขที่ฐานข้อมูลกลาง ↗')}</a>`;
+}
+function showMasterEditInfo(what){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-backdrop"><div class="modal">
+      <div class="modal-head"><h3>แก้ไข${escapeHtml(what)}ที่ฐานข้อมูลกลาง</h3><button class="modal-close" id="masterInfoClose" type="button">×</button></div>
+      <p>${escapeHtml(what)}ของทุกระบบงานเก็บไว้ที่ฐานข้อมูลกลางแห่งเดียว แก้ที่นั่นแล้วระบบนี้และระบบอื่นจะเห็นข้อมูลใหม่ทันที</p>
+      <p class="hint">เคสที่บันทึกไว้แล้วไม่เปลี่ยนตาม (ราคาในเคสเป็นราคา ณ ตอนบันทึก)</p>
+      <div class="actions">
+        <button class="btn btn-outline" id="masterInfoCancel" type="button">ปิด</button>
+        <a class="btn btn-primary" href="${window.CNMaster ? CNMaster.EDIT_URL : '#'}" target="_blank" rel="noopener">เปิดฐานข้อมูลกลาง ↗</a>
+      </div>
+    </div></div>`;
+  document.getElementById('masterInfoClose').onclick = () => { root.innerHTML = ''; };
+  document.getElementById('masterInfoCancel').onclick = () => { root.innerHTML = ''; };
+}
+// รายการทรัพย์สินที่มีเฉพาะในระบบนี้ (ยังไม่มีในฐานกลาง) → ไฟล์ JSON สำหรับนำเข้าที่หน้าฐานข้อมูลกลาง
+// รหัสขึ้นต้น "acc-" เสมอ กันชนกับรหัสในฐานกลาง (รหัสเดิมของระบบนี้อาจซ้ำ เช่น mat-002 แต่เป็นคนละรายการ)
+function exportLocalOnlyAssets(){
+  const out = [];
+  Object.keys(materialPriceMap).forEach(name => {
+    const m = materialPriceMap[name];
+    if (m.fromMaster || m.hidden) return;
+    out.push({ key: 'acc-' + (m.key || (Date.now().toString(36) + out.length)), name, unit: m.unit, price: m.price, category: m.category || classifyAssetCategoryFallback(name), frequent: !!m.frequent });
+  });
+  getAllAssetItems().forEach(it => {
+    if (materialPriceMap[it.name]) return; // มีแล้วด้านบน
+    out.push({ key: 'acc-lib-' + out.length, name: it.name, unit: it.unit, price: it.price, category: classifyAssetCategoryFallback(it.name), frequent: true });
+  });
+  if (!out.length) { showToast('ทุกรายการมีอยู่ในฐานข้อมูลกลางแล้ว'); return; }
+  const blob = new Blob([JSON.stringify({ note: 'รายการทรัพย์สินที่มีเฉพาะในระบบงานอุบัติเหตุ — นำเข้าที่ฐานข้อมูลกลาง แท็บ "นำเข้า / ส่งออก"', materials: out }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'accident-assets-for-master-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showToast('ส่งออก ' + out.length + ' รายการ — นำไฟล์ไปนำเข้าที่ฐานข้อมูลกลาง');
 }
 function applyRouteDocs(docs){
   if (!docs || docs.length === 0) return;
@@ -1844,7 +1964,10 @@ function applyRouteDocs(docs){
 function onRemoteChange(col){
   if (col === 'accidents') applyAccidentDocs(FBL.docs('accidents'));
   else if (col === 'materials') applyMaterialDocs(FBL.docs('materials'));
-  else if (col === 'routes') { applyRouteDocs(FBL.docs('routes')); try { refreshHighwayOptions(); } catch(e){} }
+  else if (col === 'routes') {
+    if (masterRoutesOn) return; // ใช้สายทางจากฐานกลางอยู่ ไม่เอา routes เดิมมาทับ
+    applyRouteDocs(FBL.docs('routes')); try { refreshHighwayOptions(); } catch(e){}
+  }
   refreshVisibleViews();
 }
 function refreshVisibleViews(){
@@ -1924,12 +2047,13 @@ async function loadTeamConfig(){
 
 /* ----- ทรัพย์สิน/วัสดุ ----- */
 async function loadMaterialPrices(){
-  try {
-    const docs = await FBL.watch('materials', onRemoteChange);
-    applyMaterialDocs(docs);
-  } catch (e) {
-    console.error('load material prices failed', e);
-  }
+  // รอฐานกลางพร้อมกันกับข้อมูลเดิม (ฐานกลางช้า/ล่ม ไม่เกิน 6 วินาทีแล้วใช้ข้อมูลเดิมไปก่อน)
+  const [docs] = await Promise.all([
+    FBL.watch('materials', onRemoteChange).catch(e => { console.error('load material prices failed', e); return []; }),
+    masterReady().then(ok => { if (ok) hookMasterChanges(); return ok; })
+  ]);
+  applyMaterialDocs(docs);
+  if (masterAssetsOn) CNMaster.loadAssets(CNMaster.fiscalYear() - 1).catch(() => {}); // เผื่อบันทึกเคสย้อนหลังปีงบก่อน
 }
 async function apiSaveMaterial(m){
   try { await FBL.saveMaterial(m); return true; }
@@ -2653,7 +2777,7 @@ function getCatalogItems(){
     return {
       name: it.name,
       unit: (live && live.unit) ? live.unit : it.unit,
-      price: live ? live.price : it.price,
+      price: catalogPrice(it.name, it.price), // ราคาตามปีงบที่เลือกในฟอร์ม (ฐานกลาง)
       hidden: live ? !!live.hidden : false,
       frequent: (live && live.frequent !== null && live.frequent !== undefined) ? live.frequent : !!it.frequent,
       catLabel: ASSET_CATEGORY_LABELS[cat] || ''
@@ -2717,7 +2841,7 @@ function initItemEntryUi(){
     input.focus();
   };
   input.addEventListener('input', render);
-  input.addEventListener('focus', render);
+  input.addEventListener('focus', () => { preloadMasterAssetsForForm(); render(); });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); if (hits.length) { active = (active + 1) % hits.length; paintActive(); } }
     else if (e.key === 'ArrowUp') { e.preventDefault(); if (hits.length) { active = (active - 1 + hits.length) % hits.length; paintActive(); } }
@@ -2753,7 +2877,7 @@ function applyMaterialCategory(){
   const key = sel.value;
   if (!key || !MATERIAL_LIBRARY[key]) { return; }
   const cat = MATERIAL_LIBRARY[key];
-  const priceOf = (it) => (materialPriceMap[it.name] ? materialPriceMap[it.name].price : it.price);
+  const priceOf = (it) => catalogPrice(it.name, it.price);
   let added = 0, skipped = 0;
   // ข้ามรายการที่มีอยู่แล้ว (ชื่อเดียวกัน) กันเลือกชุดซ้ำแล้วรายการซ้อน
   cat.items.forEach(it => {
@@ -4772,6 +4896,7 @@ function renderRoutesTable(){
   if (owner) {
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
       tr.addEventListener('dblclick', () => {
+        if (masterRoutesOn) { showMasterEditInfo('ข้อมูลสายทาง'); return; }
         const idx = Number(tr.dataset.idx);
         openRouteEditModal(rows[idx]);
       });
@@ -4779,7 +4904,7 @@ function renderRoutesTable(){
   }
   const addBtn = document.getElementById('btnAddRoute');
   if (addBtn) {
-    addBtn.style.display = owner ? '' : 'none';
+    addBtn.style.display = owner && !masterRoutesOn ? '' : 'none'; // ใช้ฐานกลางอยู่ → เพิ่มสายทางที่ฐานกลาง
     addBtn.onclick = () => openRouteEditModal(null);
   }
   updateRoutesUpdatedHint();
@@ -4959,6 +5084,11 @@ function openRouteEditModal(route, preset){
 function updateRoutesUpdatedHint(){
   const el = document.getElementById('routesUpdatedHint');
   if (!el) return;
+  if (masterRoutesOn) {
+    const upd = normalizeDateStr(CNMaster.updatedAt('routes'));
+    el.innerHTML = 'จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink() : '');
+    return;
+  }
   const dates = ROUTES.map(r => r.updatedAt).filter(Boolean).sort();
   const latest = dates.length ? dates[dates.length-1] : '';
   el.textContent = latest ? ('อัปเดตล่าสุด ' + formatThaiDate(latest)) : 'ยังไม่มีการแก้ไขข้อมูล';
@@ -5119,6 +5249,7 @@ function renderAssetsPanel(){
         updatedAt: live ? live.updatedAt : '',
         key: live ? live.key : '',
         hidden: live ? !!live.hidden : false,
+        fromMaster: !!(live && live.fromMaster),
         frequent,
         category
       };
@@ -5145,7 +5276,7 @@ function renderAssetsPanel(){
     group.forEach(it => {
       rowsHtml.push(`
         <tr data-idx="${idx}" class="${it.frequent ? 'asset-frequent' : ''}${owner ? ' route-editable' : ''}"${owner ? ' title="ดับเบิลคลิกเพื่อแก้ไข"' : ''}>
-          <td>${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★ ใช้บ่อย</span>' : ''}</td>
+          <td>${escapeHtml(it.name)}${it.frequent ? '<span class="asset-frequent-badge">★ ใช้บ่อย</span>' : ''}${masterAssetsOn && !it.fromMaster ? '<span class="asset-frequent-badge" style="background:#FDE2E0;color:#B92A22" title="ยังไม่มีในฐานข้อมูลกลาง — ส่งออกแล้วนำเข้าที่ฐานกลาง">เฉพาะระบบนี้</span>' : ''}</td>
           <td class="mono" style="text-align:center">${escapeHtml(it.unit)}</td>
           <td class="mono" style="text-align:center">${formatMoney(it.price)}</td>
         </tr>
@@ -5161,6 +5292,8 @@ function renderAssetsPanel(){
     tbody.querySelectorAll('tr[data-idx]').forEach(tr => {
       tr.addEventListener('dblclick', () => {
         const i = Number(tr.dataset.idx);
+        // รายการจากฐานกลางแก้ที่ฐานกลาง / รายการเฉพาะระบบนี้ยังแก้ที่นี่ได้ (จนกว่าจะย้ายเข้าฐานกลาง)
+        if (flatItems[i].fromMaster) { showMasterEditInfo('ราคากลางทรัพย์สิน'); return; }
         openAssetEditModal(flatItems[i]);
       });
     });
@@ -5168,7 +5301,17 @@ function renderAssetsPanel(){
   const addBtn = document.getElementById('btnAddAsset');
   if (addBtn) {
     addBtn.style.display = owner ? '' : 'none';
-    addBtn.onclick = () => openAssetEditModal(null);
+    if (masterAssetsOn) {
+      const n = allVisible.filter(it => !it.fromMaster).length;
+      addBtn.textContent = 'ส่งออกรายการเฉพาะระบบนี้ (' + n + ')';
+      addBtn.title = 'ดาวน์โหลดรายการที่ยังไม่มีในฐานข้อมูลกลาง เพื่อนำเข้าที่หน้าฐานข้อมูลกลาง';
+      addBtn.style.display = owner && n ? '' : 'none';
+      addBtn.onclick = exportLocalOnlyAssets;
+    } else {
+      addBtn.textContent = '+ เพิ่มรายการทรัพย์สิน';
+      addBtn.title = '';
+      addBtn.onclick = () => openAssetEditModal(null);
+    }
   }
   updateAssetsUpdatedHint();
 }
@@ -5324,6 +5467,11 @@ async function apiHideMaterial(item){
 function updateAssetsUpdatedHint(){
   const el = document.getElementById('assetsUpdatedHint');
   if (!el) return;
+  if (masterAssetsOn) {
+    const upd = normalizeDateStr(CNMaster.updatedAt('assets_' + CNMaster.fiscalYear()));
+    el.innerHTML = 'ราคากลางปีงบ ' + CNMaster.fiscalYear() + ' จากฐานข้อมูลกลาง' + (upd ? ' · อัปเดต ' + escapeHtml(formatThaiDate(upd)) : '') + (isPrivileged() ? ' · ' + masterEditLink() : '');
+    return;
+  }
   const dates = Object.values(materialPriceMap).map(m => m.updatedAt).filter(Boolean).sort();
   const latest = dates.length ? dates[dates.length-1] : '';
   el.textContent = latest ? ('อัปเดตล่าสุด ' + formatThaiDate(latest)) : 'ยังไม่มีการแก้ไขราคา';
@@ -5332,6 +5480,9 @@ function updateAssetsUpdatedHint(){
  
 
 async function loadRoutesData(){
+  const ok = await masterReady();
+  if (ok) hookMasterChanges();
+  if (ok && applyMasterRoutes()) return; // ใช้สายทางจากฐานกลาง ไม่ต้องอ่าน routes เดิม
   try {
     const docs = await FBL.watch('routes', onRemoteChange);
     applyRouteDocs(docs);
@@ -5393,12 +5544,14 @@ function syncFiscalYearFromDate(){
     [...sel.options].sort((a, b) => Number(a.value) - Number(b.value)).forEach(o => sel.appendChild(o));
   }
   sel.value = String(fy);
+  preloadMasterAssetsForForm();
 }
 
 async function init(){
   initModalScroll();
   initCustomSelects();
   document.getElementById('f_dateIncident').addEventListener('change', syncFiscalYearFromDate);
+  document.getElementById('f_fiscalYear').addEventListener('change', preloadMasterAssetsForForm);
   initTabs();
   initPasswordToggles();
   document.addEventListener('click', (e) => {
