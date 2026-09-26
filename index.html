@@ -1852,11 +1852,12 @@ function applyMasterRoutes(){
   return true;
 }
 // ราคาประเมินปีงบปัจจุบันจากฐานกลางทับรายการชื่อเดียวกันของระบบนี้ / รายการที่มีเฉพาะในระบบนี้ยังใช้ได้ (ติดป้าย "เฉพาะระบบนี้")
+// ต้นปีงบที่ฐานกลางยังไม่ได้สร้างราคาปีใหม่ → ใช้ราคาปีก่อนจากฐานกลาง (CNMaster.assets() เลือกให้)
 function overlayMasterAssets(){
   const list = window.CNMaster ? CNMaster.assets() : [];
   masterAssetsOn = list.length > 0;
   if (!masterAssetsOn) return;
-  const upd = normalizeDateStr(CNMaster.updatedAt('assets_' + CNMaster.fiscalYear()));
+  const upd = normalizeDateStr(CNMaster.updatedAt('assets_' + (CNMaster.assetsYear ? CNMaster.assetsYear() : CNMaster.fiscalYear())));
   Object.keys(materialPriceMap).forEach(n => { materialPriceMap[n].fromMaster = false; });
   list.forEach(a => {
     materialPriceMap[a.name] = {
